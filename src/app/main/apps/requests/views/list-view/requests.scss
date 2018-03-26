@@ -1,0 +1,56 @@
+#requests {
+
+    .center {
+
+        .header {
+                height: 80px !important;
+                min-height: 80px !important;
+                max-height: 80px !important;
+                padding: 24px 0;
+                color: #fff;
+                .logo {
+                    .logo-icon {
+                        margin: 0 16px 0 0;
+                        md-icon {
+                            color: #fff;
+                        }
+                    }
+
+                    .logo-text {
+                        font-size: 24px;
+                    }
+                }
+            }
+        }
+
+        .content-card {
+            .success-alert-message {
+                font-size: 0.9em;
+                margin: 10px 40px 0px 20px;
+                color: rgb(1, 57, 114);
+                background-color: rgba(156, 204, 101,0.4);
+                padding: 10px;
+            }
+            .error-alert-message {
+                font-size: 0.9em;
+                margin: 10px 40px 0px 20px;
+                color: rgb(114, 1, 1);
+                background-color: rgba(204, 101, 123, 0.4);
+                padding: 10px;
+            }
+            .toolbar {
+                padding: 8px;
+            }
+            .dx-datagrid {
+                .dx-row {
+                    td {
+                        padding: 8px;
+                    }
+                }
+                
+                .md-button {
+                    margin: 0;
+                }
+            }
+        }
+    }

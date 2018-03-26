@@ -1,0 +1,26 @@
+<md-dialog>
+    <form ng-cloak>
+      <md-toolbar>
+        <div class="md-toolbar-tools">
+          <h2>{{vm.request.fvuFileUrl ? 'Upload Form27A': 'Upload FVU'}}: {{vm.barcode}}</h2>
+          <span flex></span>
+          <md-button class="md-icon-button" ng-click="cancel()">
+            <md-icon md-svg-src="img/icons/ic_close_24px.svg" aria-label="Close dialog"></md-icon>
+          </md-button>
+        </div> 
+      </md-toolbar>
+  
+      <md-dialog-content>
+        <div class="md-dialog-content" id="request-dialog">
+            <div id="request-form" dx-form="vm.requestForm"></div>
+        </div>
+      </md-dialog-content>
+  
+      <md-dialog-actions layout="row">
+        <span flex></span>
+        <md-button class="md-raised md-accent" ng-click="vm.uploadFiles()">
+            Upload
+        </md-button>
+      </md-dialog-actions>
+    </form>
+  </md-dialog>

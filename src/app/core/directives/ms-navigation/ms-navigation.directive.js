@@ -1355,7 +1355,20 @@
                 {
                     // Add custom classes
                     iElement.addClass(MsNavigationHorizontalNodeCtrl.getClass());
-
+                    //Push the item into the array
+                    var role = localStorage.getItem('role') != 'undefined'? JSON.parse(localStorage.getItem('role')): null,
+                    tenantId = JSON.parse(localStorage.getItem('tenantId'));
+                    
+                    if(!role || !tenantId) {
+                        iElement.hide();
+                    }
+                    if(scope.node.roles && tenantId) {
+                        if(scope.node.roles.indexOf(role) > -1) {
+                            iElement.show();
+                        } else {
+                            iElement.hide();
+                        }
+                    } 
                     // Add group class if it's a group
                     if ( MsNavigationHorizontalNodeCtrl.group )
                     {

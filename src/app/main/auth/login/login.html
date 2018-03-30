@@ -1,20 +1,9 @@
-<div id="login" layout="row" layout-align="start">
-    <div id="login-intro" flex hide show-gt-sm>
-        <!-- <div class="logo md-accent-bg">
-            <span>Welcomet to TDSPLC</span>
-        </div>
-        <div class="title" translate="">
-        </div>
-        <div class="description">TIN - FC
-        </div> -->
-    </div>
-
-    <div id="login-form-wrapper" class="flex-scrollable md-whiteframe-8dp" ms-scroll>
+<div id="login" layout="column" layout-align="center center">
+    <md-progress-circular id="toolbar-progress" ng-if="$root.loadingProgress" class="md-accent"
+                              md-mode="indeterminate" md-diameter="32">
+    </md-progress-circular>
+    <div id="login-form-wrapper" class="flex-scrollable" ms-scroll>
         <div id="login-form">
-            <div class="logo md-accent-bg" hide-gt-sm>
-                <span>T</span>
-            </div>
-
             <div class="title" translate="LOGIN_V2.TITLE">Log in to your account</div>
             <div class="description" translate="LOGIN_V2.DESCRIPTION"></div>
 
@@ -46,9 +35,9 @@
 
                 <div class="remember-forgot-password" layout="row" layout-sm="column"
                      layout-align="space-between center">
-                    <md-checkbox class="remember-me" ng-model="data.cb1" aria-label="Remember Me">
+                    <!-- <md-checkbox class="remember-me" ng-model="data.cb1" aria-label="Remember Me">
                         <span translate="LOGIN_V2.REMEMBER_ME">Remember Me</span>
-                    </md-checkbox>
+                    </md-checkbox> -->
 
                     <a ui-sref="app.auth_forgot-password" class="forgot-password md-accent-color"
                        translate="LOGIN_V2.FORGOT_PASSWORD">Forgot Password?</a>

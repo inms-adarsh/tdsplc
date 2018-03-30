@@ -1,0 +1,67 @@
+<div class="page-layout carded left-sidenav single-scroll" id="acknowledgements" layout="row">
+
+    <!-- TOP BACKGROUND -->
+    <div class="top-bg md-accent-bg"></div>
+    <!-- / TOP BACKGROUND -->
+    
+        <!-- SIDENAV -->
+    <!--<md-sidenav class="sidenav" md-is-locked-open="$mdMedia('gt-md')" md-component-id="sidenav"
+     ng-include="'app/main/apps/acknowledgements/views/list-view/sidenavs/main-sidenav.html'" ms-scroll
+                ms-sidenav-helper>
+
+    </md-sidenav>-->
+    <!-- / SIDENAV -->
+
+    <!-- CENTER -->
+    <div class="center" flex>
+
+        <!-- CONTENT HEADER -->
+        <div class="header" layout="row" layout-align="space-between center">
+
+            <div class="logo" layout="row" layout-align="start center">
+                <span class="logo-icon">
+                    <md-icon md-font-icon="icon-sale" class="icon"></md-icon>
+                </span>
+                <span class="logo-text" translate="ACK.TITLE"></span>
+            </div>
+            <div class="title">Credit Balance : {{vm.tenant.creditBalance}}</div>
+        </div>  
+        <!-- / CONTENT HEADER -->
+      
+        <!-- CONTENT CARD -->
+        <div class="content-card">
+
+            <!-- <div id="progress" class="content" ng-show="vm.showProgressBar">
+                <div id="progressBarStatus" dx-progress-bar="vm.progressBarOptions"></div>
+            </div>
+            <div id="progress" class="content" ng-show="vm.showAdditonalFileProgressBar">
+                <div id="progressBarStatus" dx-progress-bar="vm.additonalFileProgressBarOptions"></div>
+            </div> -->
+            <div ng-class="{'error-alert-message': vm.invalidAcknowledgement, 'success-alert-message': !vm.invalidAcknowledgement}" ng-show="vm.showAlertMessage">
+                <span>Last Acknowledgement generated with {{vm.invalidAcknowledgement == true? 'Errors': 'Success'}} : <a ng-click="showAcknowledgement()">Click to View</a></span> 
+            </div>
+            <!-- CONTENT TOOLBAR -->
+            <!-- / CONTENT TOOLBAR -->
+            <!-- CONTENT -->
+            <md-content class="content" ms-scroll flex>
+
+                <!-- DEMO CONTENT -->
+                <!-- <form action="your-action" ng-submit="onFormSubmit($event)">
+                    <div class="widget-container">
+                        <div id="acknowledgement-form" dx-form="vm.acknowledgementForm"></div>
+                    </div>
+                    <div dx-button="vm.buttonOptions"></div>
+                </form> -->
+                <div id="acknowledgement-grid" dx-data-grid="vm.gridOptions"></div>
+                <!-- / DEMO CONTENT -->
+
+            </md-content>
+            <!-- / CONTENT -->
+
+        </div>
+        <!-- / CONTENT CARD -->
+
+    </div>
+    <!-- / CENTER -->
+
+</div>

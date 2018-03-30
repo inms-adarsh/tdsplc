@@ -281,17 +281,22 @@
 
             authService.registerUser(user).then(function(data) {
                 authService.createProfile(user, data, tenantId).then(function() {
-                    var ref = rootRef.child('tenant-users').child(tenantId);
+                    var ref = rootRef.child('tenant-users').child(tenantId).child(data.uid);
                     delete userObj.usrPassword;
                     if (!userObj.date) {
                         userObj.date = new Date();
                     }
                     userObj.date = userObj.date.toString();
                     userObj.user = auth.$getAuth().uid;
-                    userObj.uid = data.uid;
-                    firebaseUtils.addData(ref, userObj).then(function(data) {
+                    ref.set(userObj).then(function(data) {
+                        
+                    });
+
+                    var ref = rootRef.child('employees').child(data.uid);
+                    ref.set(userObj).then(function(data) {
                         gridInstance.refresh();  
                     });
+
                 });
                 // var ref = rootRef.child('tenant-users').child(tenantId);
 
@@ -321,6 +326,10 @@
         function updateUser(key, userData) {
             var ref = rootRef.child('tenant-users').child(tenantId).child(key['$id']);
             return firebaseUtils.updateData(ref, userData);
+
+            var ref = rootRef.child('employees').child(key['$id']);
+            firebaseUtils.updateData(ref, userData);
+
         }
 
         /**
@@ -329,7 +338,10 @@
          */
         function deleteUser(key) {
             var ref = rootRef.child('tenant-users').child(tenantId).child(key['$id']);
-            return firebaseUtils.updateData(ref, { deactivated: false });
+            firebaseUtils.updateData(ref, { deactivated: false });
+
+            var ref = rootRef.child('employees').child(tenantId).child(key['$id']);
+            firebaseUtils.updateData(ref, { deactivated: false });
         }
 
     }

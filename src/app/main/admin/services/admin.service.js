@@ -15,7 +15,8 @@
                 getCurrentCustomers: getCurrentCustomers,
                 getBeers: getBeers,
                 getCurrentBulkCustomers: getCurrentBulkCustomers,
-                getCurrentOffers: getCurrentOffers
+                getCurrentOffers: getCurrentOffers,
+                fetchEmployeeList: fetchEmployeeList
             };
 
         return service;
@@ -83,6 +84,15 @@
         function getCurrentOffers() {
             var defer = $q.defer(),
                 ref = rootRef.child('tenant-record-offers').child(tenantId);
+            firebaseUtils.fetchList(ref).then(function (data) {
+                defer.resolve(data);
+            });
+            return defer.promise;
+        }
+
+        function fetchEmployeeList() {
+            var defer = $q.defer(),
+                ref = rootRef.child('employees');
             firebaseUtils.fetchList(ref).then(function (data) {
                 defer.resolve(data);
             });

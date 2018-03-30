@@ -12,10 +12,11 @@ $card-header-height-sm: $header-height-xs - $card-toolbar-height;
 
 .page-layout {
     position: relative;
-    overflow: hidden;
+    //overflow: hidden;
 
     .top-bg {
         position: absolute;
+        display: none;
         z-index: 1;
         top: 0;
         right: 0;
@@ -78,8 +79,9 @@ $card-header-height-sm: $header-height-xs - $card-toolbar-height;
             > .center {
                 position: relative;
                 z-index: 2;
-                margin-left: 32px;
-                margin-right: 32px;
+                margin-left: auto;
+                margin-right: auto;
+                max-width: 1280px;
 
                 .header {
                     height: $card-header-height;
@@ -176,21 +178,27 @@ $card-header-height-sm: $header-height-xs - $card-toolbar-height;
             > .center {
                 position: relative;
                 z-index: 2;
-                margin-left: 32px;
-                margin-right: 32px;
+                margin-left: auto;
+                margin-right: auto;
+                max-width: 1280px;
 
                 .header {
                     height: $card-header-height;
                     min-height: $card-header-height;
                     max-height: $card-header-height;
                     padding: 24px;
+                    display: none;
                 }
 
                 .content-card {
                     background: #FFFFFF;
-                    box-shadow: $whiteframe-shadow-1dp;
+                    //box-shadow: 0 3px 8px rgba(0,0,50,.15);
                     overflow: hidden;
-
+                    margin-bottom: 10px;
+                    margin-top: 30px;
+                    margin-bottom: 10px;
+                    border: 1px solid rgba(0, 0, 0, 0.12);
+                    border-radius: 6px;
                     .toolbar {
                         padding: 8px 24px;
                         height: $card-toolbar-height;
@@ -278,14 +286,16 @@ $card-header-height-sm: $header-height-xs - $card-toolbar-height;
             > .center {
                 position: relative;
                 z-index: 2;
-                margin-left: 32px;
-                margin-right: 32px;
+                margin-left: auto;
+                margin-right: auto;
+                max-width: 100%;
 
                 .header {
                     height: $card-header-height;
                     min-height: $card-header-height;
                     max-height: $card-header-height;
                     padding: 24px;
+                    display: none;
                 }
 
                 .content-card {

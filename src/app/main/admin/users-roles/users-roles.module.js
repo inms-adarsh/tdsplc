@@ -49,7 +49,7 @@
 
         // Navigation
 
-        msNavigationServiceProvider.saveItem('admin.roles', {
+        msNavigationServiceProvider.saveItem('roles', {
             title: 'Roles',
             state: 'app.roles.list',
             weight: 2,

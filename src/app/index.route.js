@@ -49,7 +49,7 @@
         ]);
 
         // Get active layout
-        var layoutStyle = $cookies.get('layoutStyle') || 'verticalNavigationFullwidthToolbar2';
+        var layoutStyle = $cookies.get('layoutStyle') || 'horizontalNavigation';
 
         var layouts = {
             verticalNavigation  : {

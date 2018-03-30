@@ -52,89 +52,23 @@
                 colCount: 2,
                 items: [
                     {
-                        dataField: 'email',
+                        dataField: 'bankname',
                         label: {
-                            text: 'Email'
-                        },
-                        validationRules: [{
-                            type: 'email',
-                            message: 'Please enter valid e-mail address'
-                        }, {
-                            type: 'required',
-                            message: 'Name is required'
-                        }]
-                    }, {
-                        dataField: 'usrPassword',
-                        label: {
-                            text: 'Password'
-                        },
-                        validationRules: [ {
-                            type: 'required',
-                            message: 'Password is required'
-                        }],
-                        name: 'usrPassword',
-                        editorOptions: {
-                            mode: 'password'
-                        }
-                    }, {
-                        dataField: 'name',
-                        label: {
-                            text: 'Name'
+                            text: 'Bank Name'
                         },
                         validationRules: [{
                             type: 'required',
                             message: 'Name is required'
                         }]
                     }, {
-                        dataField: 'phone',
+                        dataField: 'ifsc',
                         label: {
-                            text: 'Phone'
-                        },
-                        editorType: 'dxNumberBox',
-                        validationRules: [{
-                            type: 'required',
-                            message: 'Phone number is required'
-                        }],
-                        formItem: {
-                            visible: true
-                          }
-                    },  {
-                        dataField: 'role',
-                        label: {
-                            text: 'role'
-                        },
-                        editorType: 'dxSelectBox',
-                        editorOptions: {
-                            dataSource: roles,
-                            displayExpr: 'name',
-                            valueExpr: 'id'
-                        },
-                        validationRules: [{
-                            type: 'required',
-                            message: 'Select a Role'
-                        }]
-                    }, {
-                        dataField: 'address',
-                        label: {
-                            text: 'Address'
+                            text: 'IFSC Code'
                         }
                     }, {
-                        dataField: 'city',
+                        dataField: 'accountNo',
                         label: {
-                            text: 'City'
-                        }
-                    }, {
-                        dataField: 'state',
-                        label: {
-                            text: 'State'
-                        }
-                    }, {
-                        dataField: 'zipcode',
-                        label: {
-                            text: 'ZIP/Pincode'
-                        },
-                        editorOptions: {
-                            mask: '000000'
+                            text: 'Account No'
                         }
                     }],
                 onContentReady: function (e) {
@@ -160,7 +94,6 @@
                             return defer.promise;
                         },
                         insert: function (accountObj) {
-                            Object.assign(accountObj, dxFormInstance.option('formData'));
                             saveAccount(accountObj);
                         },
                         update: function (key, accountObj) {
@@ -177,59 +110,19 @@
                         }]
                     },
                     columns: [{
-                        dataField: 'name',
-                        caption: 'Name',
+                        dataField: 'bankname',
+                        caption: 'Bank Name',
                         validationRules: [{
                             type: 'required',
                             message: 'Name is required'
                         }],
                     }, {
-                        dataField: 'role',
-                        caption: 'Role',
-                        lookup: {
-                            dataSource: roles,
-                            displayExpr: "name",
-                            valueExpr: "id"
-                        }
+                        dataField: 'ifsc',
+                        caption: 'IFSC Code'
                     },
                     {
-                        dataField: 'phone',
-                        caption: 'Phone',
-                        dataType: 'number',
-                        validationRules: [{
-                            type: 'required',
-                            message: 'Phone number is required'
-                        }]
-                    }, {
-                        dataField: 'email',
-                        caption: 'Email/Account Id',
-                        validationRules: [{
-                            type: 'email',
-                            message: 'Please enter valid e-mail address'
-                        }]
-                    }, {
-                        dataField: 'address',
-                        caption: 'Address'
-                    }, {
-                        dataField: 'city',
-                        caption: 'City'
-                    }, {
-                        dataField: 'membersSince',
-                        caption: 'Member since',
-                        dataType: 'date',
-                        validationRules: [{
-                            type: 'required',
-                            message: 'Field is required'
-                        }]
-
-                    }, {
-                        dataField: 'position',
-                        caption: 'Position',
-                        lookup: {
-                            dataSource: clientStatus,
-                            displayExpr: "name",
-                            valueExpr: "id"
-                        }
+                        dataField: 'accountNo',
+                        caption: 'Account No'
                     }],
                     export: {
                         enabled: true,
@@ -240,23 +133,8 @@
                         allowAdding: true,
                         allowUpdating: true,
                         allowDeleting: false,
-                        mode: 'form',
+                        mode: 'row',
                         form: formOptions()
-                    }, onRowRemoving: function (e) {
-                        var d = $.Deferred();
-                        var ref = rootRef.child('tenant-account-records').child(tenantId).child(e.data.$id).child('records').orderByChild('deactivated').equalTo(null);
-                        firebaseUtils.fetchList(ref).then(function (data) {
-                            if (data.length > 0) {
-                                d.reject("Can not delete the record");
-                            } else {
-                                d.resolve();
-                            }
-                        });
-                        e.cancel = d.promise();
-                    },
-                    onRowUpdated: function (e) {
-                        var ref = rootRef.child('tenants').child(e.key.$id);
-                        firebaseUtils.updateData(ref, e.data);
                     },
                     onContentReady: function(e) {
                         gridInstance = e.component;
@@ -272,27 +150,15 @@
          * @returns {Object} Account Form data
          */
         function saveAccount(accountObj) {
-            var account = {                
-                email: accountObj.email,
-                password: accountObj.usrPassword,
-                role: accountObj.role,
-                accountname: accountObj.name
-              };
-
-            authService.registerAccount(account).then(function(data) {
-                authService.createProfile(account, data, tenantId).then(function() {
-                    var ref = rootRef.child('tenant-accounts').child(tenantId);
-                    delete accountObj.usrPassword;
+                    var ref = rootRef.child('tenant-accounts');
                     if (!accountObj.date) {
                         accountObj.date = new Date();
                     }
                     accountObj.date = accountObj.date.toString();
-                    accountObj.account = auth.$getAuth().uid;
-                    accountObj.uid = data.uid;
+                    accountObj.uid = auth.$getAuth().uid;
                     firebaseUtils.addData(ref, accountObj).then(function(data) {
                         gridInstance.refresh();  
                     });
-                });
                 // var ref = rootRef.child('tenant-accounts').child(tenantId);
 
                 // if (!accountObj.date) {
@@ -301,7 +167,6 @@
                 // accountObj.date = accountObj.date.toString();
                 // accountObj.account = auth.$getAuth().uid;
                 // return firebaseUtils.addData(ref, accountObj);
-            });
            
         }
 
@@ -310,7 +175,7 @@
          * @returns {Object} Account data
          */
         function fetchAccountList() {
-            var ref = rootRef.child('tenant-accounts').child(tenantId).orderByChild('deactivated').equalTo(null);
+            var ref = rootRef.child('tenant-accounts');
             return firebaseUtils.fetchList(ref);
         }
 
@@ -319,7 +184,7 @@
          * @returns {Object} Account data
          */
         function updateAccount(key, accountData) {
-            var ref = rootRef.child('tenant-accounts').child(tenantId).child(key['$id']);
+            var ref = rootRef.child('tenant-accounts');
             return firebaseUtils.updateData(ref, accountData);
         }
 

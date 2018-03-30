@@ -4,11 +4,32 @@
         z-index: 55;
 
         #toolbar {
-            height: $toolbarHeight;
-            min-height: $toolbarHeight;
-            max-height: $toolbarHeight;
+            background: #FFF;
+            border-bottom: solid 1px #e7e9ec;
+            font-size: 13px;
+            color: rgba(0,0,0,0.9);
+            // height: $toolbarHeight;
+            // min-height: $toolbarHeight;
+            // max-height: $toolbarHeight;
             box-shadow: none;
 
+            md-button {
+                text-transform: none;                
+                font-size: 13px;
+            }
+            .toolbar-separator {
+                height: 40px;
+                width: 1px;
+                background: #fff;
+                margin-right: 10px;
+                display: none;
+            }
+
+            button.user-button.md-button.md-default-theme.md-ink-ripple {
+                background: none;
+                text-transform: none;
+                font-size: 13px;
+            }
             .top-row {
 
                 .navigation-toggle {
@@ -40,9 +61,10 @@
                     }
 
                     .logo-text {
-                        color: rgba(0, 0, 0, 0.87);
+                       // color: rgba(0, 0, 0, 0.87);
                         margin-left: 16px;
-                        font-size: 16px;
+                        font-size: 20px;
+                        margin-right: 30px;
                     }
                 }
             }
@@ -56,9 +78,9 @@
     #layout-horizontal-navigation {
 
         #toolbar-navigation-container {
-            height: $toolbarHeight;
-            min-height: $toolbarHeight;
-            max-height: $toolbarHeight;
+            // height: $toolbarHeight;
+            // min-height: $toolbarHeight;
+            // max-height: $toolbarHeight;
 
             #toolbar {
                 padding: 0;

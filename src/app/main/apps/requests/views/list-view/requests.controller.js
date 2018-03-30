@@ -7,7 +7,7 @@
         .controller('ToastController', ToastController);
 
     /** @ngInject */
-    function RequestsController($state, $firebaseArray, $scope, $compile, $mdToast, $mdDialog, $q, $document, $firebaseStorage, firebaseUtils, authService, auth, msUtils, dxUtils, requestService) {
+    function RequestsController($state, $firebaseArray, $rootScope, $scope, $compile, $mdToast, $mdDialog, $q, $document, $firebaseStorage, firebaseUtils, authService, auth, msUtils, dxUtils, requestService) {
         var vm = this,
             tenantId = authService.getCurrentTenant(),
             form27AInstance,
@@ -17,6 +17,17 @@
 
         // Data
         vm.btnDisabled = true;
+
+        var requestStatus = [{
+            id: 'pending',
+            name: 'Pending'
+        }, {
+            id: 'invalid',
+            name: 'Invalid'
+        }, {
+            id: 'acknowledged',
+            name: 'Acknowledged'
+        }];
         // Methods
         init();
         //////////
@@ -27,20 +38,10 @@
             // requestService.fetchRequestList().then(function (data) {
             //     vm.gridData = data;
             // });
-            var ref = rootRef.child('admin-tin-requests').orderByChild('tenantId').equalTo(tenantId);
+            var ref = rootRef.child('tenant-tin-requests').child(tenantId);
             vm.gridData = $firebaseArray(ref);
 
-            var ref = rootRef.child('tenant-progress-status').child(tenantId),
-                progressRef = rootRef.child('file-upload-progress').child(tenantId);
-            // firebaseUtils.getItemByRef(ref, $scope).then(function(data) {
-            //     vm.progressBarValue = data.progressValue;
-            //     vm.progressStatus = data.progressLabel;
-            //     console.log($scope.progressValue);
-            // });
-
-            firebaseUtils.getItemByRef(ref).$bindTo($scope, 'progressBar');
-
-            firebaseUtils.getItemByRef(progressRef).$bindTo($scope, 'additionalFileProgress');
+            // firebaseUtils.getItemByRef(progressRef).$bindTo($scope, 'additionalFileProgress');
             if (fvuInstance && form27AInstance) {
                 if (fvuInstance.option('value') > 0 && form27AInstance.option('value') > 0) {
                     vm.btnDisabled = false;
@@ -49,23 +50,6 @@
                 }
             }
         }
-
-        $scope.$watch('additionalFileProgress', function(newVal) {
-            if(newVal) {
-                vm.additonalFileProgressBarValue = parseInt(newVal.progress);
-            }
-        });
-        //Where vm is the cached controller instance.
-        $scope.$watch('progressBar', function (newVal) {
-            //Do something
-            if (newVal) {
-                vm.progressBarValue = parseInt(newVal.progressValue);
-                vm.progressStatus = newVal.progressLabel;
-                if (newVal.progressValue != 100) {
-                    vm.requestNo = newVal.requestNo;
-                }
-            }
-        }, true);
 
         vm.buttonOptions = {
             text: "Upload",
@@ -154,7 +138,7 @@
             bindingOptions: {
                 dataSource: 'vm.gridData'
             },
-            
+
             editing: {
                 allowUpdating: false,
                 allowDeleting: true
@@ -168,10 +152,6 @@
                     message: 'Date is required'
                 }]
             },
-            // {
-            //     dataField: 'requestId',
-            //     caption: "Request No"
-            // }, 
             {
                 dataField: 'barcode',
                 caption: 'Bar Code',
@@ -180,33 +160,15 @@
                     type: 'required',
                     message: 'Barcode is required'
                 }]
-            }, {
-                dataField: 'token',
-                caption: 'Token Number'
-
-            }, {
-                dataField: 'rdate',
-                caption: 'R Date'
-            }, {
-                caption: 'Deductor/Collector Name',
-                dataField: 'deductor'
-            }, {
-                dataField: 'fees',
-                caption: 'Fees'
-            }, {
-                dataField: 'extra',
-                caption: 'Extra'
-            }, {
-                dataField: 'discount',
-                caption: 'Discount'
-            }, {
+            },
+            {
                 dataField: 'attachment27a',
                 caption: 'Attachment 27A',
                 cellTemplate: function (container, options) {
                     if (options.data.form27AUrl) {
                         $('<a href="' + options.data.form27AUrl + '" download>Download 27A</a>').appendTo(container);
                     } else {
-                        $compile($('<a class="md-button md-raised md-accent" ng-click="vm.uploadForm27A('+options.data.barcode+')">Upload Form 27A</a>'))($scope).appendTo(container);
+                        $compile($('<a class="md-button md-raised md-accent" ng-click="vm.uploadForm27A(' + options.data.barcode + ')">Upload Form 27A</a>'))($scope).appendTo(container);
                         //$compile($('<div dx-file-uploader="vm.form27AUploader(' + options.data.barcode + ')"></a>'))($scope).appendTo(container);
                     }
                 }
@@ -220,22 +182,18 @@
                         $compile($('<a class="md-button md-raised md-accent" ng-click="vm.uploadForm27A(' + options.data.barcode + ')">Upload FVU</a>'))($scope).appendTo(container);
                     }
                 }
-            }, {
-                dataField: 'acknowledgementUrl',
-                caption: 'Acknowledge',
-                cellTemplate: function (container, options) {
-                    if (options.data.acknowledgementUrl) {
-                        $('<a href="' + options.data.acknowledgementUrl + '" download>Download Acknowledgement</a>').appendTo(container);
-                    }
-                }
-            }, {
+            },
+            {
                 dataField: 'remarks',
                 caption: 'Remarks'
             }, {
                 dataField: 'status',
-                caption: 'Status'
-            }, {
-                caption: 'Action'
+                caption: 'Status',
+                lookup: {
+                    dataSource: requestStatus,
+                    displayExpr: "name",
+                    valueExpr: "id"
+                }
             }],
             export: {
                 enabled: true,
@@ -243,11 +201,26 @@
                 allowExportSelectedData: true
             },
             onRowPrepared: function (info) {
-                if (info.rowType == 'data' && info.data.valid == false)
+                if (info.rowType == 'data' && info.data.valid == false) {
                     info.rowElement.addClass("md-red-50-bg");
+                }
+                if (info.rowType == 'data' && info.data.ackAttached == true) {
+                    info.rowElement.addClass("md-green-50-bg");
+                }   
             },
-            onContentReady: function(e) {
-                gridInstance = e.component;
+           
+            onCellPrepared: function (e) {
+                if (e.rowType == 'data' && e.row.data.valid === true) {
+                    e.cellElement.find(".dx-link-delete").remove();
+                    e.cellElement.find(".dx-link-edit").remove();
+                }
+            },
+            onRowRemoved: function (e) {
+                var component = e.component;
+                
+                console.log(component.option('dataSource'));
+                var ref = rootRef.child('tenant-tin-requests').child(tenantId).child(e.key.$id);
+                firebaseUtils.deleteData(ref);
             }
 
         };
@@ -308,7 +281,7 @@
                 controllerAs: 'vm',
                 clickOutsideToClose: true,
                 fullscreen: true, // Only for -xs, -sm breakpoints.,
-                locals: { request: request },
+                locals: { barcode: barcode, request: request },
                 bindToController: true
             })
                 .then(function (answer) {
@@ -360,7 +333,7 @@
                 visible: "vm.showAdditonalFileProgressBar"
             },
             statusFormat: function (value) {
-                return  "Uploading File:" + parseInt(value * 100) + "%";
+                return "Uploading File:" + parseInt(value * 100) + "%";
             },
             onComplete: function (e) {
                 vm.btnDisabled = false;
@@ -391,7 +364,7 @@
         function saveRequest(requestObj) {
             vm.progressStatus = 'Creating Tin Request';
             vm.showProgressBar = true;
-            var ref = rootRef.child('tenant-tin-requests');
+            var ref = rootRef.child('tin-requests');
             if (!requestObj) {
                 requestObj = {};
             }
@@ -404,15 +377,18 @@
             firebaseUtils.addData(ref, requestObj).then(function (key) {
 
                 vm.requestNo = key;
-                submitForm(key);
+                submitForm(requestObj, key);
             });
         }
 
 
         //////////
-        function submitForm(key) {
+        function submitForm(requestObj, key) {
+            $rootScope.loadingProgress = true;
             var form27As = form27AInstance.option('value');
-            var tinrequests = {};
+            var tinrequests = {},
+                existingBarcodes = [],
+                invalidFiles = [];
             vm.showAlertMessage = false;
             form27AInstance.option('disabled', true);
             fvuInstance.option('disabled', true);
@@ -420,56 +396,73 @@
             vm.progressBarValue = 20;
             var promises = form27As.map(function (form27A) {
                 return new Promise(function (resolve, reject) {
-                    var storageRef = firebase.storage().ref("tenant-tin-requests/" + key + "/form27A/" + form27A.name),
+                    var fileReader = new FileReader()
+                    fileReader.onload = function () {
 
-                        metaData = {
-                            customMetadata: {
-                                'fileType': form27A.type,
-                                'fileName': form27A.name,
-                                'fileSize': form27A.size,
-                                'requestNo': key,
-                                'tenantId': tenantId
-                            }
-                        };
+                        //Step 4:turn array buffer into typed array
+                        var typedarray = new Uint8Array(this.result);
 
-                    $firebaseStorage(storageRef).$put(form27A, metaData).$complete(function (snapshot) {
-                        //Step 2: Read the file using file reader
-                        //pdfjsLib.GlobalWorkerOptions.workerSrc = '/node_modules/pdfjs-dist/build/pdf.worker.js';
-                        var fileReader = new FileReader()
-                        fileReader.onload = function() {
+                        //Step 5:PDFJS should be able to read this
+                        pdfjsLib.getDocument(typedarray).then(function (pdf) {
+                            // do stuff
+                            pdf.getPage(1).then(function (page) {
+                                page.getTextContent().then(function (text) {
+                                    var barcode = text.items[3].str.trim();
 
-                            //Step 4:turn array buffer into typed array
-                            var typedarray = new Uint8Array(this.result);
+                                    if(isNaN(Number(barcode))) {
+                                        invalidFiles.push(form27A.name);
+                                        return resolve({});
+                                    } else if(barcode.length != 20){
+                                        invalidFiles.push(form27A.name);
+                                        return resolve({});
+                                    }
 
-                            //Step 5:PDFJS should be able to read this
-                            pdfjsLib.getDocument(typedarray).then(function(pdf) {
-                                // do stuff
-                                pdf.getPage(1).then(function(page) {
-                                    page.getTextContent().then(function(text) {
-                                        var barcode = text.items[3].str.trim();   
-                                        var requestObj = { 'barcode': barcode, 'form27AUrl': snapshot.downloadURL, 'requestId': key, 'tenantId': tenantId, 'status': 0 };
+                                    var storageRef = firebase.storage().ref("tenant-tin-requests/" + key + "/form27A/" + form27A.name),
 
-                                        if (tinrequests.hasOwnProperty(barcode)) {
-                                            tinrequests[barcode].form27AUrl = snapshot.downloadURL;
-                                        } else {
-                                            tinrequests[barcode] = requestObj;
-                                        }
-                                        return resolve(tinrequests)   
-                                    });
+                                        metaData = {
+                                            customMetadata: {
+                                                'fileType': form27A.type,
+                                                'fileName': form27A.name,
+                                                'fileSize': form27A.size,
+                                                'requestNo': key,
+                                                'tenantId': tenantId
+                                            }
+                                        };
+
+                                    var barcodeAlreadyExist = msUtils.getIndexByArray(vm.gridData, 'barcode', barcode);
+
+                                    if (barcodeAlreadyExist > -1) {
+                                        existingBarcodes.push(barcode);
+                                        return resolve({});
+                                    } else {
+                                        $firebaseStorage(storageRef).$put(form27A, metaData).$complete(function (snapshot) {
+                                            //Step 2: Read the file using file reader
+                                            //pdfjsLib.GlobalWorkerOptions.workerSrc = '/node_modules/pdfjs-dist/build/pdf.worker.js';
+                                            var requestObj = { 'form27AFileName': form27A.name, 'barcode': barcode, 'form27AUrl': snapshot.downloadURL, 'requestId': key, 'tenantId': tenantId, 'status': 'pending' };
+
+                                            if (tinrequests.hasOwnProperty(barcode)) {
+                                                tinrequests[barcode].form27AUrl = snapshot.downloadURL;
+                                                tinrequests[barcode].form27AFileName = form27A.name;
+                                            } else {
+                                                tinrequests[barcode] = requestObj;
+                                            }
+
+                                            return resolve(tinrequests);
+                                        });
+                                    }
                                 });
                             });
+                        });
+                    };
+                    //Step 3:Read the file as ArrayBuffer
+                    fileReader.readAsArrayBuffer(form27A);
 
 
-                        };
-                        //Step 3:Read the file as ArrayBuffer
-                        fileReader.readAsArrayBuffer(form27A);
-
-                    });
                 });
             });
 
             Promise.all(promises).then(function () {
-                submitFVUs(key, tinrequests);
+                submitFVUs(tinrequests, existingBarcodes, invalidFiles, key);
             });
             //console.log(fvusInstance.option('value'));
         }
@@ -478,150 +471,176 @@
          * Upload FVUs
          * @param {*} key 
          */
-        function submitFVUs(key, tinrequests) {
+        function submitFVUs(tinrequests, existingBarcodes, invalidFiles, key) {
             var fvus = fvuInstance.option('value');
             vm.progressStatus = 'Uploading FVUs';
             vm.progressBarValue = 40;
 
             var promises = fvus.map(function (fvu) {
+                if (fvu.name.split('.').pop() !== 'fvu') {
+                    invalidFiles.push(fvu.name);
+                    return;
+                }
                 return new Promise(function (resolve, reject) {
-                    var fvuRef = firebase.storage().ref("tenant-tin-requests/" + key + "/fvus/" + fvu.name),
-                        metaData = {
-                            customMetadata: {
-                                'fileType': fvu.type,
-                                'fileName': fvu.name,
-                                'fileSize': fvu.size,
-                                'requestNo': key,
-                                'tenantId': tenantId
-                            }
-                        };
 
-                    $firebaseStorage(fvuRef).$put(fvu, metaData).$complete(function (snapshot) {
-                        //Step 3:Read the file as ArrayBuffer
+                    var reader = new FileReader();
+
+                    reader.addEventListener('load', function (e) {
+                        var barcode = e.target.result.split('\n')[6].split('^');
+                        //fs.writeFile('./fvucontent.json', barcode[barcode.length - 1]);
+                        barcode = barcode[barcode.length - 1].trim();
+
                         
-                            var reader = new FileReader();
-    
-                            reader.addEventListener('load', function (e) {
-                                var barcode = e.target.result.split('\n')[6].split('^');
-                                //fs.writeFile('./fvucontent.json', barcode[barcode.length - 1]);
-                                barcode = barcode[barcode.length - 1].trim();
-                                // if(typeof barcode === 'number') {
-                                //     barcode = barcode[barcode.length - 1].trim();
-                                // } else {
-                                //     barcode = e.target.result.split('\n')[7].split('^');
-                                //     barcode = barcode[barcode.length - 1].trim();
-                                // }
-                                
-                                var requestObj = { 'barcode': barcode, 'fvuFileUrl': snapshot.downloadURL, 'requestId': key, 'tenantId': tenantId, 'status': 0 };
+                        if(isNaN(Number(barcode))) {
+                            invalidFiles.push(fvu.name);
+                            return resolve({});
+                        } else if(barcode.length != 20){
+                            invalidFiles.push(fvu.name);
+                            return resolve({});
+                        }
+                        // if(typeof barcode === 'number') {
+                        //     barcode = barcode[barcode.length - 1].trim();
+                        // } else {
+                        //     barcode = e.target.result.split('\n')[7].split('^');
+                        //     barcode = barcode[barcode.length - 1].trim();
+                        // }
+
+                        var fvuRef = firebase.storage().ref("tenant-tin-requests/" + key + "/fvus/" + fvu.name),
+                            metaData = {
+                                customMetadata: {
+                                    'fileType': fvu.type,
+                                    'fileName': fvu.name,
+                                    'fileSize': fvu.size,
+                                    'requestNo': key,
+                                    'tenantId': tenantId
+                                }
+                            };
+
+                        var barcodeAlreadyExist = msUtils.getIndexByArray(vm.gridData, 'barcode', barcode);
+                        
+
+                        if (barcodeAlreadyExist > -1) {
+                            existingBarcodes.push(barcode);
+                            return resolve({});
+                        } else {
+                            $firebaseStorage(fvuRef).$put(fvu, metaData).$complete(function (snapshot) {
+                                //Step 3:Read the file as ArrayBuffer
+
+                                var requestObj = { 'fvuFileName': fvu.name, 'barcode' : barcode, 'fvuFileUrl': snapshot.downloadURL, 'requestId': key, 'tenantId': tenantId, 'status': 'pending' };
 
                                 if (tinrequests.hasOwnProperty(barcode)) {
                                     tinrequests[barcode].fvuFileUrl = snapshot.downloadURL;
+                                    tinrequests[barcode].fvuFileName = fvu.name;
                                 } else {
                                     tinrequests[barcode] = requestObj;
                                 }
+
                                 return resolve(tinrequests);
                             });
-                            
-                            reader.readAsBinaryString(fvu);
-                                            
+                        }
                     });
+
+                    reader.readAsBinaryString(fvu);
+
+
                 });
             });
 
-            Promise.all(promises).then(function () {
 
-                if (promises.length === fvus.length) {
-                    Promise.all(promises).then(function () {
-                        // var ref = rootRef.child('tenant-upload-requests');
-                        // var requestObj = {};
-                        // if (!requestObj.date) {
-                        //     requestObj.date = new Date();
-                        // }
-                        // requestObj.date = requestObj.date.toString();
-                        // requestObj.user = auth.$getAuth().uid;
-                        // requestObj.tenantId = tenantId;
-                        // requestObj.requestId = key;
-                        // requestObj.progressStatus = 1;
-                        // //vm.btnDisabled = false;
+                Promise.all(promises).then(function () {
 
-                        // vm.progressStatus = 'Documents Scanning';
-                        // vm.progressBarValue = 50;
-                        // firebaseUtils.addData(ref, requestObj).then(function (key) {
-                        // });
+                    var invalidReq = false,
+                        positionTop = 0,
+                        increment = 65;
+                    for (var request in tinrequests) {
+                        var requestObj = tinrequests[request];
 
-                        var invalidReq = false,
-                            existingBarcodes = [],
-                             positionTop = 0,
-                            increment = 65;
-                        for (var request in tinrequests) {
-                            var requestObj = tinrequests[request];
-
-                            if (!requestObj.fvuFileUrl || !requestObj.form27AUrl) {
-                                invalidReq = true;
-                                requestObj.valid = false;
-                            } else {
-                                requestObj.valid = true;
-                            }
-
-                            if (!requestObj.date) {
-                                requestObj.date = new Date();
-                                requestObj.date = requestObj.date.toString();
-                            }
-                            var barcodeAlreadyExist = msUtils.getIndexByArray(vm.gridData, 'barcode', request);
-
-                            if(barcodeAlreadyExist > -1) {
-                                existingBarcodes.push(request);
-                               
-                            } else {
-                                rootRef.child('tenant-tin-requests').child(requestObj.requestId).push(requestObj);
-                                rootRef.child('admin-tin-requests').child('id_'+ request).update(requestObj);
-                            }
-
+                        if (!requestObj.fvuFileUrl || !requestObj.form27AUrl) {
+                            invalidReq = true;
+                            requestObj.valid = false;
+                            requestObj.status = 'invalid';
+                        } else {
+                            requestObj.valid = true;
                         }
 
-                        if (invalidReq) {
-                            rootRef.child('tenant-tin-requests').child(key).update({ 'invalidReq': true });
+                        if (!requestObj.date) {
+                            requestObj.date = new Date();
+                            requestObj.date = requestObj.date.toString();
                         }
 
-                        for(var i=0; i<existingBarcodes.length; i++) {
-                            $mdToast.show({
-                                template : '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Request for barcode ' + existingBarcodes[i] + ' already exist</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
-                                hideDelay: 7000,
-                                controller: 'ToastController',
-                                position : 'top right',
-                                parent   : '#content',
-                                locals: {
-                                    cssStyle: {
-                                        'top': positionTop + 'px'
-                                      }
+
+                        var barcodeAlreadyExist = msUtils.getIndexByArray(vm.gridData, 'barcode', request);
+                        var mergeObj = {};
+                        mergeObj['tenant-tin-requests/'+tenantId+'/'+ request] = requestObj;
+                        if(requestObj.valid) {
+                            requestObj.latest = true;
+                            mergeObj['admin-tin-requests/'+ request] = requestObj;
+                            mergeObj['tin-requests/'+key+'/'+request] = requestObj;  
+                        }                      
+                        rootRef.update(mergeObj, function(data) {
+                            
+                        });
+                    }
+
+
+                    for (var i = 0; i < existingBarcodes.length; i++) {
+                        $mdToast.show({
+                            template: '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Request for barcode ' + existingBarcodes[i] + ' already exist</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
+                            hideDelay: 7000,
+                            controller: 'ToastController',
+                            position: 'top right',
+                            parent: '#content',
+                            locals: {
+                                cssStyle: {
+                                    'top': positionTop + 'px'
                                 }
-                            }).then(function() {
-                                positionTop += increment;
-                            });
+                            }
+                        }).then(function () {
                             positionTop += increment;
-                        }
-                        form27AInstance.option('disabled', false);
-                        fvuInstance.option('disabled', false);
-                        form27AInstance.reset();
-                        fvuInstance.reset();
-                    });
-                }
-            });
+                        });
+                        positionTop += increment;
+                    }
+
+                    var positionLeft = 0;
+                    for (var i = 0; i < invalidFiles.length; i++) {
+                        $mdToast.show({
+                            template: '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Invalid File ' + invalidFiles[i] + '</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
+                            hideDelay: 7000,
+                            controller: 'ToastController',
+                            position: 'top left',
+                            parent: '#content',
+                            locals: {
+                                cssStyle: {
+                                    'top': positionLeft + 'px'
+                                }
+                            }
+                        }).then(function () {
+                            positionLeft += increment;
+                        });
+                        positionLeft += increment;
+                    }
+
+                    form27AInstance.option('disabled', false);
+                    fvuInstance.option('disabled', false);
+                    $rootScope.loadingProgress = false;
+                    form27AInstance.reset();
+                    fvuInstance.reset();
+                });
 
         }
     }
 
     function ToastController($scope, $mdToast, cssStyle) {
-            $scope.cssStyle = cssStyle;
-            var isDlgOpen = true;
-            $scope.closeToast = function() {
-                if (!isDlgOpen) return;
-        
-                $mdToast
-                  .hide()
-                  .then(function() {
+        $scope.cssStyle = cssStyle;
+        var isDlgOpen = true;
+        $scope.closeToast = function () {
+            if (!isDlgOpen) return;
+
+            $mdToast
+                .hide()
+                .then(function () {
                     isDlgOpen = false;
-                  });
-              };
+                });
+        };
     }
 })();

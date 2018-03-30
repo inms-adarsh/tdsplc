@@ -1,25 +1,15 @@
-<div id="register" layout="row" layout-align="start">
-    <div id="register-intro" flex hide show-gt-sm>
-        <!-- <div class="logo md-accent-bg">
-            <span>TDSPLC</span>
-        </div> -->
-    </div>
+<div id="register" layout="column" layout-align="center center">
+    <md-progress-circular id="toolbar-progress" ng-if="$root.loadingProgress" class="md-accent" md-mode="indeterminate" md-diameter="32">
+    </md-progress-circular>
 
-    <div id="register-form-wrapper" class="flex-scrollable md-whiteframe-8dp" layout="column" flex ms-scroll>
+    <div id="register-form-wrapper" class="flex-scrollable" ms-scroll>
         <div id="register-form">
-            <div class="logo md-accent-bg" hide-gt-sm>
-                <span>F</span>
-            </div>
-
             <div class="title" translate="REGISTER_V2.TITLE">Create an account</div>
-            <div class="description" translate="REGISTER_V2.DESCRIPTION">Sed mollis velit facilisis facilisis viverra
-            </div>
 
             <form name="registerForm" ng-submit="vm.register()" novalidate>
                 <md-input-container class="md-block" md-no-float>
-                    <input name="username" ng-model="vm.form.username" placeholder="Name"
-                           translate translate-attr-placeholder="REGISTER_V2.NAME"
-                           required>
+                    <input name="username" ng-model="vm.form.username" placeholder="Name" translate translate-attr-placeholder="REGISTER_V2.NAME"
+                        required>
                     <div ng-messages="registerForm.username.$error" role="alert">
                         <div ng-message="required">
                             <span translate="REGISTER_V2.ERRORS.USERNAME_REQUIRED">Username field is required</span>
@@ -28,9 +18,8 @@
                 </md-input-container>
 
                 <md-input-container class="md-block" md-no-float>
-                    <input type="email" name="email" ng-model="vm.form.email" placeholder="Email"
-                           translate translate-attr-placeholder="REGISTER_V2.EMAIL"
-                           ng-pattern="/^.+@.+\..+$/" required>
+                    <input type="email" name="email" ng-model="vm.form.email" placeholder="Email" translate translate-attr-placeholder="REGISTER_V2.EMAIL"
+                        ng-pattern="/^.+@.+\..+$/" required>
                     <div ng-messages="registerForm.email.$error" role="alert" multiple>
                         <div ng-message="required">
                             <span translate="REGISTER_V2.ERRORS.EMAIL_REQUIRED">Email field is required</span>
@@ -42,9 +31,8 @@
                 </md-input-container>
 
                 <md-input-container class="md-block" md-no-float>
-                    <input type="password" name="password" ng-model="vm.form.password" placeholder="Password"
-                           translate translate-attr-placeholder="REGISTER_V2.PASSWORD"
-                           required>
+                    <input type="password" name="password" ng-model="vm.form.password" placeholder="Password" translate translate-attr-placeholder="REGISTER_V2.PASSWORD"
+                        required>
                     <div ng-messages="registerForm.password.$error" role="alert">
                         <div ng-message="required">
                             <span translate="REGISTER_V2.ERRORS.PASSWORD_REQUIRED">Password field is required</span>
@@ -60,10 +48,8 @@
                     </div>
                 </div>
 
-                <md-button type="submit" class="md-raised md-accent submit-button" aria-label="CREATE MY ACCOUNT"
-                           ng-disabled="registerForm.$invalid || registerForm.$pristine"
-                           translate="REGISTER_V2.CREATE_ACCOUNT"
-                           translate-attr-aria-label="REGISTER_V2.CREATE_ACCOUNT">
+                <md-button type="submit" class="md-raised md-accent submit-button" aria-label="CREATE MY ACCOUNT" ng-disabled="registerForm.$invalid || registerForm.$pristine"
+                    translate="REGISTER_V2.CREATE_ACCOUNT" translate-attr-aria-label="REGISTER_V2.CREATE_ACCOUNT">
                     CREATE MY ACCOUNT
                 </md-button>
             </form>

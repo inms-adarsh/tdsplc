@@ -1,6 +1,6 @@
 {
     "PAYMENT": {
-        "TITLE": "BUY WORD CREDIT",
+        "TITLE": "Payment Requests",
         "EMAIL_ADRESS": "Email address",
         "NOOFWORDS": "Number of words",
         "AMOUNTTOPAY": "Amount to pay : ",

@@ -27,6 +27,12 @@
                         },
                         settings: function(adminService) {
                             return adminService.getCurrentSettings();
+                        },
+                        accounts: function( accountService){
+                            return accountService.fetchAccountList();
+                        },
+                        users: function(adminService) {
+                            return adminService.fetchEmployeeList();
                         }
                     }
                 }
@@ -38,7 +44,7 @@
         $translatePartialLoaderProvider.addPart('app/main/apps/payment');
 
         // Navigation
-        msNavigationServiceProvider.saveItem('apps.payment', {
+        msNavigationServiceProvider.saveItem('payment', {
             title : 'Payment/Recharge',
             state : 'app.payment_credit',
             icon  : 'icon-store',

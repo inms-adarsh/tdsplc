@@ -30,6 +30,26 @@
       
         <!-- CONTENT CARD -->
         <div class="content-card">
+            <!-- CONTENT TOOLBAR -->
+            <!-- / CONTENT TOOLBAR -->
+            <!-- CONTENT -->
+            <md-content class="content" ms-scroll flex>
+
+                <!-- DEMO CONTENT -->
+                <form action="your-action" ng-submit="onFormSubmit($event)">
+                    <div class="widget-container">
+                        <div id="request-form" dx-form="vm.requestForm"></div>
+                    </div>
+                    <div dx-button="vm.buttonOptions"></div>
+                </form>
+                
+                <!-- / DEMO CONTENT -->
+
+            </md-content>
+            <!-- / CONTENT -->
+
+        </div>
+        <div class="content-card">
 
             <!-- <div id="progress" class="content" ng-show="vm.showProgressBar">
                 <div id="progressBarStatus" dx-progress-bar="vm.progressBarOptions"></div>
@@ -45,13 +65,7 @@
             <!-- CONTENT -->
             <md-content class="content" ms-scroll flex>
 
-                <!-- DEMO CONTENT -->
-                <form action="your-action" ng-submit="onFormSubmit($event)">
-                    <div class="widget-container">
-                        <div id="request-form" dx-form="vm.requestForm"></div>
-                    </div>
-                    <div dx-button="vm.buttonOptions"></div>
-                </form>
+              
                 <div id="request-grid" dx-data-grid="vm.gridOptions"></div>
                 <!-- / DEMO CONTENT -->
 

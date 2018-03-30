@@ -1,17 +1,18 @@
 .dx-datagrid .dx-row {
     td {
-        padding: 12px 8px;
+        padding: 8px;
         color: map-get($contrastsMap, 'dark') !important;
-        font-size: 14px;
+        font-size: 13px;
         line-height: 20px;
     }
 } 
 
 .dx-header-row {
     td {
-        font-size: 16px !important;
+        font-size: 14px !important;
         line-height: 25px;
         font-weight: 500;
+        background: #fafafa;
     }
 }
 
@@ -42,4 +43,9 @@
 
 #dxfu1{
     border: 1px solid #d3d3d3;
+}
+
+.ps__rail-x,
+    .ps__rail-y {
+      opacity: 0.8;
 }

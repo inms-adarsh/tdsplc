@@ -38,6 +38,9 @@
                     },
                     customers: function(adminService) {
                         return adminService.getCurrentCustomers();
+                    },
+                    users: function(userService) {
+                        return userService.fetchUserList();
                     }
                 },
                 bodyClass: 'requests'
@@ -55,8 +58,8 @@
 
         // Navigation
 
-        msNavigationServiceProvider.saveItem('admin.adminrequests', {
-            weight: 3,
+        msNavigationServiceProvider.saveItem('adminrequests', {
+            weight: 0,
             title: 'TIN Requests',
             state: 'app.tinrequests.list',
             icon: 'icon-sale',

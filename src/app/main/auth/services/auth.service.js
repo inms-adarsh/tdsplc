@@ -6,7 +6,7 @@
         .factory('authService', authService);
 
     /** @ngInject */
-    function authService($firebaseArray, $firebaseObject, auth, $q, $timeout) {
+    function authService($firebaseArray, $firebaseObject, $mdToast, auth, $q, $timeout) {
         var service = {
             setCurrentTenant: setCurrentTenant,
             getCurrentTenant: getCurrentTenant,
@@ -107,6 +107,18 @@
             auth.$createUserWithEmailAndPassword(user.email, user.password).then(function(data) {
                 def.resolve(data);
             }).catch(function(err) {
+                $mdToast.show({
+                    template : '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Email already exists</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
+                    hideDelay: 7000,
+                    controller: 'ToastController',
+                    position : 'top right',
+                    parent   : '#content',
+                    locals: {
+                        cssStyle: {
+    
+                        }
+                    }
+                  });
                 def.reject(err);
             });
             return def.promise;

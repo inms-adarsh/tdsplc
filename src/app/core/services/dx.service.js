@@ -54,7 +54,7 @@
                 },
                 showColumnLines: false,
                 showRowLines: true,
-                showBorders: false,
+                showBorders: true,
                 rowAlternationEnabled: false,
                 columnAutoWidth: true,
                 sorting: {

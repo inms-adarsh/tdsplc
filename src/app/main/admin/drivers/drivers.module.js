@@ -56,7 +56,7 @@
 
         // Navigation
 
-        msNavigationServiceProvider.saveItem('admin.drivers', {
+        msNavigationServiceProvider.saveItem('drivers', {
             title: 'Drivers',
             state: 'app.drivers.list'
         });

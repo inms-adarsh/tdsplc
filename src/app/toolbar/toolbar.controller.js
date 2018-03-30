@@ -7,7 +7,7 @@
         .controller('ToolbarController', ToolbarController);
 
     /** @ngInject */
-    function ToolbarController($rootScope, $q, $state, $timeout, $mdSidenav, $translate, $mdToast, msNavigationService, auth, loginRedirectPath, authService)
+    function ToolbarController($rootScope, $firebaseObject, $q, $state, $timeout, $mdSidenav, $translate, $mdToast, msNavigationService, auth, loginRedirectPath, authService)
     {
         var vm = this;
 
@@ -89,6 +89,12 @@
 
             // Get the selected language directly from angular-translate module setting
             vm.selectedLanguage = vm.languages[$translate.preferredLanguage()];
+
+            var ref = rootRef.child('users').child(auth.$getAuth().uid);
+
+            $firebaseObject(ref).$loaded(function(data) {
+                vm.userData = data;  
+            });
         }
 
 

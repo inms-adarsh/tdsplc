@@ -58,9 +58,9 @@
 
         // Navigation
 
-        msNavigationServiceProvider.saveItem('apps.requests', {
+        msNavigationServiceProvider.saveItem('requests', {
             weight: 2,
-            title: 'TIN Requests',
+            title: 'New/Pending TIN Requests',
             state: 'app.requests.list',
             icon: 'icon-sale',
             roles: ['customer']

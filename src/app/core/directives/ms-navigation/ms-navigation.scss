@@ -115,7 +115,7 @@
 
                     .badge {
                         background: #FFFFFF !important;
-                        color: rgba(0, 0, 0, 0.87) !important;
+                        color: #FFFFFF !important;
                     }
                 }
             }
@@ -260,10 +260,10 @@
 
 // Horizontal navigation
 #horizontal-navigation {
-    height: $toolbarHeight;
-    min-height: $toolbarHeight;
-    max-height: $toolbarHeight;
-    background: #FFFFFF;
+    // height: $toolbarHeight;
+    // min-height: $toolbarHeight;
+    // max-height: $toolbarHeight;
+    //background: #FFFFFF;
     z-index: 54;
 
     .ms-navigation-horizontal {
@@ -289,6 +289,7 @@
                 &:not(.active):hover {
                     background: rgba(0, 0, 0, 0.12);
                 }
+                border-left: solid 1px #e7e9ec;
             }
 
             // Root menu items
@@ -299,15 +300,15 @@
                     > .ms-navigation-horizontal-button {
                         display: block;
                         float: left;
-                        padding: 12px 14px;
+                        //padding: 12px 14px;
 
                         .arrow {
                             display: none;
                         }
 
                         &.active {
-                            background: none;
-                            border-bottom: 2px solid;
+                            background: #e7e9ec;
+                            //border-bottom: 2px solid;
                         }
                     }
                 }
@@ -337,7 +338,7 @@
                 ul {
                     display: none;
                     position: absolute;
-                    background: #FFFFFF;
+                    //background: #FFFFFF;
                     z-index: 999;
                     min-width: 200px;
                     box-shadow: $whiteframe-shadow-8dp;
@@ -368,13 +369,15 @@
                     display: flex;
                     align-items: center;
                     width: 100%;
-                    color: rgba(0, 0, 0, 0.87);
+                    //color: #FFFFFF;
+                    color: #333;
                     white-space: nowrap;
-                    padding: 14px 16px;
+                    padding: 16px;
                     text-decoration: none;
-
+                    font-size: 13px;
+                    font-weight: 300;
                     .icon {
-                        color: rgba(0, 0, 0, 0.54);
+                        color: #FFFFFF;
                         margin-right: 8px;
                     }
 
@@ -398,7 +401,7 @@
 
                         .badge {
                             background: #FFFFFF !important;
-                            color: rgba(0, 0, 0, 0.87) !important;
+                            color: #FFFFFF !important;
                         }
 
                         .icon {

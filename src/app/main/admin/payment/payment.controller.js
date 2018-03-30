@@ -6,7 +6,7 @@
         .controller('PaymentController', PaymentController);
 
     /** @ngInject */
-    function PaymentController(currentAuth, msUtils, dxUtils, auth, customers, $firebaseArray, firebaseUtils, authService, settings, tenantInfo, $scope, paymentService, $state) {
+    function PaymentController(currentAuth, msUtils, dxUtils, users, auth, customers, $firebaseArray, firebaseUtils, authService, settings, tenantInfo, $scope, paymentService, $state) {
         var vm = this,
             formInstance,
             tenantId = authService.getCurrentTenant();
@@ -14,7 +14,7 @@
         vm.settings = settings;
         vm.tenantInfo = tenantInfo;
         vm.payment.count = 0;
-        
+
         vm.paymentModes = [{
             id: 'cheque',
             name: 'Cheque'
@@ -64,13 +64,13 @@
                 dataField: 'paymentMode',
                 caption: 'Payment Mode',
                 allowEditing: false,
-                calculateCellValue: function(data) {
+                calculateCellValue: function (data) {
                     var index = msUtils.getIndexByArray(vm.paymentModes, 'id', data.paymentMode);
                     if (index > -1) {
                         return vm.paymentModes[index].name;
                     } else {
                         return '';
-                    } 
+                    }
                 }
             }, {
                 dataField: 'amount',
@@ -87,7 +87,12 @@
             }, {
                 dataField: 'cashBy',
                 caption: 'Received By',
-                allowEditing: false
+                allowEditing: false,
+                lookup: {
+                    dataSource: users,
+                    displayExpr: "name",
+                    valueExpr: "$id"
+                }
             }, {
                 dataField: 'status',
                 caption: 'Status',
@@ -102,27 +107,39 @@
                 caption: 'Remarks',
                 allowEditing: true
             }],
-            onRowUpdated: function(e) {
+            onRowUpdated: function (e) {
                 var component = e.component;
 
                 var ref = rootRef.child('tenant-payments').child(e.key.$id);
                 firebaseUtils.updateData(ref, e.data);
 
-                if(e.key.status == 'received') {
+                if (e.key.status == 'received') {
                     var ref = rootRef.child('tenants').child(e.key.tenantId);
                     firebaseUtils.getItemByRef(ref).$loaded().then(function (data) {
-                        var creditBalance = data.creditBalance ? data.creditBalance: 0;
-                        firebaseUtils.updateData(ref, {creditBalance: creditBalance + e.key.amount});
+                        var creditBalance = data.creditBalance ? data.creditBalance : 0;
+                        firebaseUtils.updateData(ref, { creditBalance: creditBalance + e.key.amount });
                     });
-                    
+
                 }
             },
-            onCellPrepared: function(e) {
-                if (e.rowType == 'data' && e.row.data.status === "received") {                
+            onCellPrepared: function (e) {
+                var role = JSON.parse(localStorage.getItem('role'));
+                if (e.rowType == 'data' && e.row.data.status === "received" && role != 'superuser') {
                     e.cellElement.find(".dx-link-delete").remove();
                     e.cellElement.find(".dx-link-edit").remove();
                 }
             },
+            onRowRemoved: function (e) {
+                var component = e.component;
+
+                var ref = rootRef.child('tenant-payments').child(e.key.$id);
+                firebaseUtils.deleteData(ref);
+            },
+            export: {
+                enabled: true,
+                fileName: 'Requests',
+                allowExportSelectedData: true
+            }
 
         }
 
@@ -173,10 +190,10 @@
                                 if (e.value == 'cheque') {
                                     formInstance.itemOption('payment.amount', 'visible', true);
                                     formInstance.itemOption('payment.chequeNumber', 'visible', true);
-                                } else if(e.value == 'cash'){
+                                } else if (e.value == 'cash') {
                                     formInstance.itemOption('payment.amount', 'visible', true);
                                     formInstance.itemOption('payment.cashBy', 'visible', true);
-                                } else if(e.value == 'neft') {
+                                } else if (e.value == 'neft') {
                                     formInstance.itemOption('payment.bankAccount', 'visible', true);
                                     formInstance.itemOption('payment.amount', 'visible', true);
                                 }
@@ -186,7 +203,7 @@
                             type: 'required',
                             message: 'Please select a customer'
                         }]
-                    },  {
+                    }, {
                         dataField: "chequeNumber",
                         name: 'chequeNumber',
                         visible: false,
@@ -243,10 +260,10 @@
                         },
                         visible: false,
                         width: 125,
-                        editorType: 'dxNumberBox',
+                        editorType: 'dxSelectBox',
                         validationRules: [{
                             type: 'required',
-                            message: 'Please enter a value'
+                            message: 'Please select a value'
                         }
                         ]
                     }
@@ -272,30 +289,30 @@
         function submitForm(e) {
             var result = e.validationGroup.validate();
 
-            if(result.isValid == true) {
+            if (result.isValid == true) {
                 var formData = formInstance.option('formData');
                 formData.status = 'pending';
-                if(!formData.date) {
+                if (!formData.date) {
                     formData.date = new Date();
                 }
                 formData.date = formData.date.toString();
                 var ref = rootRef.child('tenant-payments').child(tenantId);
 
                 formData.user = auth.$getAuth().uid;
-                firebaseUtils.addData(ref, formData).then(function() {
+                firebaseUtils.addData(ref, formData).then(function () {
                     formInstance.resetValues();
-                    resetFormInstance(formInstance);  
+                    resetFormInstance(formInstance);
                 });
             }
         }
 
-        function resetFormInstance(formInstance){
-                //formInstance.itemOption('payment.chequeAmount', 'visible', false);
-                formInstance.itemOption('payment.chequeNumber', 'visible', false);
-                formInstance.itemOption('payment.amount', 'visible', false);
-                formInstance.itemOption('payment.cashBy', 'visible', false);
-                formInstance.itemOption('payment.bankAccount', 'visible', false);
-                //formInstance.itemOption('payment.neftAmount', 'visible', false);
+        function resetFormInstance(formInstance) {
+            //formInstance.itemOption('payment.chequeAmount', 'visible', false);
+            formInstance.itemOption('payment.chequeNumber', 'visible', false);
+            formInstance.itemOption('payment.amount', 'visible', false);
+            formInstance.itemOption('payment.cashBy', 'visible', false);
+            formInstance.itemOption('payment.bankAccount', 'visible', false);
+            //formInstance.itemOption('payment.neftAmount', 'visible', false);
         }
         /*
             Calculate Payment

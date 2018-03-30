@@ -1,7 +1,7 @@
 #register {
     height: 100%;
     overflow: hidden;
-    background: url('/assets/images/backgrounds/banner.jpg') no-repeat;
+    background: material-color('blue', 'A800');
     background-size: cover;
 
     #register-intro {
@@ -34,11 +34,10 @@
         width: 416px;
         min-width: 416px;
         max-width: 416px;
-        height: 100%;
         background: #FFFFFF;
-
+        box-shadow: 0 3px 8px rgba(0,0,50,.15);
         #register-form {
-            padding: 128px 48px 48px 48px;
+            padding: 48px;
 
             .logo {
                 width: 128px;

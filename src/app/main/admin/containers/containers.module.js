@@ -56,7 +56,7 @@
 
         // Navigation
 
-        msNavigationServiceProvider.saveItem('admin.containers', {
+        msNavigationServiceProvider.saveItem('containers', {
             title: 'Containers',
             state: 'app.containers.list'
         });

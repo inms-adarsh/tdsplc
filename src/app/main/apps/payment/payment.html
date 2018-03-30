@@ -25,25 +25,12 @@
                 <span class="logo-text" translate="PAYMENT.TITLE" flex></span>
             </div>
             
-            <div class="title">Credit Balance : {{vm.tenant.creditBalance}}</div>
-
         </div>
         <!-- / CONTENT HEADER -->
       
         <!-- CONTENT CARD -->
         <div class="content-card">
-
-            <!-- <div id="progress" class="content" ng-show="vm.showProgressBar">
-                <div id="progressBarStatus" dx-progress-bar="vm.progressBarOptions"></div>
-            </div>
-            <div id="progress" class="content" ng-show="vm.showAdditonalFileProgressBar">
-                <div id="progressBarStatus" dx-progress-bar="vm.additonalFileProgressBarOptions"></div>
-            </div> -->
-            <div ng-class="{'error-alert-message': vm.invalidRequest, 'success-alert-message': !vm.invalidRequest}" ng-show="vm.showAlertMessage">
-                <span>Last Request generated with {{vm.invalidRequest == true? 'Errors': 'Success'}} : <a ng-click="showRequest()">Click to View</a></span> 
-            </div>
-            <!-- CONTENT TOOLBAR -->
-            <!-- / CONTENT TOOLBAR -->
+            
             <!-- CONTENT -->
             <md-content class="content" ms-scroll flex>
 
@@ -52,8 +39,6 @@
                     <div id="request-form" dx-form="vm.paymentRequestForm"></div>
                 </div>
                 <div dx-button="vm.buttonOptions"></div>
-                
-                <div id="request-grid" dx-data-grid="vm.gridOptions"></div>
                 <!-- / DEMO CONTENT -->
 
             </md-content>
@@ -61,6 +46,24 @@
 
         </div>
         <!-- / CONTENT CARD -->
+
+                <!-- CONTENT CARD -->
+                <div class="content-card">
+            
+                        <div class="title">Credit Balance : {{vm.tenant.creditBalance}}</div>
+            
+                        <!-- CONTENT -->
+                        <md-content class="content" ms-scroll flex>
+            
+                            
+                            <div id="request-grid" dx-data-grid="vm.gridOptions"></div>
+                            <!-- / DEMO CONTENT -->
+            
+                        </md-content>
+                        <!-- / CONTENT -->
+            
+                    </div>
+                    <!-- / CONTENT CARD -->
 
     </div>
     <!-- / CENTER -->

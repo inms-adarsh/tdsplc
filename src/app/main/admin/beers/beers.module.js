@@ -56,7 +56,7 @@
 
         // Navigation
 
-        msNavigationServiceProvider.saveItem('admin.beers', {
+        msNavigationServiceProvider.saveItem('beers', {
             title: 'Brews',
             state: 'app.beers.list'
         });

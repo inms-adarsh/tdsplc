@@ -49,12 +49,12 @@
 
         // Navigation
 
-        msNavigationServiceProvider.saveItem('admin.accounts', {
-            title: 'Employees',
+        msNavigationServiceProvider.saveItem('accounts', {
+            title: 'Bank Accounts',
             state: 'app.accounts.list',
             weight: 2,
             icon: 'icon-person-plus',
-            roles: ['superaccount']
+            roles: ['superuser']
         });
     }
 })();

@@ -3,7 +3,8 @@
 /*----------------------------------------------------------------*/
 
 // Typography
-$font-family-body: 'Roboto', 'Helvetica Neue', 'Arial', sans-serif;
+//$font-family-body: 'Roboto', 'Helvetica Neue', 'Arial', sans-serif;
+$font-family-body: 'Karla', sans-serif;
 $font-family-code: 'Monaco', 'Menlo', 'Consolas', 'Ubuntu Mono', monospace;
 
 $font-size-root: 62.5%;
@@ -217,7 +218,8 @@ $materialColorsMap: (
             'A100': #82B1FF,
             'A200': #448AFF,
             'A400': #2979FF,
-            'A700': #2962FF
+            'A700': #2962FF,
+            'A800': rgb(250,250,250)
         ),
         'contrasts':(
             '50': 'dark',

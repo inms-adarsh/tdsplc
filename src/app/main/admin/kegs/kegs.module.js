@@ -56,7 +56,7 @@
 
         // Navigation
 
-        msNavigationServiceProvider.saveItem('admin.kegs', {
+        msNavigationServiceProvider.saveItem('kegs', {
             title: 'Kegs',
             state: 'app.kegs.list'
         });

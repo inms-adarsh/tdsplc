@@ -49,7 +49,7 @@
 
         // Navigation
 
-        msNavigationServiceProvider.saveItem('admin.employees', {
+        msNavigationServiceProvider.saveItem('employees', {
             title: 'Employees',
             state: 'app.employees.list',
             weight: 2,

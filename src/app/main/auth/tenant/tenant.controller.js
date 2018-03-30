@@ -7,7 +7,7 @@
         .controller('TenantController', TenantController);
 
     /** @ngInject */
-    function TenantController(authService, currentAuth)
+    function TenantController(authService, currentAuth, $mdToast)
     {
         var vm = this;
         // Data
@@ -53,6 +53,19 @@
                authService.addTenant(tenant).then(function(key){
                     authService.updateUserTenantId(currentAuth.uid, key, vm.userInfo).then(function(){
                         authService.setCurrentTenant(key);
+                        vm.editMode = true;
+                        $mdToast.show({
+                            template : '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Details Saved Successfully</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
+                            hideDelay: 7000,
+                            controller: 'ToastController',
+                            position : 'top right',
+                            parent   : '#content',
+                            locals: {
+                                cssStyle: {
+
+                                }
+                            }
+                        });
                     });
                   return key;
                }).catch(function(err){
@@ -68,6 +81,18 @@
         function editTenant(tenant) {
            authService.updateTenantInfo(tenant, vm.tenantId).then(function(data){
                 //authService.updateUserInfo(currentAuth.uid, data);
+                $mdToast.show({
+                    template : '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Details Saved Successfully</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
+                    hideDelay: 7000,
+                    controller: 'ToastController',
+                    position : 'top right',
+                    parent   : '#content',
+                    locals: {
+                        cssStyle: {
+
+                        }
+                    }
+                });
            }).catch(function(err){
 
            });

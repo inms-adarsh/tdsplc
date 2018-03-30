@@ -36,6 +36,7 @@
             //'app.vendings',
             //'app.records',
             'app.requests',
+            'app.acknowledgements',
             'app.payment'
             //'app.bulkbuys'
         ]);

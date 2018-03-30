@@ -7,7 +7,7 @@
         .controller('RegisterController', RegisterController);
 
     /** @ngInject */
-    function RegisterController(auth, $state, $q, $firebaseArray, $timeout, authService)
+    function RegisterController(auth, $state, $rootScope, $q, $firebaseObject, $firebaseArray, $timeout, authService)
     {
         var vm = this;
         // Data
@@ -22,6 +22,7 @@
         // });
         //////////
         function register() {
+            $rootScope.loadingProgress = true;
             var user = {
               username: vm.form.username,
               email: vm.form.email,
@@ -104,7 +105,13 @@
         // }
 
         function redirect() {
-            $state.go('app.auth_tenant');
+            var userObj = rootRef.child('users').child(auth.$getAuth().uid);
+            var obj = $firebaseObject(userObj);
+            obj.$loaded().then(function(data) {
+                $rootScope.loadingProgress = false;
+                authService.setCurrentTenant(data);
+                $state.go('app.auth_tenant');
+            });
         }
     }
 })();

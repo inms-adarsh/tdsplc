@@ -30,6 +30,9 @@
                         },
                         customers: function(adminService) {
                                 return adminService.getCurrentCustomers();
+                        },
+                        users: function(userService) {
+                            return userService.fetchUserList();
                         }
                     }
                 }
@@ -41,12 +44,12 @@
         $translatePartialLoaderProvider.addPart('app/main/admin/payment');
 
         // Navigation
-        msNavigationServiceProvider.saveItem('admin.payment', {
+        msNavigationServiceProvider.saveItem('payments', {
             title : 'Payment Requests',
             state : 'app.payment_requests',
             icon  : 'icon-store',
-            weight: 5, 
-            roles: ['superuser', 'employee']
+            weight: 1, 
+            roles: ['superuser']
         });
 
     }

@@ -18,7 +18,7 @@
             <md-icon class="s18" md-font-icon="icon-backburger"></md-icon>
         </md-button>
 
-        <ms-shortcuts></ms-shortcuts>
+        <!-- <ms-shortcuts></ms-shortcuts> -->
 
         <div class="toolbar-separator"></div>
     </div>
@@ -36,7 +36,7 @@
                             <md-icon md-font-icon ng-class="vm.userStatus.icon" ng-style="{'color': vm.userStatus.color }" class="icon status s16">
                             </md-icon>
                         </div>
-                        <span class="username" hide-sm>Admin</span>
+                        <span class="username" hide-sm>{{vm.userData.name}}</span>
                         <md-icon md-font-icon="icon-chevron-down" class="icon s16" hide-sm></md-icon>
                     </div>
                 </md-button>

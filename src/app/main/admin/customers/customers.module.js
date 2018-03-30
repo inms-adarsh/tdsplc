@@ -56,10 +56,10 @@
 
         // Navigation
 
-        msNavigationServiceProvider.saveItem('admin.customers', {
+        msNavigationServiceProvider.saveItem('customers', {
             title: 'Clients',
             state: 'app.customers.list',
-            weight: 1,
+            weight: 2,
             icon: 'icon-person-plus',
             roles: ['superuser']
         });

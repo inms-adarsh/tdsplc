@@ -7,7 +7,8 @@
 
     /** @ngInject */
     function customerService($firebaseArray, $firebaseObject, $q, authService, auth, firebaseUtils, dxUtils, config) {
-        var tenantId = authService.getCurrentTenant();
+        var tenantId = authService.getCurrentTenant(),
+            gridInstance;
         // Private variables
 
         var service = {
@@ -24,6 +25,14 @@
         }, {
             id: 'deactive',
             name: 'Disabled'
+        }];
+
+        var paymentMode = [{
+            id: 'prepaid',
+            name: 'Prepaid'
+        }, {
+            id: 'postpaid',
+            name: 'Postpaid'
         }];
         return service;
 
@@ -198,6 +207,19 @@
                         }]
         
                     }, {
+                        dataField: 'paymentType',
+                        caption: 'Customer Type',
+                        lookup: {
+                            dataSource: paymentMode,
+                            displayExpr: "name",
+                            valueExpr: "id"
+                        },
+                        validationRules: [{
+                            type: 'required',
+                            message: 'Field is required'
+                        }]
+        
+                    }, {
                         dataField: 'position',
                         caption: 'Position',
                         lookup: {
@@ -232,6 +254,9 @@
                     onRowUpdated: function(e) {
                         var ref = rootRef.child('tenants').child(e.key.$id);
                         firebaseUtils.updateData(ref, e.data);
+                    },
+                    onContentReady: function(e) {
+                        gridInstance = e.component;
                     }
                 };
 
@@ -254,7 +279,9 @@
             }
             customerObj.date = customerObj.date.toString();
             customerObj.user = auth.$getAuth().uid;
-            return firebaseUtils.addData(ref, customerObj);
+            firebaseUtils.addData(ref, customerObj).then(function(data) {
+                gridInstance.refresh();  
+            });
         }
 
         /**
@@ -272,7 +299,9 @@
          */
         function updateCustomer(key, customerData) {
             var ref = rootRef.child('tenants').child(tenantId).child(key['$id']);
-            return firebaseUtils.updateData(ref, customerData);
+            firebaseUtils.updateData(ref, customerData).then(function(data) {
+                gridInstance.refresh();  
+            });
         }
 
         /**

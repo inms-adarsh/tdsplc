@@ -56,7 +56,7 @@
 
         // Navigation
 
-        msNavigationServiceProvider.saveItem('admin.locations', {
+        msNavigationServiceProvider.saveItem('locations', {
             title: 'Locations',
             state: 'app.locations.list'
         });

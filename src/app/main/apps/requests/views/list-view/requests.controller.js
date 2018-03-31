@@ -7,7 +7,7 @@
         .controller('ToastController', ToastController);
 
     /** @ngInject */
-    function RequestsController($state, $firebaseArray, $rootScope, $scope, $compile, $mdToast, $mdDialog, $q, $document, $firebaseStorage, firebaseUtils, authService, auth, msUtils, dxUtils, requestService) {
+    function RequestsController($state, $firebaseArray, $firebaseObject, $rootScope, $scope, $compile, $mdToast, $mdDialog, $q, $document, $firebaseStorage, firebaseUtils, authService, auth, msUtils, dxUtils, requestService) {
         var vm = this,
             tenantId = authService.getCurrentTenant(),
             form27AInstance,
@@ -27,6 +27,9 @@
         }, {
             id: 'acknowledged',
             name: 'Acknowledged'
+        }, {
+            id: 'low_credit',
+            name: 'Low Credit Balance'
         }];
         // Methods
         init();
@@ -49,7 +52,17 @@
                     vm.btnDisabled = true;
                 }
             }
+
+            var tenantRef = rootRef.child('tenants').child(tenantId);
+            $firebaseObject(tenantRef).$bindTo($scope, 'tenant');
+           
+               
         }
+
+        $scope.$watch('tenant', function(newVal) {
+            vm.creditBalance = 'Credit Balance: ' + newVal.creditBalance;
+            $scope.buttonType = newVal.creditBalance < 0 ? 'danger' : 'success';
+        });
 
         vm.buttonOptions = {
             text: "Upload",
@@ -66,6 +79,7 @@
         };
 
         vm.requestForm = {
+
             onInitialized: function (e) {
                 formInstance = e.component;
             },
@@ -138,7 +152,24 @@
             bindingOptions: {
                 dataSource: 'vm.gridData'
             },
+            onToolbarPreparing: function (e) {
+                var dataGrid = e.component;
 
+                e.toolbarOptions.items.unshift(
+                    {
+                        location: "before",
+                        widget: "dxButton",
+                        options: {
+                            hint: 'Credit Balance',
+                            icon: "money",
+                            type: 'danger',
+                            bindingOptions: {
+                                text: 'vm.creditBalance',
+                                type: 'buttonType'
+                            }
+                        }
+                    });
+            },
             editing: {
                 allowUpdating: false,
                 allowDeleting: true
@@ -162,11 +193,16 @@
                 }]
             },
             {
+                dataField: 'token',
+                caption: 'Token Number'
+
+            },
+            {
                 dataField: 'attachment27a',
                 caption: 'Attachment 27A',
                 cellTemplate: function (container, options) {
                     if (options.data.form27AUrl) {
-                        $('<a href="' + options.data.form27AUrl + '" download>Download 27A</a>').appendTo(container);
+                        $('<a href="' + options.data.form27AUrl + '" download>' + options.data.form27AFileName +'</a>').appendTo(container);
                     } else {
                         $compile($('<a class="md-button md-raised md-accent" ng-click="vm.uploadForm27A(' + options.data.barcode + ')">Upload Form 27A</a>'))($scope).appendTo(container);
                         //$compile($('<div dx-file-uploader="vm.form27AUploader(' + options.data.barcode + ')"></a>'))($scope).appendTo(container);
@@ -177,9 +213,18 @@
                 caption: 'Attachment FVU',
                 cellTemplate: function (container, options) {
                     if (options.data.fvuFileUrl) {
-                        $('<a href="' + options.data.fvuFileUrl + '" download>Download FVU</a>').appendTo(container);
+                        $('<a href="' + options.data.fvuFileUrl + '" download> ' + options.data.fvuFileName +' </a>').appendTo(container);
                     } else {
                         $compile($('<a class="md-button md-raised md-accent" ng-click="vm.uploadForm27A(' + options.data.barcode + ')">Upload FVU</a>'))($scope).appendTo(container);
+                    }
+                }
+            },
+            {
+                dataField: 'acknowledgementUrl',
+                caption: 'Acknowledge',
+                cellTemplate: function (container, options) {
+                    if (options.data.acknowledgementUrl) {
+                        $('<a href="' + options.data.acknowledgementUrl + '" download>' + options.data.acknowledgementFileName + '</a>').appendTo(container);
                     }
                 }
             },
@@ -206,7 +251,8 @@
                 }
                 if (info.rowType == 'data' && info.data.ackAttached == true) {
                     info.rowElement.addClass("md-green-50-bg");
-                }   
+                }
+
             },
            
             onCellPrepared: function (e) {
@@ -215,10 +261,9 @@
                     e.cellElement.find(".dx-link-edit").remove();
                 }
             },
-            onRowRemoved: function (e) {
+            onRowRemoving: function (e) {
                 var component = e.component;
                 
-                console.log(component.option('dataSource'));
                 var ref = rootRef.child('tenant-tin-requests').child(tenantId).child(e.key.$id);
                 firebaseUtils.deleteData(ref);
             }
@@ -287,7 +332,6 @@
                 .then(function (answer) {
                     vm.requestNo = request.requestId;
                     vm.showAdditonalFileProgressBar = true;
-                    gridInstance.refresh();
                 }, function () {
                     $scope.status = 'You cancelled the dialog.';
                 });

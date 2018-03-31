@@ -117,9 +117,29 @@
                     var ref = rootRef.child('tenants').child(e.key.tenantId);
                     firebaseUtils.getItemByRef(ref).$loaded().then(function (data) {
                         var creditBalance = data.creditBalance ? data.creditBalance : 0;
-                        firebaseUtils.updateData(ref, { creditBalance: creditBalance + e.key.amount });
-                    });
+                        firebaseUtils.updateData(ref, { 'creditBalance': creditBalance + e.key.amount }).then(function(data) {
+                            var ref = rootRef.child('tenant-pending-tin-requests-token/' + e.key.tenantId);
+                            var creditBalance = data.creditBalance;
+                            firebaseUtils.fetchList(ref).then(function(requests) {
+                                requests.forEach(function(request) {
+                                    var id = request.$id;
+                                    delete request.$id;
+                                    delete request.$conf;
+                                    delete request.$priority;
+                                    if(request.fees <= creditBalance || data.paymentType == 'postpaid') {
+                                        var obj = { ackAttached: true, remarks: '', status: 'acknowledged' };
+                                        rootRef.child('tenant-tin-requests-token/' + e.key.tenantId + '/' + id).update(Object.assign(request, obj));
+                                        rootRef.child('tenant-tin-requests/' + e.key.tenantId + '/' + request['barcode']).update(Object.assign(request, obj));
+                                        creditBalance = creditBalance - request.fees;
+                                        rootRef.child('tenants').child(e.key.tenantId).update({'creditBalance': creditBalance});
 
+                                       var ref = rootRef.child('tenant-pending-tin-requests-token/' + e.key.tenantId + '/' + request.token);
+                                       firebaseUtils.deleteData(ref);
+                                    }
+                                });
+                            })
+                        });
+                    });
                 }
             },
             onCellPrepared: function (e) {
@@ -129,7 +149,7 @@
                     e.cellElement.find(".dx-link-edit").remove();
                 }
             },
-            onRowRemoved: function (e) {
+            onRowRemoving: function (e) {
                 var component = e.component;
 
                 var ref = rootRef.child('tenant-payments').child(e.key.$id);

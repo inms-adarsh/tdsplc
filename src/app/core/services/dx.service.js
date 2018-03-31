@@ -29,7 +29,10 @@
                     mode: 'virtual'
                 },
                 headerFilter: {
-                    visible: false
+                    visible: true
+                },
+                filterRow: {
+                    visible: true
                 },
                 searchPanel: {
                     visible: true,

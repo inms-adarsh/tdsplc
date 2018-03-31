@@ -315,7 +315,7 @@
          * @returns {Object} User data
          */
         function fetchUserList() {
-            var ref = rootRef.child('tenant-users').child(tenantId).orderByChild('deactivated').equalTo(null);
+            var ref = rootRef.child('tenant-users').child(tenantId);
             return firebaseUtils.fetchList(ref);
         }
 

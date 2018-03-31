@@ -28,10 +28,6 @@
             name: 'Cash'
         }];
 
-        vm.bankAccounts = [{
-            id: ''
-        }];
-
         vm.paymentStatus = [{
             id: 'pending',
             name: 'Pending'
@@ -106,11 +102,29 @@
                     e.cellElement.find(".dx-link-delete").remove();
                 }
             },
-            onRowRemoved: function (e) {
+            onRowRemoving: function (e) {
                 var component = e.component;
 
                 var ref = rootRef.child('tenant-payments').child(e.key.$id);
                 firebaseUtils.deleteData(ref);
+            },
+            onToolbarPreparing: function (e) {
+                var dataGrid = e.component;
+
+                e.toolbarOptions.items.unshift(
+                    {
+                        location: "before",
+                        widget: "dxButton",
+                        options: {
+                            hint: 'Credit Balance',
+                            icon: "money",
+                            type: 'danger',
+                            bindingOptions: {
+                                text: 'vm.creditBalance',
+                                type: 'buttonType'
+                            }
+                        }
+                    });
             }
         }
 
@@ -373,20 +387,16 @@
         vm.gridData = $firebaseArray(ref);
 
         var tenantRef = rootRef.child('tenants').child(tenantId);
-        var obj = $firebaseObject(tenantRef);
-        obj.$loaded(
-            function (data) {
-                vm.tenant = data;
-            },
-            function (error) {
-                console.error("Error:", error);
-            }
-        );
-
-
-
+        $firebaseObject(tenantRef).$bindTo($scope, 'tenant');
     }
 
     init();
+
+    
+    $scope.$watch('tenant', function(newVal) {
+        vm.creditBalance = 'Credit Balance: ' + newVal.creditBalance;
+        $scope.buttonType = newVal.creditBalance < 0 ? 'danger' : 'success';
+    });
+
 }
 }) ();

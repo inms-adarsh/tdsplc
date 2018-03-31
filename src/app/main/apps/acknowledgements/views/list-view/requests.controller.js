@@ -21,6 +21,19 @@
         init();
         //////////
 
+        var requestStatus = [{
+            id: 'pending',
+            name: 'Pending'
+        }, {
+            id: 'invalid',
+            name: 'Invalid'
+        }, {
+            id: 'acknowledged',
+            name: 'Acknowledged'
+        }, {
+            id: 'low_credit',
+            name: 'Low Credit Balance'
+        }];
 
         function init() {
             //vm.acknowledgementGridOptions = acknowledgementService.gridOptions('vm.acknowledgements');
@@ -30,18 +43,45 @@
             var ref = rootRef.child('tenant-tin-requests-token').child(tenantId);
             vm.gridData = $firebaseArray(ref);
 
+            var tenantRef = rootRef.child('tenants').child(tenantId);
+            $firebaseObject(tenantRef).$bindTo($scope, 'tenant');
+
         }
+
+        
+        $scope.$watch('tenant', function(newVal) {
+            vm.creditBalance = 'Credit Balance: ' + newVal.creditBalance;
+            $scope.buttonType = newVal.creditBalance < 0 ? 'danger' : 'success';
+        });
 
         vm.gridOptions = dxUtils.createGrid();
 
         vm.acknowledgementGridOptions = {
+            onToolbarPreparing: function (e) {
+                var dataGrid = e.component;
+
+                e.toolbarOptions.items.unshift(
+                    {
+                        location: "before",
+                        widget: "dxButton",
+                        options: {
+                            hint: 'Credit Balance',
+                            icon: "money",
+                            type: 'danger',
+                            bindingOptions: {
+                                text: 'vm.creditBalance',
+                                type: 'buttonType'
+                            }
+                        }
+                    });
+            },
             bindingOptions: {
                 dataSource: 'vm.gridData'
             },
-            
+
             editing: {
                 allowUpdating: false,
-                allowDeleting: true
+                allowDeleting: false
             },
             columns: [{
                 dataField: 'date',
@@ -88,9 +128,9 @@
                 caption: 'Attachment 27A',
                 cellTemplate: function (container, options) {
                     if (options.data.form27AUrl) {
-                        $('<a href="' + options.data.form27AUrl + '" download>Download 27A</a>').appendTo(container);
+                        $('<a href="' + options.data.form27AUrl + '" download>'+ options.data.form27AFileName +'</a>').appendTo(container);
                     } else {
-                        $compile($('<a class="md-button md-raised md-accent" ng-click="vm.uploadForm27A('+options.data.barcode+')">Upload Form 27A</a>'))($scope).appendTo(container);
+                        $compile($('<a class="md-button md-raised md-accent" ng-click="vm.uploadForm27A(' + options.data.barcode + ')">Upload Form 27A</a>'))($scope).appendTo(container);
                         //$compile($('<div dx-file-uploader="vm.form27AUploader(' + options.data.barcode + ')"></a>'))($scope).appendTo(container);
                     }
                 }
@@ -99,7 +139,7 @@
                 caption: 'Attachment FVU',
                 cellTemplate: function (container, options) {
                     if (options.data.fvuFileUrl) {
-                        $('<a href="' + options.data.fvuFileUrl + '" download>Download FVU</a>').appendTo(container);
+                        $('<a href="' + options.data.fvuFileUrl + '" download>' + options.data.fvuFileName +'</a>').appendTo(container);
                     } else {
                         $compile($('<a class="md-button md-raised md-accent" ng-click="vm.uploadForm27A(' + options.data.barcode + ')">Upload FVU</a>'))($scope).appendTo(container);
                     }
@@ -109,7 +149,7 @@
                 caption: 'Acknowledge',
                 cellTemplate: function (container, options) {
                     if (options.data.acknowledgementUrl) {
-                        $('<a href="' + options.data.acknowledgementUrl + '" download>Download Acknowledgement</a>').appendTo(container);
+                        $('<a href="' + options.data.acknowledgementUrl + '" download>' + options.data.acknowledgementFileName + '</a>').appendTo(container);
                     }
                 }
             }, {
@@ -117,9 +157,12 @@
                 caption: 'Remarks'
             }, {
                 dataField: 'status',
-                caption: 'Status'
-            }, {
-                caption: 'Action'
+                caption: 'Status',
+                lookup: {
+                    dataSource: requestStatus,
+                    displayExpr: "name",
+                    valueExpr: "id"
+                }
             }],
             export: {
                 enabled: true,
@@ -130,7 +173,7 @@
                 if (info.rowType == 'data' && info.data.valid == false)
                     info.rowElement.addClass("md-red-50-bg");
             },
-            onContentReady: function(e) {
+            onContentReady: function (e) {
                 gridInstance = e.component;
             }
 
@@ -244,7 +287,7 @@
                 visible: "vm.showAdditonalFileProgressBar"
             },
             statusFormat: function (value) {
-                return  "Uploading File:" + parseInt(value * 100) + "%";
+                return "Uploading File:" + parseInt(value * 100) + "%";
             },
             onComplete: function (e) {
                 vm.btnDisabled = false;
@@ -320,17 +363,17 @@
                         //Step 2: Read the file using file reader
                         //pdfjsLib.GlobalWorkerOptions.workerSrc = '/node_modules/pdfjs-dist/build/pdf.worker.js';
                         var fileReader = new FileReader()
-                        fileReader.onload = function() {
+                        fileReader.onload = function () {
 
                             //Step 4:turn array buffer into typed array
                             var typedarray = new Uint8Array(this.result);
 
                             //Step 5:PDFJS should be able to read this
-                            pdfjsLib.getDocument(typedarray).then(function(pdf) {
+                            pdfjsLib.getDocument(typedarray).then(function (pdf) {
                                 // do stuff
-                                pdf.getPage(1).then(function(page) {
-                                    page.getTextContent().then(function(text) {
-                                        var barcode = text.items[3].str.trim();   
+                                pdf.getPage(1).then(function (page) {
+                                    page.getTextContent().then(function (text) {
+                                        var barcode = text.items[3].str.trim();
                                         var acknowledgementObj = { 'barcode': barcode, 'form27AUrl': snapshot.downloadURL, 'acknowledgementId': key, 'tenantId': tenantId, 'status': 0 };
 
                                         if (tinacknowledgements.hasOwnProperty(barcode)) {
@@ -338,7 +381,7 @@
                                         } else {
                                             tinacknowledgements[barcode] = acknowledgementObj;
                                         }
-                                        return resolve(tinacknowledgements)   
+                                        return resolve(tinacknowledgements)
                                     });
                                 });
                             });
@@ -382,32 +425,32 @@
 
                     $firebaseStorage(fvuRef).$put(fvu, metaData).$complete(function (snapshot) {
                         //Step 3:Read the file as ArrayBuffer
-                        
-                            var reader = new FileReader();
-    
-                            reader.addEventListener('load', function (e) {
-                                var barcode = e.target.result.split('\n')[6].split('^');
-                                //fs.writeFile('./fvucontent.json', barcode[barcode.length - 1]);
-                                barcode = barcode[barcode.length - 1].trim();
-                                // if(typeof barcode === 'number') {
-                                //     barcode = barcode[barcode.length - 1].trim();
-                                // } else {
-                                //     barcode = e.target.result.split('\n')[7].split('^');
-                                //     barcode = barcode[barcode.length - 1].trim();
-                                // }
-                                
-                                var acknowledgementObj = { 'barcode': barcode, 'fvuFileUrl': snapshot.downloadURL, 'acknowledgementId': key, 'tenantId': tenantId, 'status': 0 };
 
-                                if (tinacknowledgements.hasOwnProperty(barcode)) {
-                                    tinacknowledgements[barcode].fvuFileUrl = snapshot.downloadURL;
-                                } else {
-                                    tinacknowledgements[barcode] = acknowledgementObj;
-                                }
-                                return resolve(tinacknowledgements);
-                            });
-                            
-                            reader.readAsBinaryString(fvu);
-                                            
+                        var reader = new FileReader();
+
+                        reader.addEventListener('load', function (e) {
+                            var barcode = e.target.result.split('\n')[6].split('^');
+                            //fs.writeFile('./fvucontent.json', barcode[barcode.length - 1]);
+                            barcode = barcode[barcode.length - 1].trim();
+                            // if(typeof barcode === 'number') {
+                            //     barcode = barcode[barcode.length - 1].trim();
+                            // } else {
+                            //     barcode = e.target.result.split('\n')[7].split('^');
+                            //     barcode = barcode[barcode.length - 1].trim();
+                            // }
+
+                            var acknowledgementObj = { 'barcode': barcode, 'fvuFileUrl': snapshot.downloadURL, 'acknowledgementId': key, 'tenantId': tenantId, 'status': 0 };
+
+                            if (tinacknowledgements.hasOwnProperty(barcode)) {
+                                tinacknowledgements[barcode].fvuFileUrl = snapshot.downloadURL;
+                            } else {
+                                tinacknowledgements[barcode] = acknowledgementObj;
+                            }
+                            return resolve(tinacknowledgements);
+                        });
+
+                        reader.readAsBinaryString(fvu);
+
                     });
                 });
             });
@@ -435,7 +478,7 @@
 
                         var invalidReq = false,
                             existingBarcodes = [],
-                             positionTop = 0,
+                            positionTop = 0,
                             increment = 65;
                         for (var acknowledgement in tinacknowledgements) {
                             var acknowledgementObj = tinacknowledgements[acknowledgement];
@@ -453,12 +496,12 @@
                             }
                             var barcodeAlreadyExist = msUtils.getIndexByArray(vm.gridData, 'barcode', acknowledgement);
 
-                            if(barcodeAlreadyExist > -1) {
+                            if (barcodeAlreadyExist > -1) {
                                 existingBarcodes.push(acknowledgement);
-                               
+
                             } else {
                                 rootRef.child('tenant-tin-acknowledgements').child(acknowledgementObj.acknowledgementId).push(acknowledgementObj);
-                                rootRef.child('admin-tin-acknowledgements').child(''+ acknowledgement).update(acknowledgementObj);
+                                rootRef.child('admin-tin-acknowledgements').child('' + acknowledgement).update(acknowledgementObj);
                             }
 
                         }
@@ -467,19 +510,19 @@
                             rootRef.child('tenant-tin-acknowledgements').child(key).update({ 'invalidReq': true });
                         }
 
-                        for(var i=0; i<existingBarcodes.length; i++) {
+                        for (var i = 0; i < existingBarcodes.length; i++) {
                             $mdToast.show({
-                                template : '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Acknowledgement for barcode ' + existingBarcodes[i] + ' already exist</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
+                                template: '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Acknowledgement for barcode ' + existingBarcodes[i] + ' already exist</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
                                 hideDelay: 7000,
                                 controller: 'ToastController',
-                                position : 'top right',
-                                parent   : '#content',
+                                position: 'top right',
+                                parent: '#content',
                                 locals: {
                                     cssStyle: {
                                         'top': positionTop + 'px'
-                                      }
+                                    }
                                 }
-                            }).then(function() {
+                            }).then(function () {
                                 positionTop += increment;
                             });
                             positionTop += increment;
@@ -496,16 +539,16 @@
     }
 
     function ToastController($scope, $mdToast, cssStyle) {
-            $scope.cssStyle = cssStyle;
-            var isDlgOpen = true;
-            $scope.closeToast = function() {
-                if (!isDlgOpen) return;
-        
-                $mdToast
-                  .hide()
-                  .then(function() {
+        $scope.cssStyle = cssStyle;
+        var isDlgOpen = true;
+        $scope.closeToast = function () {
+            if (!isDlgOpen) return;
+
+            $mdToast
+                .hide()
+                .then(function () {
                     isDlgOpen = false;
-                  });
-              };
+                });
+        };
     }
 })();

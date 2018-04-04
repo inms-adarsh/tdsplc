@@ -451,6 +451,10 @@
                             // do stuff
                             pdf.getPage(1).then(function (page) {
                                 page.getTextContent().then(function (text) {
+                                    if(!text || !text.items || !text.items[3]) {
+                                        invalidFiles.push(form27A.name);
+                                        return resolve({});
+                                    }
                                     var barcode = text.items[3].str.trim();
 
                                     if(isNaN(Number(barcode))) {
@@ -595,7 +599,9 @@
 
                     var invalidReq = false,
                         positionTop = 0,
-                        increment = 65;
+                        increment = 65,
+                        pendingCount = 0,
+                        failureCount = 0;
                     for (var request in tinrequests) {
                         var requestObj = tinrequests[request];
 
@@ -620,13 +626,17 @@
                             requestObj.latest = true;
                             mergeObj['admin-tin-requests/'+ request] = requestObj;
                             mergeObj['tin-requests/'+key+'/'+request] = requestObj;  
-                        }                      
+                            pendingCount++;
+                        } else {
+                            failureCount++;
+                        }                   
                         rootRef.update(mergeObj, function(data) {
                             
                         });
                     }
 
-
+                    firebaseUtils.setBadges('new_requests', 'admin', pendingCount);
+                    
                     for (var i = 0; i < existingBarcodes.length; i++) {
                         $mdToast.show({
                             template: '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Request for barcode ' + existingBarcodes[i] + ' already exist</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',

@@ -63,7 +63,8 @@
             title: 'TIN Requests',
             state: 'app.tinrequests.list',
             icon: 'icon-sale',
-            roles: ['superuser', 'employee']
+            roles: ['superuser', 'employee'],
+            badgeId: 'new_requests'
         });
     }
 })();

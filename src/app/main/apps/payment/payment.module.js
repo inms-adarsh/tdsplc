@@ -40,6 +40,7 @@
             bodyClass: 'paymment'
         });
 
+        
         // Translation
         $translatePartialLoaderProvider.addPart('app/main/apps/payment');
 
@@ -49,7 +50,8 @@
             state : 'app.payment_credit',
             icon  : 'icon-store',
             weight: 5,
-            roles: ['customer']
+            roles: ['customer'],
+            badgeId: ['new_requests']
         });
 
     }

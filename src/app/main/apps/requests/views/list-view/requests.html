@@ -34,11 +34,17 @@
             <!-- / CONTENT TOOLBAR -->
             <!-- CONTENT -->
             <md-content class="content" ms-scroll flex>
-
+                
                 <!-- DEMO CONTENT -->
                 <form action="your-action" ng-submit="onFormSubmit($event)">
-                    <div class="widget-container">
+                    <div class="widget-container" style="margin-bottom: 10px; padding: 10px; border-bottom: 1px solid #ddd;">
+                        <div dx-radio-group="vm.radioFileUpload"></div>
+                    </div>
+                    <div class="widget-container" ng-if="vm.multiRequest">
                         <div id="request-form" dx-form="vm.requestForm"></div>
+                    </div>
+                    <div class="widget-container" ng-if="!vm.multiRequest">
+                            <div id="request-form" dx-form="vm.manualRequestForm"></div>
                     </div>
                     <div dx-button="vm.buttonOptions"></div>
                 </form>

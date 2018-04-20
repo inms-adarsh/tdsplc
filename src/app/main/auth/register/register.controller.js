@@ -1,5 +1,4 @@
-(function ()
-{
+(function () {
     'use strict';
 
     angular
@@ -7,8 +6,7 @@
         .controller('RegisterController', RegisterController);
 
     /** @ngInject */
-    function RegisterController(auth, $state, $rootScope, $q, $firebaseObject, $firebaseArray, $timeout, authService)
-    {
+    function RegisterController(auth, $state, $rootScope, $q, $firebaseObject, $firebaseArray, $timeout, authService) {
         var vm = this;
         // Data
 
@@ -24,16 +22,35 @@
         function register() {
             $rootScope.loadingProgress = true;
             var user = {
-              username: vm.form.username,
-              email: vm.form.email,
-              password: vm.form.password,
-              role: 'customer'
+                username: vm.form.username,
+                email: vm.form.email,
+                password: vm.form.password,
+                role: 'customer'
             };
-            authService.registerUser(user).then(function(data) {
-              authService.createProfile(user, data).then(function(data) {
-                redirect();
-              });
+
+            authService.registerUser(user).then(function (data) {
+                authService.createProfile(user, data).then(function () {
+                    redirect();
+                    var ref = rootRef.child('tenants');
+                    $firebaseArray(ref).$loaded().then(function (data) {
+                        if (data.length == 0) {
+                            user.role = 'superuser';
+                        }
+                        if (user.role == 'superuser') {
+                            delete user.usrPassword;
+                            if (!user.date) {
+                                user.date = new Date();
+                            }
+                            user.date = user.date.toString();
+
+                            var ref = rootRef.child('employees').child(data.uid);
+                            ref.set(user).then(function (data) {
+                            });
+                        }
+                    });
+                });
             });
+
         }
 
         // function createTenant(user) {
@@ -107,7 +124,7 @@
         function redirect() {
             var userObj = rootRef.child('users').child(auth.$getAuth().uid);
             var obj = $firebaseObject(userObj);
-            obj.$loaded().then(function(data) {
+            obj.$loaded().then(function (data) {
                 $rootScope.loadingProgress = false;
                 authService.setCurrentTenant(data);
                 $state.go('app.auth_tenant');

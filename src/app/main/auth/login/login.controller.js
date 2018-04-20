@@ -81,12 +81,17 @@
                 if(!data.tenantId) {
                   $state.go('app.auth_tenant');
                 } else {
-                  if(data.role == 'customer') {
-                    var tenantObj = rootRef.child('tenants').child(data.tenantId);
-                    
-                    $firebaseObject(tenantObj).$loaded(function(data) {
-                      if(data.position == 'active') {
-                        $state.go('app.requests.list');
+                  if(data.role == 'customer' || data.role == 'employee') {
+                    var tenantObj;
+                    if(data.role == 'customer') {
+                      tenantObj = rootRef.child('tenants').child(data.tenantId);
+                    } else if(data.role == 'employee') {
+                      tenantObj = rootRef.child('employees').child(auth.$getAuth().uid);
+                    }
+
+                    $firebaseObject(tenantObj).$loaded(function(tenant) {
+                      if(tenant.position == 'active') {
+                        data.role == 'customer' ? $state.go('app.requests.list') : $state.go('app.tinrequests.list');
                       } else {
                         $mdToast.show({
                           template : '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Account Not active!</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
@@ -100,6 +105,7 @@
                               }
                           }
                         });
+                        auth.$signOut();
                       }
                     });
                   } else {

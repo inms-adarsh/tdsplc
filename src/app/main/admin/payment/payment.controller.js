@@ -9,7 +9,8 @@
     function PaymentController(currentAuth, msUtils, dxUtils, users, auth, customers, $firebaseArray, firebaseUtils, authService, settings, tenantInfo, $scope, paymentService, $state) {
         var vm = this,
             formInstance,
-            tenantId = authService.getCurrentTenant();
+            tenantId = authService.getCurrentTenant(),
+            gridInstance;
         vm.payment = [];
         vm.settings = settings;
         vm.tenantInfo = tenantInfo;
@@ -37,6 +38,49 @@
         vm.gridOptions = dxUtils.createGrid();
 
         vm.paymentOptions = {
+            onToolbarPreparing: function (e) {
+                var dataGrid = e.component;
+
+                e.toolbarOptions.items.unshift(
+                    {
+                        location: "before",
+                        widget: "dxButton",
+                        options: {
+                            text: 'Select Pending Requests',
+                            icon: "check",
+                            onClick: function (e) {
+                                var data = vm.gridData,
+                                    count = 0,
+                                    mergeObj = {},
+                                    latestRecords,
+                                    zipFilename;
+
+                                latestRecords = vm.gridData.filter(function (request) {
+                                    return request.status == 'pending';
+                                });
+                                gridInstance.selectRows(latestRecords);
+                            }
+                        }
+                    }, {
+                        location: "before",
+                        widget: "dxButton",
+                        options: {
+                            type: 'success',
+                            text: 'Approve Selected',
+                            onClick: function (e) {
+                                var latestRecords = gridInstance.getSelectedRowKeys(),
+                                    zip = new JSZip(),
+                                    count = 0,
+                                    mergeObj = {},
+                                    zipFilename;
+                                
+                                approveAll(latestRecords);
+                            }
+                        }
+                    }
+                );
+
+            },
             bindingOptions: {
                 dataSource: 'vm.gridData'
             },
@@ -46,6 +90,11 @@
                 mode: 'row'
             },
             columns: [{
+                caption: '#',
+                cellTemplate: function (cellElement, cellInfo) {
+                    cellElement.text(cellInfo.row.rowIndex + 1)
+                }
+            }, {
                 dataField: 'date',
                 caption: 'Date',
                 dataType: 'date',
@@ -110,36 +159,11 @@
             onRowUpdated: function (e) {
                 var component = e.component;
 
-                var ref = rootRef.child('tenant-payments').child(e.key.$id);
-                firebaseUtils.updateData(ref, e.data);
+                // var ref = rootRef.child('tenant-payments').child(e.key.$id);
+                // firebaseUtils.updateData(ref, e.data);
 
                 if (e.key.status == 'received') {
-                    var ref = rootRef.child('tenants').child(e.key.tenantId);
-                    firebaseUtils.getItemByRef(ref).$loaded().then(function (data) {
-                        var creditBalance = data.creditBalance ? data.creditBalance : 0;
-                        firebaseUtils.updateData(ref, { 'creditBalance': creditBalance + e.key.amount }).then(function(data) {
-                            var ref = rootRef.child('tenant-pending-tin-requests-token/' + e.key.tenantId);
-                            var creditBalance = data.creditBalance;
-                            firebaseUtils.fetchList(ref).then(function(requests) {
-                                requests.forEach(function(request) {
-                                    var id = request.$id;
-                                    delete request.$id;
-                                    delete request.$conf;
-                                    delete request.$priority;
-                                    if(request.fees <= creditBalance || data.paymentType == 'postpaid') {
-                                        var obj = { ackAttached: true, remarks: '', status: 'acknowledged' };
-                                        rootRef.child('tenant-tin-requests-token/' + e.key.tenantId + '/' + id).update(Object.assign(request, obj));
-                                        rootRef.child('tenant-tin-requests/' + e.key.tenantId + '/' + request['barcode']).update(Object.assign(request, obj));
-                                        creditBalance = creditBalance - request.fees;
-                                        rootRef.child('tenants').child(e.key.tenantId).update({'creditBalance': creditBalance});
-
-                                       var ref = rootRef.child('tenant-pending-tin-requests-token/' + e.key.tenantId + '/' + request.token);
-                                       firebaseUtils.deleteData(ref);
-                                    }
-                                });
-                            })
-                        });
-                    });
+                    approveSingleRecord(e.key);
                 }
             },
             onCellPrepared: function (e) {
@@ -159,6 +183,9 @@
                 enabled: true,
                 fileName: 'Requests',
                 allowExportSelectedData: true
+            },
+            onContentReady: function (e) {
+                gridInstance = e.component;
             }
 
         }
@@ -395,9 +422,6 @@
         /**
          * Redirect to invoice page
          */
-        function redirect() {
-            $state.go('app.pages_auth_invoice');
-        }
 
         function init() {
             var ref = rootRef.child('tenant-payments').orderByChild('date');
@@ -405,6 +429,141 @@
 
         }
 
+        /**
+         * calculate revenues
+         * @param {*} data 
+         */
+        function calculateRevenue(data) {
+            var date = new Date(),
+                month = date.getMonth(),
+                year = date.getFullYear();
+
+            var ref = rootRef.child("/tenant-monthly-revenues/" + year + "/" + month + "/" + data.tenantId),
+                totalref = rootRef.child("/tenant-revenues/" + data.tenantId);
+            // Attach an asynchronous callback to read the data at our posts reference
+            var extraCharge = settings.extraCharge ? settings.extraCharge : 0;
+            var totalCost = data.fees + extraCharge;
+            ref.on("value", function (snapshot) {
+                var totalRevenue = 0;
+                if(snapshot.val() && snapshot.val().totalRevenue) {
+                    totalRevenue = snapshot.val().totalRevenue;
+                } else {
+                    totalRevenue = 0;
+                }
+                ref.update({ 'totalRevenue': totalRevenue + totalCost });
+                totalref.update({ 'totalRevenue': totalRevenue + totalCost });
+            }, function (errorObject) {
+                console.log("The read failed: " + errorObject.code);
+            });
+        }
+
+        /**
+         * Approve all records
+         * @param {*} latestRecords 
+         */
+        function approveAll(latestRecords) {
+            latestRecords.forEach(function (record) {
+                record.status = 'received';               
+                approveSingleRecord(record);
+            });
+
+        }
+
+        function settleDues(e) {
+            var ref = rootRef.child('tenants').child(e.key.tenantId);
+            firebaseUtils.getItemByRef(ref).$loaded().then(function (data) {
+                var creditBalance = data.creditBalance ? data.creditBalance : 0;
+                firebaseUtils.updateData(ref, { 'creditBalance': creditBalance + e.key.amount }).then(function (data) {
+                    var ref = rootRef.child('tenant-pending-tin-requests-token/' + e.key.tenantId);
+                    var creditBalance = data.creditBalance,
+                        requiredBalance = data.requiredBalance;
+                    firebaseUtils.fetchList(ref).then(function (requests) {
+                        requests.forEach(function (request) {
+                            var id = request.$id;
+                            delete request.$id;
+                            delete request.$conf;
+                            delete request.$priority;
+                            if (request.fees <= creditBalance || data.paymentType == 'postpaid') {
+                                var obj = { ackAttached: true, remarks: '', status: 'acknowledged' };
+                                rootRef.child('tenant-tin-requests-token/' + e.key.tenantId + '/' + id).update(Object.assign(request, obj));
+                                rootRef.child('tenant-tin-requests/' + e.key.tenantId + '/' + request['barcode']).update(Object.assign(request, obj));
+                                creditBalance = creditBalance - request.fees;
+                                requiredBalance = requiredBalance - requests.fees;
+                                rootRef.child('tenants').child(e.key.tenantId).update({ 'creditBalance': creditBalance, 'requiredBalance': requiredBalance });
+                                calculateRevenue(request);
+                                var ref = rootRef.child('tenant-pending-tin-requests-token/' + e.key.tenantId + '/' + request.token);
+                                firebaseUtils.deleteData(ref);
+                            }
+                        });
+                    })
+                });
+            });
+
+        }
+
+        /**
+         * Approve Single Record
+         * @param {*} record 
+         */
+        function approveSingleRecord(record) {
+            var paymentId = record.$id;
+            delete record.$id;
+            delete record.$conf;
+            delete record.$priority;
+
+            var ref = rootRef.child('tenant-payments').child(paymentId);
+            firebaseUtils.updateData(ref, record);
+
+            var tenantLedger = rootRef.child('tenant-payment-ledger').child(record.tenantId);
+            record.mode = 'credit';
+            record.credit = record.amount;
+            firebaseUtils.addData(tenantLedger, record);
+
+            var ref = rootRef.child('tenants').child(record.tenantId);
+            firebaseUtils.getItemByRef(ref).$loaded().then(function (data) {
+                var creditBalance = data.creditBalance ? data.creditBalance : 0,
+                    requiredBalance = data.requiredBalance ? data.requiredBalance : 0;
+                firebaseUtils.updateData(ref, { 'creditBalance': creditBalance + record.amount }).then(function (data) {
+                    var ref = rootRef.child('tenant-pending-tin-requests-token/' + record.tenantId);
+                    var creditBalance = data.creditBalance;
+                    firebaseUtils.fetchList(ref).then(function (requests) {
+                        requests.forEach(function (request) {
+                            var id = request.$id;
+                            delete request.$id;
+                            delete request.$conf;
+                            delete request.$priority;
+                            var extraCharge = settings.extraCharge ? settings.extraCharge : 0;
+                            var totalCost = request.fees + extraCharge;
+                            if (totalCost <= creditBalance || data.paymentType == 'postpaid') {
+                                var obj = { ackAttached: true, remarks: '', status: 'acknowledged' };
+                                rootRef.child('tenant-tin-requests-token/' + record.tenantId + '/' + id).update(Object.assign(request, obj));
+                                rootRef.child('tenant-tin-requests/' + record.tenantId + '/' + request['barcode']).update(Object.assign(request, obj));
+                                creditBalance = creditBalance - totalCost;
+                                requiredBalance = requiredBalance - totalCost;
+                                rootRef.child('tenants').child(record.tenantId).update({ 'creditBalance': creditBalance, 'requiredBalance': requiredBalance }).then(function() {
+                                    var tenantLedger = rootRef.child('tenant-payment-ledger').child(request.tenantId);
+                                    request.mode = 'debit';
+                                    request.debit = totalCost;
+                                    request.acknowledgementNo = id;
+                                    firebaseUtils.addData(tenantLedger, request);
+
+                                    calculateRevenue(request);
+                                    
+                                    var ref = rootRef.child('tenant-pending-tin-requests-token/' + request.tenantId + '/' + request.token);
+                                    ref.update(null);
+                                });
+
+                            }
+                        });
+                    })
+                });
+            });
+
+        }
+
+        /**
+         * Init function
+         */
         init();
     }
 })();

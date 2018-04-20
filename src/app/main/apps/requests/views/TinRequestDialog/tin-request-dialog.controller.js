@@ -114,7 +114,7 @@
                                       if(request.barcode == barcode) {
                                         $firebaseStorage(storageRef).$put(form27A, metaData).$complete(function (snapshot) {
                                             var ref = rootRef.child('tenant-tin-requests').child(tenantId).child(''+barcode);
-                                            ref.on("value", function(request) {
+                                            ref.once("value", function(request) {
                                                 var request = angular.copy(request.val()); 
                                                 Object.assign(request, {'form27AFileName': form27A.name, 'form27AUrl': snapshot.downloadURL, 'latest': true, 'valid': true, status: 'pending'});
                                                 var mergeObj = {};
@@ -166,7 +166,7 @@
                                     // var ref = rootRef.child('admin-tin-requests').child(request.$id),
                                     //     requestObj = metaData.customMetadata;
                                     var ref = rootRef.child('tenant-tin-requests').child(tenantId).child(''+barcode);
-                                    ref.on("value", function(request) {
+                                    ref.once("value", function(request) {
                                         var request = angular.copy(request.val()); 
                                         Object.assign(request, {'fvuFileName': form27A.name, 'fvuFileUrl': snapshot.downloadURL, 'latest': true, 'valid': true, status: 'pending'});
                                         //delete request.$id;

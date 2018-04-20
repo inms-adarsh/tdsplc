@@ -7,7 +7,7 @@
         .controller('ToastController', ToastController);
 
     /** @ngInject */
-    function RequestsController($state, $firebaseArray, $firebaseObject, $rootScope, $scope, $compile, $mdToast, $mdDialog, $q, $document, $firebaseStorage, firebaseUtils, authService, auth, msUtils, dxUtils, requestService) {
+    function RequestsController($state, $firebaseArray, $firebaseObject, $rootScope, $scope, $compile, $mdToast, $mdDialog, $q, $document, $firebaseStorage, firebaseUtils, authService, auth, msUtils, dxUtils, requestService, settings) {
         var vm = this,
             tenantId = authService.getCurrentTenant(),
             form27AInstance,
@@ -17,6 +17,7 @@
 
         // Data
         vm.btnDisabled = true;
+        vm.multiRequest = true;
 
         var requestStatus = [{
             id: 'pending',
@@ -26,7 +27,7 @@
             name: 'Invalid'
         }, {
             id: 'acknowledged',
-            name: 'Acknowledged'
+            name: 'Uploaded'
         }, {
             id: 'low_credit',
             name: 'Low Credit Balance'
@@ -41,7 +42,7 @@
             // requestService.fetchRequestList().then(function (data) {
             //     vm.gridData = data;
             // });
-            var ref = rootRef.child('tenant-tin-requests').child(tenantId);
+            var ref = rootRef.child('tenant-tin-requests').child(tenantId).orderByChild('status');
             vm.gridData = $firebaseArray(ref);
 
             // firebaseUtils.getItemByRef(progressRef).$bindTo($scope, 'additionalFileProgress');
@@ -55,11 +56,11 @@
 
             var tenantRef = rootRef.child('tenants').child(tenantId);
             $firebaseObject(tenantRef).$bindTo($scope, 'tenant');
-           
-               
+
+
         }
 
-        $scope.$watch('tenant', function(newVal) {
+        $scope.$watch('tenant', function (newVal) {
             vm.creditBalance = 'Credit Balance: ' + newVal.creditBalance;
             $scope.buttonType = newVal.creditBalance < 0 ? 'danger' : 'success';
         });
@@ -78,6 +79,30 @@
             }
         };
 
+        vm.radioFileUpload = {
+            dataSource: [
+                {
+                    "text": "Multi-File Upload (Auto Scanner)",
+                    "value": "multi"
+                },
+                {
+                    "text": "Single File Upload (Manual Entry)",
+                    "value": "single"
+                }
+            ],
+            displayExpr: 'text',
+            valueExpr: 'value',
+            layout: 'horizontal',
+            value: 'multi',
+            onValueChanged: function (e) {
+                if (e.value == 'multi') {
+                    vm.multiRequest = true;
+                } else {
+                    vm.multiRequest = false;
+                }
+            }
+        };
+
         vm.requestForm = {
 
             onInitialized: function (e) {
@@ -87,7 +112,7 @@
             items: [{
                 itemType: "group",
                 caption: "Add TIN Request",
-                colCount: 2,
+                colCount: 3,
 
                 items: [
                     {
@@ -141,6 +166,98 @@
                                 }
                             }));
                         }
+                    }, {
+                        dataField: 'ref',
+                        label: {
+                            location: 'top',
+                            text: 'Reference'
+                        },
+                        editorType: 'dxTextBox'
+                    }
+                ]
+            }]
+        };
+
+
+        vm.manualRequestForm = {
+
+            onInitialized: function (e) {
+                formInstance = e.component;
+            },
+            validationGroup: "customerData",
+            items: [{
+                itemType: "group",
+                caption: "Add TIN Request",
+                colCount: 3,
+
+                items: [
+                    {
+                        dataField: 'barcode',
+                        label: {
+                            text: 'Barcode'
+                        },
+                        validationRules: [{
+                            type: 'required',
+                            message: 'Barcode is required'
+                        }]
+                    },
+                    {
+                        template: function (data, itemElement) {
+                            itemElement.append($("<div>").dxFileUploader({
+                                accept: 'application/pdf',
+                                selectButtonText: "Select Form 27A",
+                                multiple: 'false',
+                                uploadMode: "useButtons",
+                                onContentReady: function (e) {
+                                    form27AInstance = e.component;
+                                },
+                                onValueChanged: function (e) {
+                                    var values = e.component.option("values");
+                                    $.each(values, function (index, value) {
+                                        e.element.find(".dx-fileuploader-upload-button").hide();
+                                    });
+                                    e.element.find(".dx-fileuploader-upload-button").hide();
+
+                                    if (values.length > 0 && fvuInstance.option('value').length > 0) {
+                                        vm.btnDisabled = false;
+                                    } else {
+                                        vm.btnDisabled = true;
+                                    }
+                                }
+                            }));
+
+                            itemElement.append('<div id="button" dx-button="buttonOptions"></div>');
+                        }
+                    }, {
+                        template: function (data, itemElement) {
+                            itemElement.append($("<div>").dxFileUploader({
+                                accept: '*.fvu',
+                                selectButtonText: "Select FVU",
+                                multiple: false,
+                                uploadMode: "useButtons",
+                                onContentReady: function (e) {
+                                    fvuInstance = e.component;
+                                },
+                                onValueChanged: function (e) {
+                                    var values = e.component.option("values");
+                                    $.each(values, function (index, value) {
+                                        e.element.find(".dx-fileuploader-upload-button").hide();
+                                    });
+                                    e.element.find(".dx-fileuploader-upload-button").hide();
+                                    if (values.length > 0 && form27AInstance.option('value').length > 0) {
+                                        vm.btnDisabled = false;
+                                    } else {
+                                        vm.btnDisabled = true;
+                                    }
+                                }
+                            }));
+                        }
+                    }, {
+                        dataField: 'ref',
+                        label: {
+                            text: 'Reference'
+                        },
+                        editorType: 'dxTextBox'
                     }
                 ]
             }]
@@ -168,78 +285,165 @@
                                 type: 'buttonType'
                             }
                         }
+                    }, {
+                        location: "before",
+                        widget: "dxButton",
+                        options: {
+                            text: 'Select Uploaded Requests',
+                            icon: "check",
+                            onClick: function (e) {
+                                var data = vm.gridData,
+                                    count = 0,
+                                    mergeObj = {},
+                                    latestRecords,
+                                    zipFilename;
+
+                                latestRecords = vm.gridData.filter(function (request) {
+                                    return request.status == 'acknowledged';
+                                });
+                                gridInstance.selectRows(latestRecords);
+                            }
+                        }
+                    }, {
+                        location: "before",
+                        widget: "dxButton",
+                        options: {
+                            type: 'success',
+                            text: 'Download Selected Acknowledgements',
+                            onClick: function (e) {
+                                var latestRecords = gridInstance.getSelectedRowKeys().filter(function (record) {
+                                    return record.status == 'acknowledged';
+                                }),
+                                    zip = new JSZip(),
+                                    count = 0,
+                                    mergeObj = {},
+                                    zipFilename;
+
+                                zipFilename = msUtils.formatDate(new Date()) + "_ACKs.zip";
+
+                                latestRecords.forEach(function (record) {
+                                    var ackUrlUrl = record.acknowledgementUrl,
+                                        fileName = record.acknowledgementFileName;
+
+                                    //var acknowledgementRef = firebase.storage().ref("tenant-tin-requests/" + latestRecords[i].rquestId + "/fvus/" + fvu.name)
+                                    JSZipUtils.getBinaryContent(ackUrlUrl, function (err, data) {
+                                        if (err) {
+                                            throw err; // or handle the error
+                                        }
+                                        zip.file(fileName, data, { binary: true });
+                                        count++;
+                                        if (count == latestRecords.length) {
+                                            var zipFile = zip.generateAsync({ type: "blob" }).then(function (blob) { // 1) generate the zip file
+                                                saveAs(blob, zipFilename);
+                                                rootRef.update(mergeObj);                     // 2) trigger the download
+                                            }, function (err) {
+                                                alert('erro generating download!');
+                                            });
+                                        }
+                                    });
+                                });
+                            }
+                        }
                     });
             },
             editing: {
                 allowUpdating: false,
                 allowDeleting: true
             },
-            columns: [{
-                dataField: 'date',
-                caption: 'Date',
-                dataType: 'date',
-                validationRules: [{
-                    type: 'required',
-                    message: 'Date is required'
-                }]
-            },
-            {
-                dataField: 'barcode',
-                caption: 'Bar Code',
-                dataType: 'string',
-                validationRules: [{
-                    type: 'required',
-                    message: 'Barcode is required'
-                }]
-            },
-            {
-                dataField: 'token',
-                caption: 'Token Number'
+            columns: [
+                {
+                    caption: '#',
+                    cellTemplate: function (cellElement, cellInfo) {
+                        cellElement.text(cellInfo.row.rowIndex + 1)
+                    }
+                }, {
+                    dataField: 'refNo',
+                    caption: 'Ref #'
+                }, {
+                    dataField: 'ref',
+                    caption: 'Reference'
+                }, {
+                    dataField: 'date',
+                    caption: 'Date',
+                    dataType: 'date',
+                    validationRules: [{
+                        type: 'required',
+                        message: 'Date is required'
+                    }]
+                },
+                {
+                    dataField: 'barcode',
+                    caption: 'Bar Code',
+                    dataType: 'string',
+                    validationRules: [{
+                        type: 'required',
+                        message: 'Barcode is required'
+                    }]
+                },
+                {
+                    dataField: 'token',
+                    caption: 'Token Number'
 
-            },
-            {
-                dataField: 'attachment27a',
-                caption: 'Attachment 27A',
-                cellTemplate: function (container, options) {
-                    if (options.data.form27AUrl) {
-                        $('<a href="' + options.data.form27AUrl + '" download>' + options.data.form27AFileName +'</a>').appendTo(container);
-                    } else {
-                        $compile($('<a class="md-button md-raised md-accent" ng-click="vm.uploadForm27A(' + options.data.barcode + ')">Upload Form 27A</a>'))($scope).appendTo(container);
-                        //$compile($('<div dx-file-uploader="vm.form27AUploader(' + options.data.barcode + ')"></a>'))($scope).appendTo(container);
+                },
+                {
+                    dataField: 'rdate',
+                    caption: 'R Date'
+                }, {
+                    caption: 'Deductor/Collector Name',
+                    dataField: 'deductor'
+                }, {
+                    dataField: 'fees',
+                    caption: 'Fees'
+                }, {
+                    dataField: 'extra',
+                    caption: 'Extra'
+                }, {
+                    dataField: 'discount',
+                    caption: 'Discount'
+                },
+                {
+                    dataField: 'attachment27a',
+                    caption: 'Attachment 27A',
+                    cellTemplate: function (container, options) {
+                        if (options.data.form27AUrl) {
+                            $compile($('<a class="md-button md-raised md-normal"  href="' + options.data.form27AUrl + '" download><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
+                        } else {
+                            $compile($('<a ng-click="vm.uploadForm27A(' + options.data.barcode + ')">Wrong Form27A! Click to Upload again</a>'))($scope).appendTo(container);
+                            //$compile($('<div dx-file-uploader="vm.form27AUploader(' + options.data.barcode + ')"></a>'))($scope).appendTo(container);
+                        }
                     }
-                }
-            }, {
-                dataField: 'attachmentfvu',
-                caption: 'Attachment FVU',
-                cellTemplate: function (container, options) {
-                    if (options.data.fvuFileUrl) {
-                        $('<a href="' + options.data.fvuFileUrl + '" download> ' + options.data.fvuFileName +' </a>').appendTo(container);
-                    } else {
-                        $compile($('<a class="md-button md-raised md-accent" ng-click="vm.uploadForm27A(' + options.data.barcode + ')">Upload FVU</a>'))($scope).appendTo(container);
+                }, {
+                    dataField: 'attachmentfvu',
+                    caption: 'Attachment FVU',
+                    cellTemplate: function (container, options) {
+                        if (options.data.fvuFileUrl) {
+                            $compile($('<a class="md-button md-raised md-normal" href="' + options.data.fvuFileUrl + '" download><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
+                        } else {
+                            $compile($('<a ng-click="vm.uploadForm27A(' + options.data.barcode + ')">Wrong FVU! Click to Upload again</a>'))($scope).appendTo(container);
+                        }
                     }
-                }
-            },
-            {
-                dataField: 'acknowledgementUrl',
-                caption: 'Acknowledge',
-                cellTemplate: function (container, options) {
-                    if (options.data.acknowledgementUrl) {
-                        $('<a href="' + options.data.acknowledgementUrl + '" download>' + options.data.acknowledgementFileName + '</a>').appendTo(container);
+                },
+                {
+                    dataField: 'acknowledgementUrl',
+                    caption: 'Acknowledge',
+                    cellTemplate: function (container, options) {
+                        if (options.data.acknowledgementUrl) {
+                            $compile($('<a class="md-button md-raised md-normal"  href="' + options.data.acknowledgementUrl + '" download><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
+                        }
                     }
-                }
-            },
-            {
-                dataField: 'remarks',
-                caption: 'Remarks'
-            }, {
-                dataField: 'status',
-                caption: 'Status',
-                lookup: {
-                    dataSource: requestStatus,
-                    displayExpr: "name",
-                    valueExpr: "id"
-                }
-            }],
+                },
+                {
+                    dataField: 'remarks',
+                    caption: 'Remarks'
+                }, {
+                    dataField: 'status',
+                    caption: 'Status',
+                    lookup: {
+                        dataSource: requestStatus,
+                        displayExpr: "name",
+                        valueExpr: "id"
+                    }
+                }],
             export: {
                 enabled: true,
                 fileName: 'Requests',
@@ -254,7 +458,7 @@
                 }
 
             },
-           
+
             onCellPrepared: function (e) {
                 if (e.rowType == 'data' && e.row.data.valid === true) {
                     e.cellElement.find(".dx-link-delete").remove();
@@ -263,9 +467,12 @@
             },
             onRowRemoving: function (e) {
                 var component = e.component;
-                
+
                 var ref = rootRef.child('tenant-tin-requests').child(tenantId).child(e.key.$id);
                 firebaseUtils.deleteData(ref);
+            },
+            onContentReady: function (e) {
+                gridInstance = e.component;
             }
 
         };
@@ -451,16 +658,16 @@
                             // do stuff
                             pdf.getPage(1).then(function (page) {
                                 page.getTextContent().then(function (text) {
-                                    if(!text || !text.items || !text.items[3]) {
+                                    if (!text || !text.items || !text.items[3]) {
                                         invalidFiles.push(form27A.name);
                                         return resolve({});
                                     }
                                     var barcode = text.items[3].str.trim();
 
-                                    if(isNaN(Number(barcode))) {
+                                    if (isNaN(Number(barcode))) {
                                         invalidFiles.push(form27A.name);
                                         return resolve({});
-                                    } else if(barcode.length != 20){
+                                    } else if (barcode.length != 20) {
                                         invalidFiles.push(form27A.name);
                                         return resolve({});
                                     }
@@ -534,15 +741,19 @@
                     var reader = new FileReader();
 
                     reader.addEventListener('load', function (e) {
-                        var barcode = e.target.result.split('\n')[6].split('^');
+                        var barcode = e.target.result.split('\n')[7].split('^');
+
+                        if (isNaN(Number(barcode))) {
+                            barcode = e.target.result.split('\n')[6].split('^');
+                        }
                         //fs.writeFile('./fvucontent.json', barcode[barcode.length - 1]);
                         barcode = barcode[barcode.length - 1].trim();
 
-                        
-                        if(isNaN(Number(barcode))) {
+
+                        if (isNaN(Number(barcode))) {
                             invalidFiles.push(fvu.name);
                             return resolve({});
-                        } else if(barcode.length != 20){
+                        } else if (barcode.length != 20) {
                             invalidFiles.push(fvu.name);
                             return resolve({});
                         }
@@ -565,7 +776,7 @@
                             };
 
                         var barcodeAlreadyExist = msUtils.getIndexByArray(vm.gridData, 'barcode', barcode);
-                        
+
 
                         if (barcodeAlreadyExist > -1) {
                             existingBarcodes.push(barcode);
@@ -574,7 +785,7 @@
                             $firebaseStorage(fvuRef).$put(fvu, metaData).$complete(function (snapshot) {
                                 //Step 3:Read the file as ArrayBuffer
 
-                                var requestObj = { 'fvuFileName': fvu.name, 'barcode' : barcode, 'fvuFileUrl': snapshot.downloadURL, 'requestId': key, 'tenantId': tenantId, 'status': 'pending' };
+                                var requestObj = { 'fvuFileName': fvu.name, 'barcode': barcode, 'fvuFileUrl': snapshot.downloadURL, 'requestId': key, 'tenantId': tenantId, 'status': 'pending' };
 
                                 if (tinrequests.hasOwnProperty(barcode)) {
                                     tinrequests[barcode].fvuFileUrl = snapshot.downloadURL;
@@ -595,91 +806,93 @@
             });
 
 
-                Promise.all(promises).then(function () {
+            Promise.all(promises).then(function () {
 
-                    var invalidReq = false,
-                        positionTop = 0,
-                        increment = 65,
-                        pendingCount = 0,
-                        failureCount = 0;
-                    for (var request in tinrequests) {
-                        var requestObj = tinrequests[request];
+                var invalidReq = false,
+                    positionTop = 0,
+                    increment = 65,
+                    pendingCount = 0,
+                    failureCount = 0;
+                for (var request in tinrequests) {
+                    var requestObj = tinrequests[request];
 
-                        if (!requestObj.fvuFileUrl || !requestObj.form27AUrl) {
-                            invalidReq = true;
-                            requestObj.valid = false;
-                            requestObj.status = 'invalid';
-                        } else {
-                            requestObj.valid = true;
-                        }
-
-                        if (!requestObj.date) {
-                            requestObj.date = new Date();
-                            requestObj.date = requestObj.date.toString();
-                        }
-
-
-                        var barcodeAlreadyExist = msUtils.getIndexByArray(vm.gridData, 'barcode', request);
-                        var mergeObj = {};
-                        mergeObj['tenant-tin-requests/'+tenantId+'/'+ request] = requestObj;
-                        if(requestObj.valid) {
-                            requestObj.latest = true;
-                            mergeObj['admin-tin-requests/'+ request] = requestObj;
-                            mergeObj['tin-requests/'+key+'/'+request] = requestObj;  
-                            pendingCount++;
-                        } else {
-                            failureCount++;
-                        }                   
-                        rootRef.update(mergeObj, function(data) {
-                            
-                        });
+                    if (!requestObj.fvuFileUrl || !requestObj.form27AUrl) {
+                        invalidReq = true;
+                        requestObj.valid = false;
+                        requestObj.status = 'invalid';
+                    } else {
+                        requestObj.valid = true;
                     }
 
-                    firebaseUtils.setBadges('new_requests', 'admin', pendingCount);
-                    
-                    for (var i = 0; i < existingBarcodes.length; i++) {
-                        $mdToast.show({
-                            template: '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Request for barcode ' + existingBarcodes[i] + ' already exist</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
-                            hideDelay: 7000,
-                            controller: 'ToastController',
-                            position: 'top right',
-                            parent: '#content',
-                            locals: {
-                                cssStyle: {
-                                    'top': positionTop + 'px'
-                                }
+                    if (!requestObj.date) {
+                        requestObj.date = new Date();
+                        requestObj.date = requestObj.date.toString();
+                    }
+
+
+                    var barcodeAlreadyExist = msUtils.getIndexByArray(vm.gridData, 'barcode', request);
+                    var mergeObj = {};
+
+                    requestObj.refNo = settings.requestIdPrefix + (new Date()).getTime();
+                    requestObj.ref = formInstance.getEditor('ref').option('value') || '';
+                    mergeObj['tenant-tin-requests/' + tenantId + '/' + request] = requestObj;
+                    if (requestObj.valid) {
+                        requestObj.latest = true;
+                        mergeObj['admin-tin-requests/' + request] = requestObj;
+                        mergeObj['tin-requests/' + key + '/' + request] = requestObj;
+                        pendingCount++;
+                    } else {
+                        failureCount++;
+                    }
+                    rootRef.update(mergeObj, function (data) {
+                    });
+                }
+
+                firebaseUtils.setBadges('new_requests', 'admin', pendingCount);
+
+                for (var i = 0; i < existingBarcodes.length; i++) {
+                    $mdToast.show({
+                        template: '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Request for barcode ' + existingBarcodes[i] + ' already exist</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
+                        hideDelay: 7000,
+                        controller: 'ToastController',
+                        position: 'top right',
+                        parent: '#content',
+                        locals: {
+                            cssStyle: {
+                                'top': positionTop + 'px'
                             }
-                        }).then(function () {
-                            positionTop += increment;
-                        });
+                        }
+                    }).then(function () {
                         positionTop += increment;
-                    }
+                    });
+                    positionTop += increment;
+                }
 
-                    var positionLeft = 0;
-                    for (var i = 0; i < invalidFiles.length; i++) {
-                        $mdToast.show({
-                            template: '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Invalid File ' + invalidFiles[i] + '</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
-                            hideDelay: 7000,
-                            controller: 'ToastController',
-                            position: 'top left',
-                            parent: '#content',
-                            locals: {
-                                cssStyle: {
-                                    'top': positionLeft + 'px'
-                                }
+                var positionLeft = 0;
+                for (var i = 0; i < invalidFiles.length; i++) {
+                    $mdToast.show({
+                        template: '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Invalid File ' + invalidFiles[i] + '</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
+                        hideDelay: 7000,
+                        controller: 'ToastController',
+                        position: 'top left',
+                        parent: '#content',
+                        locals: {
+                            cssStyle: {
+                                'top': positionLeft + 'px'
                             }
-                        }).then(function () {
-                            positionLeft += increment;
-                        });
+                        }
+                    }).then(function () {
                         positionLeft += increment;
-                    }
+                    });
+                    positionLeft += increment;
+                }
 
-                    form27AInstance.option('disabled', false);
-                    fvuInstance.option('disabled', false);
-                    $rootScope.loadingProgress = false;
-                    form27AInstance.reset();
-                    fvuInstance.reset();
-                });
+                form27AInstance.option('disabled', false);
+                fvuInstance.option('disabled', false);
+                $rootScope.loadingProgress = false;
+                form27AInstance.reset();
+                fvuInstance.reset();
+            });
 
         }
     }

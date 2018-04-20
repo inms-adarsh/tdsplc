@@ -35,9 +35,11 @@
             //'app.bookings',
             //'app.vendings',
             //'app.records',
+            'app.dashboards',
             'app.requests',
-            'app.acknowledgements',
-            'app.payment'
+            //'app.acknowledgements',
+            'app.payment',
+            'app.settings'
             //'app.bulkbuys'
         ]);
 })();

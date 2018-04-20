@@ -47,6 +47,11 @@
                 allowDeleting: true
             },
             columns: [{
+                caption: '#',
+                cellTemplate: function(cellElement, cellInfo) {
+                    cellElement.text(cellInfo.row.rowIndex + 1)
+                }
+            },{
                 dataField: 'date',
                 caption: 'Date',
                 dataType: 'date'

@@ -252,6 +252,23 @@
                 }
             }
         }
+
+        vm.reset = function reset() {
+            var mergeObj = {};
+            mergeObj['admin-tin-requests/'] = null;
+            mergeObj['tenant-pending-tin-requests-token/'] = null;
+            mergeObj['tenant-tin-requests-token/'] = null;
+            mergeObj['employee-tin-requests-token/'] = null;
+            mergeObj['tenant-payments/'] = null;
+            mergeObj['tenant-monthly-revenues/'] = null;
+            mergeObj['tenant-revenues/'] = null;
+            mergeObj['admin-tin-requests-token/'] = null;
+            mergeObj['tin-requests-token/'] = null;
+            mergeObj['tin-requests/'] = null;
+            mergeObj['tenant-tin-requests/'] = null;
+            mergeObj['tenant-payment-ledger/'] = null;
+            rootRef.update(mergeObj);
+        }
     }
 
 })();

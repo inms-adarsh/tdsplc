@@ -101,7 +101,7 @@
                     },  {
                         dataField: 'role',
                         label: {
-                            text: 'role'
+                            text: 'Role'
                         },
                         editorType: 'dxSelectBox',
                         editorOptions: {
@@ -112,6 +112,22 @@
                         validationRules: [{
                             type: 'required',
                             message: 'Select a Role'
+                        }]
+                    }, {
+                        dataField: 'position',
+                        label: {
+                            text: 'Position'
+                        },
+                        editorType: 'dxSelectBox',
+                        editorOptions: {
+                            dataSource: clientStatus,
+                            displayExpr: 'name',
+                            valueExpr: 'id',
+                            value: 'active'
+                        },
+                        validationRules: [{
+                            type: 'required',
+                            message: 'Select a Position'
                         }]
                     }, {
                         dataField: 'address',
@@ -177,6 +193,11 @@
                         }]
                     },
                     columns: [{
+                        caption: '#',
+                        cellTemplate: function(cellElement, cellInfo) {
+                            cellElement.text(cellInfo.row.rowIndex + 1)
+                        }
+                    },{
                         dataField: 'name',
                         caption: 'Name',
                         validationRules: [{
@@ -191,6 +212,9 @@
                             displayExpr: "name",
                             valueExpr: "id"
                         }
+                    }, {
+                        dataField: 'pendingRequests',
+                        caption: 'Total Pending Requests'
                     },
                     {
                         dataField: 'phone',
@@ -213,15 +237,6 @@
                     }, {
                         dataField: 'city',
                         caption: 'City'
-                    }, {
-                        dataField: 'membersSince',
-                        caption: 'Member since',
-                        dataType: 'date',
-                        validationRules: [{
-                            type: 'required',
-                            message: 'Field is required'
-                        }]
-
                     }, {
                         dataField: 'position',
                         caption: 'Position',

@@ -62,9 +62,16 @@
             <!-- / CONTENT TOOLBAR -->
             <!-- CONTENT -->
             <md-content class="content" flex>
-
+                <div class="popup" dx-popup="vm.assignedToPopupOptions">
+                    <div data-options="dxTemplate: { name:'info' }">
+                        <div dx-data-grid="vm.employeeGrid"></div>
+                        </br>
+                        <div style="text-align:center">
+                            <div dx-button="vm.assignButtonOptions"></div>
+                        </div>
+                    </div>
+                </div>
                 <!-- DEMO CONTENT -->
-                
                 <div id="request-grid" dx-data-grid="vm.gridOptions"></div>
                 <!-- / DEMO CONTENT -->
 

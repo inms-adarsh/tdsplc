@@ -3,10 +3,9 @@
     'use strict';
 
     angular
-        .module('app.settings.taxgroups',
+        .module('app.settings',
             [
                 // 3rd Party Dependencies
-                'app.settings.taxes',
                 'dx'
             ]
         )
@@ -17,16 +16,16 @@
     {
         // State
         $stateProvider
-            .state('app.taxgroups', {
+            .state('app.settings', {
                 abstract: true,
-                url     : '/taxgroups'
+                url     : '/settings'
             })
-            .state('app.taxgroups.list', {
+            .state('app.settings.list', {
                 url      : '/list',
                 views    : {
                     'content@app': {
-                        templateUrl: 'app/main/settings/taxgroups/views/list-view/taxgroups.html',
-                        controller : 'TaxgroupsController as vm'
+                        templateUrl: 'app/main/settings/settings/views/list-view/settings.html',
+                        controller : 'SettingsController as vm'
                     }
                 },
                  resolve : {
@@ -41,25 +40,26 @@
                         return settingsService.getCurrentSettings();
                     }
                 },
-                bodyClass: 'taxgroups'
+                bodyClass: 'settings'
             });
 
         // Translation
-        $translatePartialLoaderProvider.addPart('app/main/settings/taxgroups');
+        $translatePartialLoaderProvider.addPart('app/main/settings/settings');
 
         // Api
-        msApiProvider.register('taxgroups.dashboard', ['app/data/e-commerce/dashboard.json']);
-        msApiProvider.register('taxgroups.products', ['app/data/e-commerce/products.json']);
-        msApiProvider.register('taxgroups.product', ['app/data/e-commerce/product.json']);
-        msApiProvider.register('taxgroups.orders', ['app/data/e-commerce/orders.json']);
-        msApiProvider.register('taxgroups.statuses', ['app/data/e-commerce/statuses.json']);
-        msApiProvider.register('taxgroups.order', ['app/data/e-commerce/order.json']);
+        msApiProvider.register('settings.dashboard', ['app/data/e-commerce/dashboard.json']);
+        msApiProvider.register('settings.products', ['app/data/e-commerce/products.json']);
+        msApiProvider.register('settings.product', ['app/data/e-commerce/product.json']);
+        msApiProvider.register('settings.orders', ['app/data/e-commerce/orders.json']);
+        msApiProvider.register('settings.statuses', ['app/data/e-commerce/statuses.json']);
+        msApiProvider.register('settings.order', ['app/data/e-commerce/order.json']);
 
         // Navigation
 
-        msNavigationServiceProvider.saveItem('settings.taxgroups', {
-            title: 'Taxgroups',
-            state: 'app.taxgroups.list'
+        msNavigationServiceProvider.saveItem('settings', {
+            title: 'Settings',
+            state: 'app.settings.list',
+            roles: ['superuser']
         });
     }
 })();

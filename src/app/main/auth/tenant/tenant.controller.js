@@ -50,6 +50,7 @@
                tenant.date = new Date();
                tenant.date = new Date().toString();
                tenant.creditBalance = 0;
+               tenant.paymentType = 'prepaid';
                authService.addTenant(tenant).then(function(key){
                     authService.updateUserTenantId(currentAuth.uid, key, vm.userInfo).then(function(){
                         authService.setCurrentTenant(key);

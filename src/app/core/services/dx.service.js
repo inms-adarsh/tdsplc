@@ -55,14 +55,11 @@
                 onContentReady: function (e) {
                     e.component.option('loadPanel.enabled', false);
                 },
-                showColumnLines: false,
+                showColumnLines: true,
                 showRowLines: true,
-                showBorders: true,
+                //showBorders: true,
                 rowAlternationEnabled: false,
                 columnAutoWidth: true,
-                sorting: {
-                    mode: 'none'
-                },
                 height: 520
             };
             return gridOptions;

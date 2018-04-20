@@ -21,37 +21,16 @@
         </div>
         <!-- / CONTENT HEADER -->
       
-        <!-- CONTENT CARD -->
-        <div class="content-card">
-
-            
-            <!-- CONTENT TOOLBAR -->
-            <!--<div class="toolbar" layout="row" layout-align="space-between center">
-
-                <div layout="row" layout-align="start center">
-
-                    <md-button ng-click="vm.addDialog($event)" class="md-icon-button add-row-button" aria-label="Add"
-                               translate
-                               translate-attr-aria-label="GANTT.ADD">
-                        <md-icon md-font-icon="icon-plus"></md-icon>
-                    </md-button>
-
-                </div>
-
-            </div>-->
-            <!-- / CONTENT TOOLBAR -->
             <!-- CONTENT -->
-            <md-content class="content" ms-scroll>
-
+            <md-card ms-scroll>
+                <md-card-content>
                 <!-- DEMO CONTENT -->
-                <div id="customer-grid" dx-data-grid="vm.customerGridOptions"></div>
-                <!-- / DEMO CONTENT -->
-
-            </md-content>
+                    <div id="customer-grid" dx-data-grid="vm.gridOptions"></div>
+                    <!-- / DEMO CONTENT -->
+                </md-card-content>
+            </md-card>
             <!-- / CONTENT -->
 
-        </div>
-        <!-- / CONTENT CARD -->
 
     </div>
     <!-- / CENTER -->

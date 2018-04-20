@@ -6,7 +6,7 @@
         .controller('AdminRequestsController', AdminRequestsController);
 
     /** @ngInject */
-    function AdminRequestsController($state, auth, $mdToast, firebaseUtils, $compile, users, $firebaseStorage, $firebaseObject, authService, dxUtils, msUtils, $firebaseArray, $scope, $mdDialog, $document, adminRequestService) {
+    function AdminRequestsController($state, auth, $mdToast, firebaseUtils, $compile, users, $firebaseStorage, $firebaseObject, authService, dxUtils, msUtils, $firebaseArray, $scope, $mdDialog, $document, adminRequestService, settings) {
         var vm = this,
             tenantId = authService.getCurrentTenant(),
             requestForm,
@@ -14,7 +14,9 @@
             form27AInstance,
             ackFormInstance,
             ackFileFormInstance,
-            gridInstance
+            gridInstance,
+            employeeDropdown,
+            employeeGridInstance
             ;
 
         // Data
@@ -29,12 +31,160 @@
             name: 'Invalid'
         }, {
             id: 'acknowledged',
-            name: 'Acknowledged'
+            name: 'Uploaded'
         }];
+
+        vm.statusSelectBox = {
+            dataSource: requestStatus,
+            displayExpr: 'name',
+            valueExpr: 'id',
+            width: 300,
+            label: {
+                text: 'Filter By Status'
+            },
+            onValueChanged: function (e) {
+
+            }
+        }
+
+        /**
+         * Popup For assign employee
+         */
+        vm.assignedToPopupOptions = {
+            contentTemplate: "info",
+            showTitle: true,
+            width: '70%',
+            height: 'auto',
+            title: "Assign Selected Requests To",
+            dragEnabled: false,
+            closeOnOutsideClick: true,
+            bindingOptions: {
+                visible: "visiblePopup"
+            }
+        };
+
+        /**
+         * Employee Grid
+         */
+        vm.employeeGrid = {
+            onContentReady: function (e) {
+                employeeGridInstance = e.component
+            },
+            summary: {
+                totalItems: [{
+                    column: 'name',
+                    summaryType: 'count'
+                }]
+            },
+            columns: [{
+                caption: '#',
+                cellTemplate: function (cellElement, cellInfo) {
+                    cellElement.text(cellInfo.row.rowIndex + 1)
+                }
+            }, {
+                dataField: 'refNo',
+                caption: 'Reference No'
+            }, {
+                dataField: 'name',
+                caption: 'Name',
+                validationRules: [{
+                    type: 'required',
+                    message: 'Name is required'
+                }],
+            },
+            {
+                dataField: 'phone',
+                caption: 'Phone',
+                dataType: 'number',
+                validationRules: [{
+                    type: 'required',
+                    message: 'Phone number is required'
+                }]
+            }, {
+                dataField: 'email',
+                caption: 'Email/User Id',
+                validationRules: [{
+                    type: 'email',
+                    message: 'Please enter valid e-mail address'
+                }]
+            }, {
+                dataField: 'pendingRequests',
+                caption: 'Pending Requests'
+            }],
+            dataSource: users,
+            selection: {
+                mode: 'single',
+                showCheckBoxesMode: 'always'
+            }
+        };
+
+        /**
+         * Assign Button
+         */
+        vm.assignButtonOptions = {
+            text: "Assign",
+            type: "success",
+            useSubmitBehavior: true,
+            onClick: function (e) {
+                assignRequests();
+                $scope.visiblePopup = false;
+                gridInstance.clearSelection();
+                employeeGridInstance.clearSelection();
+            }
+        };
         // Methods
         init();
         //////////
 
+        /**
+         * assign requests function
+         */
+        function assignRequests() {
+
+            var data = gridInstance.getSelectedRowKeys();
+            var mergeObj = {};
+
+            for (var i = 0; i < data.length; i++) {
+                if (!data[i].acknowledged) {
+
+                    var ref = rootRef.child('admin-tin-requests').child(data[i].$id);
+                    ref.once("value", function (request) {
+                        var request = request.val();
+                        request.latest = true;
+
+                        if (request.assignedTo) {
+                            mergeObj['employee-tin-requests/' + request.assignedTo + '/' + data[i].$id] = null;
+                        }
+                        var assignedTo = employeeGridInstance.getSelectedRowKeys()[0].$id;
+                        request.assignedTo = assignedTo;
+                        mergeObj['employee-tin-requests/' + assignedTo + '/' + data[i].$id] = request;
+                        mergeObj['admin-tin-requests/' + data[i].$id + '/latest'] = false;
+                        mergeObj['admin-tin-requests/' + data[i].$id + '/assignedTo'] = assignedTo;
+                        mergeObj['tenant-tin-requests/' + request.tenantId + '/' + data[i].$id + '/assignedTo'] = assignedTo;
+                        mergeObj['tin-requests/' + request.requestId + '/assignedTo'] = assignedTo;
+
+                    });
+
+                }
+            }
+
+            rootRef.update(mergeObj).then(function () {
+                $mdToast.show({
+                    template: '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Request Submitted Successfully</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
+                    hideDelay: 7000,
+                    controller: 'ToastController',
+                    position: 'top right',
+                    parent: '#content',
+                    locals: {
+                        cssStyle: {
+                        }
+                    }
+                });
+            });
+        }
+        /**
+         * Init
+         */
         function init() {
             vm.gridOptions = dxUtils.createGrid();
 
@@ -82,7 +232,7 @@
                                 var mergeObj = {};
 
                                 var ref = rootRef.child('admin-tin-requests').child(data[i].$id);
-                                ref.on("value", function (request) {
+                                ref.once("value", function (request) {
                                     var request = request.val();
                                     request.latest = true;
 
@@ -115,142 +265,154 @@
                     allowUpdating: true,
                     allowDeleting: true
                 },
-                columns: [{
-                    dataField: 'date',
-                    caption: 'Date',
-                    dataType: 'date',
-                    validationRules: [{
-                        type: 'required',
-                        message: 'Date is required'
-                    }],
-                    allowEditing: false
-                }, {
-                    dataField: 'requestId',
-                    caption: "Request No",
-                    groupIndex: 0,
-                    allowEditing: false
-                }, {
-                    dataField: 'tenantId',
-                    caption: 'client',
-                    dataType: 'string',
-                    calculateCellValue: function (options) {
-                        var index = msUtils.getIndexByArray(vm.clients, '$id', options.tenantId);
-                        return vm.clients[index].company;
+                columns: [
+                    {
+                        caption: '#',
+                        cellTemplate: function (cellElement, cellInfo) {
+                            cellElement.text(cellInfo.row.rowIndex + 1)
+                        }
+                    }, {
+                        dataField: 'date',
+                        caption: 'Date',
+                        dataType: 'date',
+                        validationRules: [{
+                            type: 'required',
+                            message: 'Date is required'
+                        }],
+                        allowEditing: false
                     },
-                    allowEditing: false
-                }, {
-                    dataField: 'token',
-                    caption: 'Token Number',
-                    allowEditing: false
+                    {
+                        dataField: 'assignedTo',
+                        caption: "Assigned To",
+                        lookup: {
+                            dataSource: users,
+                            valueExpr: '$id',
+                            displayExpr: 'name'
+                        }
+                    },
+                    {
+                        dataField: 'tenantId',
+                        caption: 'client',
+                        dataType: 'string',
+                        calculateCellValue: function (options) {
+                            var index = msUtils.getIndexByArray(vm.clients, '$id', options.tenantId);
+                            return vm.clients[index].company;
+                        },
+                        allowEditing: false
+                    }, {
+                        dataField: 'token',
+                        caption: 'Token Number',
+                        allowEditing: false
 
-                }, {
-                    dataField: 'rno',
-                    caption: 'R No',
-                    allowEditing: false
-                }, {
-                    dataField: 'rdate',
-                    caption: 'R Date',
-                    allowEditing: false
-                }, {
-                    dataField: 'barcode',
-                    caption: 'Barcode',
-                    allowEditing: false
-                }, {
-                    dataField: 'module',
-                    caption: 'Module',
-                    allowEditing: false
-                }, {
-                    caption: 'Deductor/Collector Name',
-                    dataField: 'deductor',
-                    allowEditing: false
-                }, {
-                    caption: 'Finacial Year',
-                    dataField: 'finYear',
-                    allowEditing: false
-                }, {
-                    caption: 'QTR',
-                    dataField: 'qtr',
-                    allowEditing: false
-                }, {
-                    caption: 'Form No',
-                    dataField: 'formNo',
-                    allowEditing: false
-                }, {
-                    caption: 'TAN',
-                    dataField: 'tan',
-                    allowEditing: false
-                }, {
-                    caption: 'AO Code',
-                    dataField: 'aoCode',
-                    allowEditing: false
-                }, {
-                    caption: 'Regular/Correction',
-                    dataField: 'corrections',
-                    allowEditing: false
-                }, {
-                    caption: 'Original Token No',
-                    dataField: 'origTokenNo',
-                    allowEditing: false
-                }, {
-                    caption: 'Deductee/Collectee Count',
-                    dataField: 'collecteeCount',
-                    allowEditing: false
-                }, {
-                    caption: 'User ID',
-                    dataField: 'userId',
-                    allowEditing: false
-                }, {
-                    dataField: 'fees',
-                    caption: 'Fees',
-                    allowEditing: false
-                }, {
-                    dataField: 'extra',
-                    caption: 'Extra',
-                    allowEditing: false
-                }, {
-                    dataField: 'discount',
-                    caption: 'Discount',
-                    allowEditing: false
-                }, {
-                    dataField: 'attachment27a',
-                    caption: 'Attachment 27A',
-                    cellTemplate: function (container, options) {
-                        if (options.data.form27AUrl) {
-                            $('<a href="' + options.data.form27AUrl + '" download>'+ options.data.form27AFileName +'</a>').appendTo(container);
-                        }
-                    },
-                    allowEditing: false
-                }, {
-                    dataField: 'attachmentfvu',
-                    caption: 'Attachment FVU',
-                    cellTemplate: function (container, options) {
-                        if (options.data.fvuFileUrl) {
-                            $('<a href="' + options.data.fvuFileUrl + '" download>' + options.data.fvuFileName +'</a>').appendTo(container);
-                        }
-                    },
-                    allowEditing: false
-                }, {
-                    dataField: 'acknowledgementUrl',
-                    caption: 'Acknowledge',
-                    cellTemplate: function (container, options) {
-                        if (options.data.acknowledgementUrl) {
-                            $('<a href="' + options.data.acknowledgementUrl + '" download>' + options.data.acknowledgementFileName + '</a>').appendTo(container);
-                        }
-                    },
-                    allowEditing: false
-                }, {
-                    dataField: 'remarks',
-                    caption: 'Remarks'
-                }, {
-                    dataField: 'status',
-                    caption: 'Status',
-                    allowEditing: false,
-                    lookup: {
-                        dataSource: requestStatus,
-                        displayExpr: "name",
-                        valueExpr: "id"
-                    }
-                }],
+                    }, {
+                        dataField: 'rno',
+                        caption: 'R No',
+                        allowEditing: false
+                    }, {
+                        dataField: 'rdate',
+                        caption: 'R Date',
+                        allowEditing: false
+                    }, {
+                        dataField: 'barcode',
+                        caption: 'Barcode',
+                        allowEditing: false
+                    }, {
+                        dataField: 'module',
+                        caption: 'Module',
+                        allowEditing: false
+                    }, {
+                        caption: 'Deductor/Collector Name',
+                        dataField: 'deductor',
+                        allowEditing: false
+                    }, {
+                        caption: 'Finacial Year',
+                        dataField: 'finYear',
+                        allowEditing: false
+                    }, {
+                        caption: 'QTR',
+                        dataField: 'qtr',
+                        allowEditing: false
+                    }, {
+                        caption: 'Form No',
+                        dataField: 'formNo',
+                        allowEditing: false
+                    }, {
+                        caption: 'TAN',
+                        dataField: 'tan',
+                        allowEditing: false
+                    }, {
+                        caption: 'AO Code',
+                        dataField: 'aoCode',
+                        allowEditing: false
+                    }, {
+                        caption: 'Regular/Correction',
+                        dataField: 'corrections',
+                        allowEditing: false
+                    }, {
+                        caption: 'Original Token No',
+                        dataField: 'origTokenNo',
+                        allowEditing: false
+                    }, {
+                        caption: 'Deductee/Collectee Count',
+                        dataField: 'collecteeCount',
+                        allowEditing: false
+                    }, {
+                        caption: 'User ID',
+                        dataField: 'userId',
+                        allowEditing: false
+                    }, {
+                        dataField: 'fees',
+                        caption: 'Fees',
+                        allowEditing: false
+                    }, {
+                        dataField: 'extra',
+                        caption: 'Extra',
+                        allowEditing: false
+                    }, {
+                        dataField: 'discount',
+                        caption: 'Discount',
+                        allowEditing: false
+                    }, {
+                        dataField: 'attachment27a',
+                        caption: 'Attachment 27A',
+                        cellTemplate: function (container, options) {
+                            if (options.data.form27AUrl) {
+                                $('<a href="' + options.data.form27AUrl + '" download>' + options.data.form27AFileName + '</a>').appendTo(container);
+                            }
+                        },
+                        allowEditing: false
+                    }, {
+                        dataField: 'attachmentfvu',
+                        caption: 'Attachment FVU',
+                        cellTemplate: function (container, options) {
+                            if (options.data.fvuFileUrl) {
+                                $('<a href="' + options.data.fvuFileUrl + '" download>' + options.data.fvuFileName + '</a>').appendTo(container);
+                            }
+                        },
+                        allowEditing: false
+                    }, {
+                        dataField: 'acknowledgementUrl',
+                        caption: 'Acknowledge',
+                        cellTemplate: function (container, options) {
+                            if (options.data.acknowledgementUrl) {
+                                $('<a href="' + options.data.acknowledgementUrl + '" download>' + options.data.acknowledgementFileName + '</a>').appendTo(container);
+                            }
+                        },
+                        allowEditing: false
+                    }, {
+                        dataField: 'remarks',
+                        caption: 'Remarks'
+                    }, {
+                        dataField: 'status',
+                        caption: 'Status',
+                        allowEditing: false,
+                        lookup: {
+                            dataSource: requestStatus,
+                            displayExpr: "name",
+                            valueExpr: "id"
+                        },
+                        sortIndex: 0
+                    }],
                 onToolbarPreparing: function (e) {
                     var dataGrid = e.component;
 
@@ -279,9 +441,8 @@
                             location: "before",
                             widget: "dxButton",
                             options: {
-                                hint: "Download",
-                                icon: "download",
-                                text: 'Download Latest FVUs',
+                                text: 'Select Latest Requests',
+                                icon: "check",
                                 onClick: function (e) {
                                     var data = vm.gridData,
                                         zip = new JSZip(),
@@ -293,6 +454,24 @@
                                     latestRecords = vm.gridData.filter(function (request) {
                                         return request.latest == true;
                                     });
+                                    gridInstance.selectRows(latestRecords);
+                                }
+                            }
+                        }, {
+                            location: "before",
+                            widget: "dxButton",
+                            options: {
+                                hint: "Download",
+                                icon: "download",
+                                type: 'success',
+                                text: 'Download Selected FVUs',
+                                onClick: function (e) {
+                                    var latestRecords = gridInstance.getSelectedRowKeys(),
+                                        zip = new JSZip(),
+                                        count = 0,
+                                        mergeObj = {},
+                                        zipFilename;
+
                                     zipFilename = msUtils.formatDate(new Date()) + latestRecords[0].requestId + "_FVUs.zip";
 
                                     latestRecords.forEach(function (record) {
@@ -326,20 +505,79 @@
                             location: "before",
                             widget: "dxButton",
                             options: {
-                                hint: "Collapse All",
-                                icon: "chevrondown",
-                                text: "Collapse All",
+                                text: 'Assign Selected',
+                                icon: "group",
                                 onClick: function (e) {
-                                    var expanding = e.component.option("icon") === "chevronnext";
-                                    dataGrid.option("grouping.autoExpandAll", expanding);
-                                    e.component.option({
-                                        icon: expanding ? "chevrondown" : "chevronnext",
-                                        hint: expanding ? "Collapse All" : "Expand All",
-                                        text: expanding ? "Collapse All" : "Expand All"
-                                    });
+                                    $scope.visiblePopup = true;
                                 }
                             }
-                        });
+                        }
+                        // {
+                        //     location: "after",
+                        //     widget: "dxSelectBox",
+                        //     options: {
+                        //         width: 200,
+                        //         items: users,
+                        //         displayExpr: "name",
+                        //         valueExpr: "$id",
+                        //         placeholder: 'Assign Selected Requests',
+                        //         onValueChanged: function (e) {
+
+                        //         },
+                        //         onContentReady: function (e) {
+                        //             employeeDropdown = e.component;
+                        //         }
+                        //     }
+                        // }, {
+                        //     location: "after",
+                        //     widget: "dxButton",
+                        //     options: {
+                        //         hint: "Submit",
+                        //         icon: 'save',
+                        //         text: "Submit",
+                        //         onClick: function (e) {
+                        //             var data = gridInstance.getSelectedRowKeys();
+
+                        //             for (var i = 0; i < data.length; i++) {
+                        //                 if (!data[i].acknowledged) {
+                        //                     var mergeObj = {};
+
+                        //                     var ref = rootRef.child('admin-tin-requests').child(data[i].$id);
+                        //                     ref.on("value", function (request) {
+                        //                         var request = request.val();
+                        //                         request.latest = true;
+
+                        //                         if (request.assignedTo) {
+                        //                             mergeObj['employee-tin-requests/' + request.assignedTo + '/' + data[i].$id] = null;
+                        //                         }
+                        //                         var assignedTo = employeeDropdown.option('value');
+                        //                         request.assignedTo = assignedTo;
+                        //                         mergeObj['employee-tin-requests/' + assignedTo + '/' + data[i].$id] = request;
+                        //                         mergeObj['admin-tin-requests/' + data[i].$id + '/latest'] = false;
+                        //                         mergeObj['admin-tin-requests/' + data[i].$id + '/assignedTo'] = assignedTo;
+                        //                         mergeObj['tenant-tin-requests/' + request.tenantId + '/' + data[i].$id + '/assignedTo'] = assignedTo;
+                        //                         mergeObj['tin-requests/' + request.requestId + '/assignedTo'] = assignedTo;
+
+                        //                         rootRef.update(mergeObj).then(function () {
+                        //                             $mdToast.show({
+                        //                                 template: '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Request Submitted Successfully</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
+                        //                                 hideDelay: 7000,
+                        //                                 controller: 'ToastController',
+                        //                                 position: 'top right',
+                        //                                 parent: '#content',
+                        //                                 locals: {
+                        //                                     cssStyle: {
+                        //                                     }
+                        //                                 }
+                        //                             });
+                        //                         });
+                        //                     });
+                        //                 }
+                        //             }
+                        //         }
+                        //     }
+                        // }
+                    );
                 },
                 export: {
                     enabled: true,
@@ -389,6 +627,9 @@
                     rootRef.update(mergeObj).then(function () {
                     });
 
+                },
+                onContentReady: function (e) {
+                    gridInstance = e.component
                 }
 
             };
@@ -455,7 +696,7 @@
                                             e.element.find(".dx-fileuploader-upload-button").hide();
                                         });
                                         e.element.find(".dx-fileuploader-upload-button").hide();
-                                        
+
                                     }
                                 }));
                             }
@@ -493,10 +734,10 @@
             var value = form27AInstance.option('value');
             var reader = new FileReader();
 
-            if(value.length === 0) {
+            if (value.length === 0) {
                 form27AInstance.option('disabled', false);
                 form27AInstance.reset();
-                return;   
+                return;
             }
 
             reader.onload = function (e) {
@@ -544,11 +785,14 @@
 
                     };
 
+                    if(settings.extraCharge) {
+                        obj['extra'] = settings.extraCharge;
+                    }
 
                     var ref = rootRef.child('admin-tin-requests').child('' + obj['barcode']);
                     var index = msUtils.getIndexByArray(vm.gridData, 'barcode', obj['barcode']);
                     if (index > -1 && !vm.gridData[index].acknowledged) {
-                        ref.on('value', function (data) {
+                        ref.once('value', function (data) {
                             var data = data.val();
                             var ref = rootRef.child('tenants').child(data.tenantId);
 
@@ -605,15 +849,19 @@
             var tokens = [],
                 invalidTokens = [],
                 positionTop = 0,
-                positionLeft= 0,
+                positionLeft = 0,
                 increment = 65;
 
-            if(acknowledgements.length === 0) {
+            if (acknowledgements.length === 0) {
                 ackFileFormInstance.option('disabled', false);
                 ackFileFormInstance.reset();
-                return;   
+                return;
             }
+            var count = 0;
+            console.log(acknowledgements.length);
             acknowledgements.map(function (acknowledgement) {
+                count++;
+                console.log(count);
                 var acknowledgementNo = acknowledgement.name.split('.')[0];
 
                 var index = msUtils.getIndexByArray(vm.gridData, 'token', acknowledgementNo);
@@ -628,9 +876,11 @@
                                 'fileSize': acknowledgement.size
                             }
                         };
-                    ref.on('value', function (data) {
+                    ref.once('value', function (data) {
                         var data = data.val();
                         if (!data.ackAttached) {
+                            data.ackDate = new Date();
+                            data.ackDate = new Date().toString();
                             $firebaseStorage(acknowledgementRef).$put(acknowledgement, metaData).$complete(function (snapshot) {
                                 var obj = { acknowledgementFileName: acknowledgement.name, acknowledgementUrl: snapshot.downloadURL, ackAttached: true, status: 'acknowledged' };
                                 rootRef.child('admin-tin-requests/' + data['barcode']).update(obj);
@@ -645,13 +895,25 @@
                                 var ref = rootRef.child('tenants').child(data.tenantId);
 
                                 $firebaseObject(ref).$loaded(function (tenant) {
-                                    if (tenant.creditBalance >= data.fees || tenant.paymentType == 'postpaid') {
+                                    var extraCharge = settings.extraCharge ? settings.extraCharge : 0;
+                                    var totalCost = data.fees + extraCharge;
+                                    if (tenant.creditBalance >= totalCost || tenant.paymentType == 'postpaid') {
                                         rootRef.child('tenant-tin-requests-token/' + data.tenantId + '/' + acknowledgementNo).update(Object.assign(data, obj));
                                         rootRef.child('tenant-tin-requests/' + data.tenantId + '/' + data['barcode']).update(Object.assign(data, obj));
-                                        rootRef.child('tenants/' + data.tenantId).update({ creditBalance: (tenant.creditBalance ? tenant.creditBalance : 0) - parseInt(data.fees) });
+                                        rootRef.child('tenants/' + data.tenantId).update({ creditBalance: (tenant.creditBalance ? tenant.creditBalance : 0) - parseInt(totalCost) });
+                                        var tenantLedger = rootRef.child('tenant-payment-ledger').child(data.tenantId);
+                                        data.mode = 'debit';
+                                        data.debit = totalCost;
+                                        data.acknowledgementNo = acknowledgementNo;
+                                        firebaseUtils.addData(tenantLedger, data);
+
+                                        calculateRevenue(data);
+                                    
                                     } else {
                                         rootRef.child('tenant-pending-tin-requests-token/' + data.tenantId + '/' + acknowledgementNo).update(Object.assign(data, obj));
-                                        rootRef.child('tenant-tin-requests/' + data.tenantId + '/' + data['barcode']).update({status: 'low_credit', remarks: 'Credit Balance Low! Please Recharge '});
+                                        calculateRequiredBalance(data);
+                                        rootRef.child('tenant-tin-requests/' + data.tenantId + '/' + data['barcode']).update({ status: 'low_credit', remarks: 'Credit Balance Low! Please Recharge ' }).then(function () {
+                                        });
                                     }
                                 });
                             });
@@ -701,6 +963,36 @@
                 });
                 positionLeft += increment;
             }
+        }
+
+
+        function calculateRequiredBalance(data) {
+            var ref = rootRef.child("/tenants/" + data.tenantId);
+            ref.once('value', function (snapshot) {
+                var extraCharge = settings.extraCharge ? settings.extraCharge : 0;
+                var totalCost = data.fees + extraCharge;
+                var prevBalance = snapshot.val().requiredBalance ? snapshot.val().requiredBalance : 0;
+                ref.update({ requiredBalance: prevBalance + totalCost})
+            });
+        }
+
+
+        function calculateRevenue(data) {
+            var date = new Date(),
+                month = date.getMonth(),
+                year = date.getFullYear();
+
+            var ref = rootRef.child("/tenant-monthly-revenues/" + year + "/" + month + "/" + data.tenantId),
+                totalref = rootRef.child("/tenant-revenues/" + data.tenantId);
+            // Attach an asynchronous callback to read the data at our posts reference
+            ref.once("value", function (snapshot) {
+                var extraCharge = settings.extraCharge ? settings.extraCharge : 0;
+                var totalCost = data.fees + extraCharge;
+                ref.update({ totalRevenue: snapshot.val().totalRevenue + totalCost });
+                totalref.update({ totalRevenue: snapshot.val().totalRevenue + totalCost });
+            }, function (errorObject) {
+                console.log("The read failed: " + errorObject.code);
+            });
         }
     }
 })();

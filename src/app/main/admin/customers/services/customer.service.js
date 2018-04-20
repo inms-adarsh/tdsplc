@@ -152,13 +152,54 @@
                             summaryType: 'count'
                         }]
                     },
+                    onToolbarPreparing: function (e) {
+                        var dataGrid = e.component;
+        
+                        e.toolbarOptions.items.unshift(
+                            {
+                                location: "before",
+                                widget: "dxButton",
+                                options: {
+                                    text: 'Select Pending Requests',
+                                    icon: "check",
+                                    onClick: function (e) {
+                                        var data = vm.gridData,
+                                            count = 0,
+                                            mergeObj = {},
+                                            latestRecords,
+                                            zipFilename;
+        
+                                        latestRecords = vm.gridData.filter(function (request) {
+                                            return request.status == 'pending';
+                                        });
+                                        gridInstance.selectRows(latestRecords);
+                                    }
+                                }
+                            }, {
+                                location: "before",
+                                widget: "dxButton",
+                                options: {
+                                    type: 'success',
+                                    text: 'Approve Selected',
+                                    onClick: function (e) {
+                                        var latestRecords = gridInstance.getSelectedRowKeys(),
+                                            zip = new JSZip(),
+                                            count = 0,
+                                            mergeObj = {},
+                                            zipFilename;
+                                        
+                                        approveAll(latestRecords);
+                                    }
+                                }
+                            }
+                        );
+        
+                    },
                     columns: [{
-                        dataField: 'company',
-                        caption: 'Name',
-                        validationRules: [{
-                            type: 'required',
-                            message: 'Name is required'
-                        }],
+                        caption: '#',
+                        cellTemplate: function(cellElement, cellInfo) {
+                            cellElement.text(cellInfo.row.rowIndex + 1)
+                        }
                     }, {
                         dataField: 'company',
                         caption: 'Firm name',
@@ -169,6 +210,9 @@
                     },{
                         dataField: 'creditBalance',
                         caption: 'Credit Balance'
+                    }, {
+                        dataField: 'requiredBalance',
+                        caption: 'Required Balance'
                     }, {
                         dataField: 'phone',
                         caption: 'Phone',
@@ -198,7 +242,7 @@
                         caption: 'Discount',
                         dataType: 'number'
                     }, {
-                        dataField: 'membersSince',
+                        dataField: 'date',
                         caption: 'Member since',
                         dataType: 'date',
                         validationRules: [{

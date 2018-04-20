@@ -60,7 +60,7 @@
 
         msNavigationServiceProvider.saveItem('acknowledgements', {
             weight: 2,
-            title: 'Acknowledged TIN Requests',
+            title: 'Uploaded TIN Requests',
             state: 'app.acknowledgements.list',
             icon: 'icon-sale',
             roles: ['customer']

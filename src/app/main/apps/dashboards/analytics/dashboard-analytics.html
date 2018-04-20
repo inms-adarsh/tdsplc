@@ -1,0 +1,119 @@
+<div class="page-layout carded left-sidenav single-scroll" id="analytics" layout="row">
+
+    <!-- TOP BACKGROUND -->
+    <div class="top-bg md-accent-bg"></div>
+    <!-- / TOP BACKGROUND -->
+
+    <!-- SIDENAV -->
+    <!--<md-sidenav class="sidenav" md-is-locked-open="$mdMedia('gt-md')" md-component-id="sidenav"
+     ng-include="'app/main/apps/requests/views/list-view/sidenavs/main-sidenav.html'" ms-scroll
+                ms-sidenav-helper>
+
+    </md-sidenav>-->
+    <!-- / SIDENAV -->
+
+    <!-- CENTER -->
+    <div class="center" flex>
+
+        <!-- CONTENT HEADER -->
+        <div class="header" layout="row" layout-align="start center">
+
+            <div class="logo" layout="row" layout-align="start center">
+                <span class="logo-icon">
+                    <md-icon md-font-icon="icon-sale" class="icon"></md-icon>
+                </span>
+                <span class="logo-text" translate="RECORD.TITLE"></span>
+            </div>
+
+        </div>
+        <!-- / CONTENT HEADER -->
+
+        <!-- CONTENT CARD -->
+        <div layout="row">
+            <md-card flex="50">
+                <md-card-header>
+                    <md-card-header-text>
+                        <span class="md-title">New Payment Requests</span>
+                    </md-card-header-text>
+                </md-card-header>
+                <md-card-content>
+                    <!-- / DEMO CONTENT -->
+                    <div dx-data-grid="vm.paymentRequests"></div>
+                </md-card-content>
+            </md-card>
+
+            <md-card flex="50">
+                <md-card-header>
+                    <md-card-header-text>
+                        <span class="md-title">Highest Revenue Clients This Month</span>
+                    </md-card-header-text>
+                </md-card-header>
+                <md-card-content>
+                    <!-- / DEMO CONTENT -->
+                    <div dx-data-grid="vm.mostRevenueClients"></div>
+                </md-card-content>
+            </md-card>
+        </div>
+        <div layout="row">
+
+            <md-card flex="50">
+                <md-card-header>
+                    <md-card-header-text>
+                        <span class="md-title">Client Required Payments</span>
+                    </md-card-header-text>
+                </md-card-header>
+                <md-card-content>
+                    <!-- / DEMO CONTENT -->
+                    <div dx-data-grid="vm.pendingPayments"></div>
+                </md-card-content>
+            </md-card>
+
+            <md-card flex="50">
+                <md-card-header>
+                    <md-card-header-text>
+                        <span class="md-title">Employee Pending Requests</span>
+                    </md-card-header-text>
+                </md-card-header>
+                <md-card-content>
+                    <!-- / DEMO CONTENT -->
+                    <div dx-data-grid="vm.employeeGrid"></div>
+                </md-card-content>
+            </md-card>
+            <div>
+                <!-- CONTENT TOOLBAR -->
+                <!-- / CONTENT TOOLBAR -->
+                <!-- CONTENT -->
+                <md-content class="content" ms-scroll flex>
+
+                </md-content>
+                <!-- / CONTENT -->
+
+            </div>
+        </div>
+
+        <md-card>
+            <md-card-header>
+                <md-card-header-text>
+                    <span class="md-title">All Pending Requests</span>
+                </md-card-header-text>
+            </md-card-header>
+            <md-card-content>
+                <!-- / DEMO CONTENT -->
+                <div class="popup" dx-popup="vm.assignedToPopupOptions">
+                    <div data-options="dxTemplate: { name:'info' }">
+                        <div dx-data-grid="vm.employeeGrid"></div>
+                        </br>
+                        <div style="text-align:center">
+                            <div dx-button="vm.assignButtonOptions"></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="request-grid" dx-data-grid="vm.gridOptions"></div>
+            </md-card-content>
+        </md-card>
+        <!-- / CONTENT CARD -->
+
+    </div>
+    <!-- / CENTER -->
+
+</div>

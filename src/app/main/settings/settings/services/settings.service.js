@@ -2,11 +2,11 @@
     'use strict';
 
     angular
-        .module('app.settings.taxgroups')
-        .factory('taxgroupService', taxgroupService);
+        .module('app.settings')
+        .factory('settingsService', settingsService);
 
     /** @ngInject */
-    function taxgroupService($firebaseArray, $firebaseObject, $q, authService, auth, firebaseUtils, dxUtils, config) {
+    function settingsService($firebaseArray, $firebaseObject, $q, authService, auth, firebaseUtils, dxUtils, config) {
         var tenantId = authService.getCurrentTenant(),
             taxGridInstance,
             dxTaxForm;
@@ -14,9 +14,9 @@
 
         var service = {
             gridOptions: gridOptions,
-            saveTaxgroup: saveTaxgroup,
-            updateTaxgroup: updateTaxgroup,
-            fetchTaxgroupList: fetchTaxgroupList,
+            saveSettings: saveSettings,
+            updateSettings: updateSettings,
+            fetchSettingsList: fetchSettingsList,
             taxGrid: taxGrid
         };
 
@@ -25,7 +25,7 @@
         //////////
 
         /**
-         * Grid Options for taxgroup list
+         * Grid Options for settings list
          * @param {Object} dataSource 
          */
         function gridOptions(dataSource) {
@@ -34,20 +34,20 @@
                     dataSource: {
                         load: function () {
                             var defer = $q.defer();
-                            fetchTaxgroupList().then(function (data) {
+                            fetchSettingsList().then(function (data) {
                                 defer.resolve(data);
                             });
                             return defer.promise;
                         },
                         insert: function (taxObj) {
                             taxObj.selectedTaxes = taxGridInstance.getSelectedRowKeys();
-                            saveTaxgroup(taxObj);
+                            saveSettings(taxObj);
                         },
                         update: function (key, taxObj) {
-                            updateTaxgroup(key, taxObj);
+                            updateSettings(key, taxObj);
                         },
                         remove: function (key) {
-                            deleteTaxgroup(key);
+                            deleteSettings(key);
                         }
                     },
                     summary: {
@@ -59,7 +59,7 @@
                     columns: config.taxGroupGridCols(),
                     export: {
                         enabled: true,
-                        fileName: 'Taxgroups',
+                        fileName: 'Settings',
                         allowExportSelectedData: true
                     },
                     onEditingStart: function (e) {
@@ -89,7 +89,7 @@
                                     text: 'Select the Taxes that are included in this group',
                                     location: 'top'
                                 },
-                                template: 'taxgroupTemplate'
+                                template: 'settingsTemplate'
                             }],
                             onInitialized: function (e) {
                                 dxTaxForm = e.component;
@@ -140,38 +140,38 @@
 
         /**
          * Save form data
-         * @returns {Object} Taxgroup Form data
+         * @returns {Object} Settings Form data
          */
-        function saveTaxgroup(taxObj) {
-            var ref = rootRef.child('tenant-taxgroups').child(tenantId);
+        function saveSettings(taxObj) {
+            var ref = rootRef.child('tenant-settings').child(tenantId);
             taxObj.user = auth.$getAuth().uid;
             return firebaseUtils.addData(ref, taxObj);
         }
 
         /**
-         * Fetch taxgroup list
-         * @returns {Object} Taxgroup data
+         * Fetch settings list
+         * @returns {Object} Settings data
          */
-        function fetchTaxgroupList() {
-            var ref = rootRef.child('tenant-taxgroups').child(tenantId).orderByChild('deactivated').equalTo(null);
+        function fetchSettingsList() {
+            var ref = rootRef.child('tenant-settings').child(tenantId).orderByChild('deactivated').equalTo(null);
             return firebaseUtils.fetchList(ref);
         }
 
         /**
-         * Fetch taxgroup list
-         * @returns {Object} Taxgroup data
+         * Fetch settings list
+         * @returns {Object} Settings data
          */
-        function updateTaxgroup(key, taxData) {
-            var ref = rootRef.child('tenant-taxgroups').child(tenantId).child(key['$id']);
-            return firebaseUtils.updateData(ref, TaxgroupsData);
+        function updateSettings(key, taxData) {
+            var ref = rootRef.child('tenant-settings').child(tenantId).child(key['$id']);
+            return firebaseUtils.updateData(ref, SettingsData);
         }
 
         /**
-         * Delete Taxgroup
-         * @returns {Object} taxgroup data
+         * Delete Settings
+         * @returns {Object} settings data
          */
-        function deleteTaxgroup(key) {
-            var ref = rootRef.child('tenant-taxgroups').child(tenantId).child(key['$id']);
+        function deleteSettings(key) {
+            var ref = rootRef.child('tenant-settings').child(tenantId).child(key['$id']);
             return firebaseUtils.updateData(ref, { deactivated: false });
         }
 

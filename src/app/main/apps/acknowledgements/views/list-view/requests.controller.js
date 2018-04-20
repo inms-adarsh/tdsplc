@@ -29,7 +29,7 @@
             name: 'Invalid'
         }, {
             id: 'acknowledged',
-            name: 'Acknowledged'
+            name: 'Uploaded'
         }, {
             id: 'low_credit',
             name: 'Low Credit Balance'

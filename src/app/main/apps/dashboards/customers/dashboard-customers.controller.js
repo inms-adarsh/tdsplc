@@ -3,11 +3,11 @@
     'use strict';
 
     angular
-        .module('app.dashboards.analytics')
-        .controller('DashboardAnalyticsController', DashboardAnalyticsController);
+        .module('app.dashboards.customers')
+        .controller('DashboardCustomersController', DashboardCustomersController);
 
     /** @ngInject */
-    function DashboardAnalyticsController($state, auth, $mdToast, firebaseUtils, $compile, users, $firebaseStorage, $firebaseObject, authService, dxUtils, msUtils, $firebaseArray, $scope, $mdDialog, $document, adminRequestService, customers)
+    function DashboardCustomersController($state, auth, $mdToast, firebaseUtils, $compile, users, $firebaseStorage, $firebaseObject, authService, dxUtils, msUtils, $firebaseArray, $scope, $mdDialog, $document, adminRequestService, customers)
     {
         var vm = this,
             tenantId = authService.getCurrentTenant(),
@@ -52,20 +52,9 @@
             var ref = rootRef.child('tenants');
             vm.clients = $firebaseArray(ref);
 
-            if (role == 'employee') {
-                var ref = rootRef.child('employee-tin-requests').child(auth.$getAuth().uid).orderByChild('status').equalTo('pending');
-            } else {
-                var ref = rootRef.child('admin-tin-requests').orderByChild('status').equalTo('pending');
-            }
-
+            var ref = rootRef.child('tenant-tin-requests').child(tenantId).orderByChild('status').equalTo('pending');
+           
             vm.gridData = $firebaseArray(ref);
-            vm.clientGridData = $firebaseArray(rootRef.child('tenants').orderByChild('requiredBalance').startAt(1));
-            vm.paymentRequestsgridData = $firebaseArray(rootRef.child('tenant-payments').orderByChild('status').equalTo('pending'));
-            var date = new Date(),
-                month = date.getMonth(),
-                year = date.getFullYear();
-
-            vm.revenueClientsData = $firebaseArray(rootRef.child('tenant-monthly-revenues/'+ year + '/'+ month).orderByChild('totalRevenue').limitToLast(10));
             
             vm.requestGridOptions = {
                 bindingOptions: {
@@ -132,82 +121,6 @@
                 onToolbarPreparing: function (e) {
                     var dataGrid = e.component;
 
-                    e.toolbarOptions.items.unshift(
-                        {
-                            location: "before",
-                            widget: "dxButton",
-                            options: {
-                                text: 'Select Latest Requests',
-                                icon: "check",
-                                onClick: function (e) {
-                                    var data = vm.gridData,
-                                        zip = new JSZip(),
-                                        count = 0,
-                                        mergeObj = {},
-                                        latestRecords,
-                                        zipFilename;
-
-                                    latestRecords = vm.gridData.filter(function (request) {
-                                        return request.latest == true;
-                                    });
-                                    gridInstance.selectRows(latestRecords);
-                                }
-                            }
-                        }, {
-                            location: "before",
-                            widget: "dxButton",
-                            options: {
-                                hint: "Download",
-                                icon: "download",
-                                text: 'Download Selected FVUs',
-                                onClick: function (e) {
-                                    var latestRecords = gridInstance.getSelectedRowKeys(),
-                                        zip = new JSZip(),
-                                        count = 0,
-                                        mergeObj = {},
-                                        zipFilename;
-
-                                    zipFilename = msUtils.formatDate(new Date()) + latestRecords[0].requestId + "_FVUs.zip";
-
-                                    latestRecords.forEach(function (record) {
-                                        var fvuUrl = record.fvuFileUrl,
-                                            fileName = record.fvuFileName;
-                                        if (role == 'employee') {
-                                            mergeObj['employee-tin-requests/' + auth.$getAuth().uid + '/' + record.$id + '/latest'] = false;
-                                        } else {
-                                            mergeObj['admin-tin-requests/' + record.$id + '/latest'] = false;
-                                        }
-                                        //var acknowledgementRef = firebase.storage().ref("tenant-tin-requests/" + latestRecords[i].rquestId + "/fvus/" + fvu.name)
-                                        JSZipUtils.getBinaryContent(fvuUrl, function (err, data) {
-                                            if (err) {
-                                                throw err; // or handle the error
-                                            }
-                                            zip.file(fileName, data, { binary: true });
-                                            count++;
-                                            if (count == latestRecords.length) {
-                                                var zipFile = zip.generateAsync({ type: "blob" }).then(function (blob) { // 1) generate the zip file
-                                                    saveAs(blob, zipFilename);
-                                                    rootRef.update(mergeObj);                     // 2) trigger the download
-                                                }, function (err) {
-                                                    alert('erro generating download!');
-                                                });
-                                            }
-                                        });
-                                    });
-                                }
-                            }
-                        }, {
-                            location: "before",
-                            widget: "dxButton",
-                            options: {
-                                text: 'Assign Selected',
-                                icon: "group",
-                                onClick: function (e) {
-                                    $scope.visiblePopup = true;
-                                }
-                            }
-                        } 
-                    );
                 },
                 export: {
                     enabled: true,

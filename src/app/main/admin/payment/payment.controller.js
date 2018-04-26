@@ -37,11 +37,38 @@
 
         vm.gridOptions = dxUtils.createGrid();
 
+        
+        vm.uploadPopupOptions = {
+            contentTemplate: "info",
+            showTitle: true,
+            width: '50%',
+            height: 'auto',
+            title: "Add Payment Request",
+            dragEnabled: false,
+            closeOnOutsideClick: true,
+            bindingOptions: {
+                visible: "visiblePopup"
+            }
+        };
+
         vm.paymentOptions = {
             onToolbarPreparing: function (e) {
                 var dataGrid = e.component;
 
                 e.toolbarOptions.items.unshift(
+                    {
+                        location: "before",
+                        widget: "dxButton",
+                        options: {
+                            text: 'Add New Request',
+                            icon: "plus",
+                            type: 'default',
+                            onClick: function (e) {
+                                $scope.visiblePopup = true;
+                            }
+
+                        }
+                    },
                     {
                         location: "before",
                         widget: "dxButton",
@@ -73,7 +100,7 @@
                                     count = 0,
                                     mergeObj = {},
                                     zipFilename;
-                                
+
                                 approveAll(latestRecords);
                             }
                         }
@@ -87,13 +114,15 @@
             editing: {
                 allowUpdating: true,
                 allowDeleting: true,
+                allowAdding: false,
                 mode: 'row'
             },
             columns: [{
                 caption: '#',
                 cellTemplate: function (cellElement, cellInfo) {
                     cellElement.text(cellInfo.row.rowIndex + 1)
-                }
+                },
+                allowEditing: false
             }, {
                 dataField: 'date',
                 caption: 'Date',
@@ -102,25 +131,22 @@
             }, {
                 dataField: 'tenantId',
                 caption: 'Client',
-                allowEditing: false,
                 lookup: {
                     dataSource: customers,
                     displayExpr: "company",
                     valueExpr: "$id"
-                }
+                },
+                allowEditing: false
             },
             {
                 dataField: 'paymentMode',
                 caption: 'Payment Mode',
-                allowEditing: false,
-                calculateCellValue: function (data) {
-                    var index = msUtils.getIndexByArray(vm.paymentModes, 'id', data.paymentMode);
-                    if (index > -1) {
-                        return vm.paymentModes[index].name;
-                    } else {
-                        return '';
-                    }
-                }
+                lookup: {
+                    dataSource: vm.paymentModes,
+                    displayExpr: "name",
+                    valueExpr: "$id"
+                },
+                allowEditing: false
             }, {
                 dataField: 'amount',
                 caption: 'Amount',
@@ -159,9 +185,6 @@
             onRowUpdated: function (e) {
                 var component = e.component;
 
-                // var ref = rootRef.child('tenant-payments').child(e.key.$id);
-                // firebaseUtils.updateData(ref, e.data);
-
                 if (e.key.status == 'received') {
                     approveSingleRecord(e.key);
                 }
@@ -192,21 +215,17 @@
 
         angular.extend(vm.gridOptions, vm.paymentOptions);
 
-
-        vm.paymentRequestForm = {
-            onInitialized: function (e) {
-                formInstance = e.component;
-            },
-            validationGroup: "customerData",
-            items: [{
-                itemType: "group",
-                caption: "Add Payment",
+        vm.paymentRequestForm = formOptions();
+        function formOptions() {
+            return {
+                onInitialized: function (e) {
+                    formInstance = e.component;
+                },
+                validationGroup: "customerData",
                 colCount: 2,
-                name: 'payment',
                 items: [
                     {
                         dataField: 'date',
-                        name: 'paymentDate',
                         label: {
                             text: 'Date'
                         },
@@ -222,11 +241,40 @@
                             message: 'Date is required'
                         }]
                     }, {
+                        dataField: 'tenantId',
+                        label: {
+                            text: 'Select Tenant'
+                        },
+                        editorType: 'dxSelectBox',
+                        editorOptions: {
+                            dataSource: customers,
+                            displayExpr: "company",
+                            valueExpr: "$id",
+                        },
+                        validationRules: [{
+                            type: 'required',
+                            message: 'Date is required'
+                        }]
+                    }, {
+                        dataField: 'status',
+                        label: {
+                            text: 'Select Status'
+                        },
+                        editorType: 'dxSelectBox',
+                        editorOptions: {
+                            dataSource: vm.paymentStatus,
+                            displayExpr: "name",
+                            valueExpr: "id",
+                        },
+                        validationRules: [{
+                            type: 'required',
+                            message: 'Status is required'
+                        }]
+                    }, {
                         dataField: 'paymentMode',
                         label: {
                             text: 'Payment Mode'
                         },
-                        name: 'paymentMode',
                         editorType: 'dxSelectBox',
                         editorOptions: {
                             dataSource: vm.paymentModes,
@@ -235,24 +283,23 @@
                             onValueChanged: function (e) {
                                 resetFormInstance(formInstance);
                                 if (e.value == 'cheque') {
-                                    formInstance.itemOption('payment.amount', 'visible', true);
-                                    formInstance.itemOption('payment.chequeNumber', 'visible', true);
+                                    formInstance.itemOption('amount', 'visible', true);
+                                    formInstance.itemOption('chequeNumber', 'visible', true);
                                 } else if (e.value == 'cash') {
-                                    formInstance.itemOption('payment.amount', 'visible', true);
-                                    formInstance.itemOption('payment.cashBy', 'visible', true);
+                                    formInstance.itemOption('amount', 'visible', true);
+                                    formInstance.itemOption('cashBy', 'visible', true);
                                 } else if (e.value == 'neft') {
-                                    formInstance.itemOption('payment.bankAccount', 'visible', true);
-                                    formInstance.itemOption('payment.amount', 'visible', true);
+                                    formInstance.itemOption('bankAccount', 'visible', true);
+                                    formInstance.itemOption('amount', 'visible', true);
                                 }
                             }
                         },
                         validationRules: [{
                             type: 'required',
-                            message: 'Please select a customer'
+                            message: 'Please select a mode'
                         }]
                     }, {
                         dataField: "chequeNumber",
-                        name: 'chequeNumber',
                         visible: false,
                         label: {
                             text: 'Cheque Number'
@@ -270,7 +317,6 @@
                         ]
                     }, {
                         dataField: "amount",
-                        name: 'amount',
                         visible: false,
                         label: {
                             text: 'Amount'
@@ -288,7 +334,6 @@
                         ]
                     }, {
                         dataField: "bankAccount",
-                        name: 'cashAccount',
                         label: {
                             text: 'Select Account'
                         },
@@ -301,7 +346,6 @@
                         }]
                     }, {
                         dataField: "cashBy",
-                        name: 'cashBy',
                         label: {
                             text: 'Cash By'
                         },
@@ -311,12 +355,11 @@
                         validationRules: [{
                             type: 'required',
                             message: 'Please select a value'
-                        }
-                        ]
+                        }]
                     }
                 ]
-            }]
-        };
+            };
+        }
 
         vm.buttonOptions = {
             text: "Submit",
@@ -337,16 +380,24 @@
             var result = e.validationGroup.validate();
 
             if (result.isValid == true) {
+                $scope.visiblePopup = false;
                 var formData = formInstance.option('formData');
-                formData.status = 'pending';
+                if(!formData.status) {
+                    formData.status = 'pending';
+                }
                 if (!formData.date) {
                     formData.date = new Date();
                 }
                 formData.date = formData.date.toString();
-                var ref = rootRef.child('tenant-payments').child(tenantId);
+                
+                var ref = rootRef.child('tenant-payments');
 
                 formData.user = auth.$getAuth().uid;
-                firebaseUtils.addData(ref, formData).then(function () {
+                firebaseUtils.addData(ref, formData).then(function (key) {
+                    if(formData.status == 'received') {
+                        formData.$id = key;
+                        approveSingleRecord(formData);
+                    }
                     formInstance.resetValues();
                     resetFormInstance(formInstance);
                 });
@@ -354,12 +405,12 @@
         }
 
         function resetFormInstance(formInstance) {
-            //formInstance.itemOption('payment.chequeAmount', 'visible', false);
-            formInstance.itemOption('payment.chequeNumber', 'visible', false);
-            formInstance.itemOption('payment.amount', 'visible', false);
-            formInstance.itemOption('payment.cashBy', 'visible', false);
-            formInstance.itemOption('payment.bankAccount', 'visible', false);
-            //formInstance.itemOption('payment.neftAmount', 'visible', false);
+            //formInstance.itemOption('chequeAmount', 'visible', false);
+            formInstance.itemOption('chequeNumber', 'visible', false);
+            formInstance.itemOption('amount', 'visible', false);
+            formInstance.itemOption('cashBy', 'visible', false);
+            formInstance.itemOption('bankAccount', 'visible', false);
+            //formInstance.itemOption('neftAmount', 'visible', false);
         }
         /*
             Calculate Payment
@@ -424,7 +475,7 @@
          */
 
         function init() {
-            var ref = rootRef.child('tenant-payments').orderByChild('date');
+            var ref = rootRef.child('tenant-payments');
             vm.gridData = $firebaseArray(ref);
 
         }
@@ -441,17 +492,15 @@
             var ref = rootRef.child("/tenant-monthly-revenues/" + year + "/" + month + "/" + data.tenantId),
                 totalref = rootRef.child("/tenant-revenues/" + data.tenantId);
             // Attach an asynchronous callback to read the data at our posts reference
-            var extraCharge = settings.extraCharge ? settings.extraCharge : 0;
-            var totalCost = data.fees + extraCharge;
-            ref.on("value", function (snapshot) {
+            ref.once("value", function (snapshot) {
                 var totalRevenue = 0;
-                if(snapshot.val() && snapshot.val().totalRevenue) {
+                if (snapshot.val() && snapshot.val().totalRevenue) {
                     totalRevenue = snapshot.val().totalRevenue;
                 } else {
                     totalRevenue = 0;
                 }
-                ref.update({ 'totalRevenue': totalRevenue + totalCost });
-                totalref.update({ 'totalRevenue': totalRevenue + totalCost });
+                ref.update({ 'totalRevenue': totalRevenue + data.amount });
+                totalref.update({ 'totalRevenue': totalRevenue + data.amount });
             }, function (errorObject) {
                 console.log("The read failed: " + errorObject.code);
             });
@@ -463,7 +512,7 @@
          */
         function approveAll(latestRecords) {
             latestRecords.forEach(function (record) {
-                record.status = 'received';               
+                record.status = 'received';
                 approveSingleRecord(record);
             });
 
@@ -490,7 +539,6 @@
                                 creditBalance = creditBalance - request.fees;
                                 requiredBalance = requiredBalance - requests.fees;
                                 rootRef.child('tenants').child(e.key.tenantId).update({ 'creditBalance': creditBalance, 'requiredBalance': requiredBalance });
-                                calculateRevenue(request);
                                 var ref = rootRef.child('tenant-pending-tin-requests-token/' + e.key.tenantId + '/' + request.token);
                                 firebaseUtils.deleteData(ref);
                             }
@@ -506,6 +554,8 @@
          * @param {*} record 
          */
         function approveSingleRecord(record) {
+            calculateRevenue(record);
+                              
             var paymentId = record.$id;
             delete record.$id;
             delete record.$conf;
@@ -540,15 +590,13 @@
                                 rootRef.child('tenant-tin-requests/' + record.tenantId + '/' + request['barcode']).update(Object.assign(request, obj));
                                 creditBalance = creditBalance - totalCost;
                                 requiredBalance = requiredBalance - totalCost;
-                                rootRef.child('tenants').child(record.tenantId).update({ 'creditBalance': creditBalance, 'requiredBalance': requiredBalance }).then(function() {
+                                rootRef.child('tenants').child(record.tenantId).update({ 'creditBalance': creditBalance, 'requiredBalance': requiredBalance }).then(function () {
                                     var tenantLedger = rootRef.child('tenant-payment-ledger').child(request.tenantId);
                                     request.mode = 'debit';
                                     request.debit = totalCost;
                                     request.acknowledgementNo = id;
                                     firebaseUtils.addData(tenantLedger, request);
 
-                                    calculateRevenue(request);
-                                    
                                     var ref = rootRef.child('tenant-pending-tin-requests-token/' + request.tenantId + '/' + request.token);
                                     ref.update(null);
                                 });

@@ -44,9 +44,15 @@
 
 #dxfu1{
     border: 1px solid #d3d3d3;
+    max-height: 270px;
+    overflow: auto;
 }
 
 .ps__rail-x,
     .ps__rail-y {
       opacity: 0.8;
+}
+
+.dx-scrollable-customizable-scrollbars ::-webkit-scrollbar-thumb {
+    background-color: #c1c1c1;
 }

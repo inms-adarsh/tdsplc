@@ -72,10 +72,10 @@
                             type: 'required',
                             message: 'Password is required'
                         }],
-                        name: 'usrPassword',
                         editorOptions: {
                             mode: 'password'
-                        }
+                        },
+                        name: 'usrPassword'
                     }, {
                         dataField: 'name',
                         label: {
@@ -123,7 +123,7 @@
                             dataSource: clientStatus,
                             displayExpr: 'name',
                             valueExpr: 'id',
-                            value: 'active'
+                            placeholder: 'Select'
                         },
                         validationRules: [{
                             type: 'required',

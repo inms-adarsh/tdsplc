@@ -36,6 +36,9 @@
                     tenantInfo: function(auth, authService){
                         return authService.retrieveTenant();
                     },
+                    customers: function(adminService) {
+                        return adminService.getCurrentCustomers();
+                    },
                     settings: function(adminService) {
                         return adminService.getCurrentSettings();
                     }

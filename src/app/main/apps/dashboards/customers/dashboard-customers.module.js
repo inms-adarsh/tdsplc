@@ -3,7 +3,7 @@
     'use strict';
 
     angular
-        .module('app.dashboards.analytics',
+        .module('app.dashboards.customers',
             [
                 // 3rd Party Dependencies
             ]
@@ -13,8 +13,7 @@
     /** @ngInject */
     function config($stateProvider, msApiProvider)
     {
- 
-
+        
     }
 
 })();

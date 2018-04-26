@@ -225,13 +225,13 @@
                         caption: 'Discount'
                     }, {
                         dataField: 'attachment27a',
-                        caption: 'Attachment 27A',
+                        caption: '27A',
                         cellTemplate: function(container, options) {
                             $('<a href="'+ options.data.filePath+'" download>Download 27A</a>').appendTo(container);
                         }
                     }, {
                         dataField: 'attachmentfvu',
-                        caption: 'Attachment FVU'
+                        caption: 'FVU'
                     }, {
                         dataField: 'ACK',
                         caption: 'Acknowledge'

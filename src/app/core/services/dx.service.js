@@ -26,7 +26,8 @@
                     enabled: true
                 },
                 scrolling: {
-                    mode: 'virtual'
+                    mode: 'virtual',
+                    useNative: true
                 },
                 headerFilter: {
                     visible: true

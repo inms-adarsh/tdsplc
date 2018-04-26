@@ -6,17 +6,20 @@
         .controller('AdminRequestsController', AdminRequestsController);
 
     /** @ngInject */
-    function AdminRequestsController($state, auth, $mdToast, firebaseUtils, $compile, users, $firebaseStorage, $firebaseObject, authService, dxUtils, msUtils, $firebaseArray, $scope, $mdDialog, $document, adminRequestService, settings) {
+    function AdminRequestsController($rootScope, $state, auth, $mdToast, firebaseUtils, $compile, users, $firebaseStorage, $firebaseObject, authService, dxUtils, msUtils, $firebaseArray, $scope, $mdDialog, $document, adminRequestService, settings, customers) {
         var vm = this,
             tenantId = authService.getCurrentTenant(),
             requestForm,
             formInstance,
             form27AInstance,
+            tdsInstance,
             ackFormInstance,
             ackFileFormInstance,
             gridInstance,
             employeeDropdown,
-            employeeGridInstance
+            employeeGridInstance,
+            fvuInstance,
+            formTDSInstance
             ;
 
         // Data
@@ -33,6 +36,8 @@
             id: 'acknowledged',
             name: 'Uploaded'
         }];
+
+        vm.uploadReqbtnDisabled = true;
 
         vm.statusSelectBox = {
             dataSource: requestStatus,
@@ -132,6 +137,28 @@
                 employeeGridInstance.clearSelection();
             }
         };
+
+        /**
+         * Assign Button
+         */
+        vm.requestButtonOptions = {
+            text: "Upload",
+            type: "success",
+            useSubmitBehavior: true,
+            bindingOptions: {
+                'disabled': 'vm.uploadReqbtnDisabled'
+            },
+            validationGroup: "requestData",
+            onClick: function (e) {
+                vm.btnDisabled = true;
+                var result = e.validationGroup.validate();
+
+                if (result.isValid == true) {
+                    saveRequest();
+                    $scope.visibleRequestPopup = false
+                }
+            }
+        };
         // Methods
         init();
         //////////
@@ -182,6 +209,20 @@
                 });
             });
         }
+
+        vm.uploadPopupOptions = {
+            contentTemplate: "requestinfo",
+            showTitle: true,
+            width: '70%',
+            height: 'auto',
+            title: "Add Tin Requests",
+            dragEnabled: false,
+            closeOnOutsideClick: true,
+            bindingOptions: {
+                visible: "visibleRequestPopup"
+            }
+        };
+
         /**
          * Init
          */
@@ -271,6 +312,35 @@
                         cellTemplate: function (cellElement, cellInfo) {
                             cellElement.text(cellInfo.row.rowIndex + 1)
                         }
+                    },{
+                        dataField: 'refNo',
+                        caption: 'Ref #'
+                    }, {
+                        dataField: 'ref',
+                        caption: 'Reference'
+                    },  {
+                        dataField: 'attachment27a',
+                        caption: '27A',
+                        cellTemplate: function (container, options) {
+                            if (options.data.form27AUrl) {
+                                $compile($('<a class="md-button md-raised md-normal"  href="' + options.data.form27AUrl + '" download><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
+                            } else {
+                                $compile($('<a ng-click="vm.uploadForm27A(' + options.data.barcode + ')">Wrong Form27A! Click to Upload again</a>'))($scope).appendTo(container);
+                                //$compile($('<div dx-file-uploader="vm.form27AUploader(' + options.data.barcode + ')"></a>'))($scope).appendTo(container);
+                            }
+                        },
+                        allowEditing: false
+                    }, {
+                        dataField: 'attachmentfvu',
+                        caption: 'FVU',
+                        cellTemplate: function (container, options) {
+                            if (options.data.fvuFileUrl) {
+                                $compile($('<a class="md-button md-raised md-normal" href="' + options.data.fvuFileUrl + '" download><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
+                            } else {
+                                $compile($('<a ng-click="vm.uploadForm27A(' + options.data.barcode + ')">Wrong FVU! Click to Upload again</a>'))($scope).appendTo(container);
+                            }
+                        },
+                        allowEditing: false
                     }, {
                         dataField: 'date',
                         caption: 'Date',
@@ -308,7 +378,7 @@
                         dataField: 'rno',
                         caption: 'R No',
                         allowEditing: false
-                    }, {
+                    },  {
                         dataField: 'rdate',
                         caption: 'R Date',
                         allowEditing: false
@@ -373,29 +443,11 @@
                         caption: 'Discount',
                         allowEditing: false
                     }, {
-                        dataField: 'attachment27a',
-                        caption: 'Attachment 27A',
-                        cellTemplate: function (container, options) {
-                            if (options.data.form27AUrl) {
-                                $('<a href="' + options.data.form27AUrl + '" download>' + options.data.form27AFileName + '</a>').appendTo(container);
-                            }
-                        },
-                        allowEditing: false
-                    }, {
-                        dataField: 'attachmentfvu',
-                        caption: 'Attachment FVU',
-                        cellTemplate: function (container, options) {
-                            if (options.data.fvuFileUrl) {
-                                $('<a href="' + options.data.fvuFileUrl + '" download>' + options.data.fvuFileName + '</a>').appendTo(container);
-                            }
-                        },
-                        allowEditing: false
-                    }, {
                         dataField: 'acknowledgementUrl',
-                        caption: 'Acknowledge',
+                        caption: 'Acknowledgement',
                         cellTemplate: function (container, options) {
                             if (options.data.acknowledgementUrl) {
-                                $('<a href="' + options.data.acknowledgementUrl + '" download>' + options.data.acknowledgementFileName + '</a>').appendTo(container);
+                                $compile($('<a class="md-button md-raised md-normal"  href="' + options.data.acknowledgementUrl + '" download><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
                             }
                         },
                         allowEditing: false
@@ -417,26 +469,19 @@
                     var dataGrid = e.component;
 
                     e.toolbarOptions.items.unshift(
-                        // {
-                        //     location: "before",
-                        //     widget: "dxSelectBox",
-                        //     options: {
-                        //         width: 200,
-                        //         items: [{
-                        //             value: "all",
-                        //             text: "All"
-                        //         }, {
-                        //             value: "latest",
-                        //             text: "Latest"
-                        //         }],
-                        //         displayExpr: "text",
-                        //         valueExpr: "value",
-                        //         placeholder: 'Download FVUs',
-                        //         onValueChanged: function(e) {
+                        {
+                            location: "before",
+                            widget: "dxButton",
+                            options: {
+                                text: 'Add New Request',
+                                icon: "plus",
+                                type: 'default',
+                                onClick: function (e) {
+                                    $scope.visibleRequestPopup = true;
+                                }
 
-                        //         }
-                        //     }
-                        // }, 
+                            }
+                        },
                         {
                             location: "before",
                             widget: "dxButton",
@@ -463,7 +508,6 @@
                             options: {
                                 hint: "Download",
                                 icon: "download",
-                                type: 'success',
                                 text: 'Download Selected FVUs',
                                 onClick: function (e) {
                                     var latestRecords = gridInstance.getSelectedRowKeys(),
@@ -512,71 +556,6 @@
                                 }
                             }
                         }
-                        // {
-                        //     location: "after",
-                        //     widget: "dxSelectBox",
-                        //     options: {
-                        //         width: 200,
-                        //         items: users,
-                        //         displayExpr: "name",
-                        //         valueExpr: "$id",
-                        //         placeholder: 'Assign Selected Requests',
-                        //         onValueChanged: function (e) {
-
-                        //         },
-                        //         onContentReady: function (e) {
-                        //             employeeDropdown = e.component;
-                        //         }
-                        //     }
-                        // }, {
-                        //     location: "after",
-                        //     widget: "dxButton",
-                        //     options: {
-                        //         hint: "Submit",
-                        //         icon: 'save',
-                        //         text: "Submit",
-                        //         onClick: function (e) {
-                        //             var data = gridInstance.getSelectedRowKeys();
-
-                        //             for (var i = 0; i < data.length; i++) {
-                        //                 if (!data[i].acknowledged) {
-                        //                     var mergeObj = {};
-
-                        //                     var ref = rootRef.child('admin-tin-requests').child(data[i].$id);
-                        //                     ref.on("value", function (request) {
-                        //                         var request = request.val();
-                        //                         request.latest = true;
-
-                        //                         if (request.assignedTo) {
-                        //                             mergeObj['employee-tin-requests/' + request.assignedTo + '/' + data[i].$id] = null;
-                        //                         }
-                        //                         var assignedTo = employeeDropdown.option('value');
-                        //                         request.assignedTo = assignedTo;
-                        //                         mergeObj['employee-tin-requests/' + assignedTo + '/' + data[i].$id] = request;
-                        //                         mergeObj['admin-tin-requests/' + data[i].$id + '/latest'] = false;
-                        //                         mergeObj['admin-tin-requests/' + data[i].$id + '/assignedTo'] = assignedTo;
-                        //                         mergeObj['tenant-tin-requests/' + request.tenantId + '/' + data[i].$id + '/assignedTo'] = assignedTo;
-                        //                         mergeObj['tin-requests/' + request.requestId + '/assignedTo'] = assignedTo;
-
-                        //                         rootRef.update(mergeObj).then(function () {
-                        //                             $mdToast.show({
-                        //                                 template: '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Request Submitted Successfully</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
-                        //                                 hideDelay: 7000,
-                        //                                 controller: 'ToastController',
-                        //                                 position: 'top right',
-                        //                                 parent: '#content',
-                        //                                 locals: {
-                        //                                     cssStyle: {
-                        //                                     }
-                        //                                 }
-                        //                             });
-                        //                         });
-                        //                     });
-                        //                 }
-                        //             }
-                        //         }
-                        //     }
-                        // }
                     );
                 },
                 export: {
@@ -600,6 +579,9 @@
                         info.rowElement.addClass("md-light-blue-50-bg");
                     if (info.rowType == 'data' && info.data.ackAttached == true)
                         info.rowElement.addClass("md-green-50-bg");
+                    if (info.rowType == 'data' && info.data.valid == false) {
+                        info.rowElement.addClass("md-red-50-bg");
+                    }
 
                 },
                 onRowUpdated: function (e) {
@@ -636,7 +618,7 @@
 
             vm.tdsRequestForm = {
                 onInitialized: function (e) {
-                    formInstance = e.component;
+                    formTDSInstance = e.component;
                 },
                 validationGroup: "customerData",
                 items: [{
@@ -652,7 +634,7 @@
                                     multiple: 'false',
                                     uploadMode: "useButtons",
                                     onContentReady: function (e) {
-                                        form27AInstance = e.component;
+                                        tdsInstance = e.component;
                                     },
                                     onValueChanged: function (e) {
                                         var values = e.component.option("values");
@@ -711,7 +693,7 @@
                 type: "success",
                 useSubmitBehavior: false,
                 onClick: function () {
-                    form27AInstance.option('disabled', true);
+                    tdsInstance.option('disabled', true);
                     saveTDSRequest();
                 }
             };
@@ -731,12 +713,12 @@
 
         function saveTDSRequest() {
 
-            var value = form27AInstance.option('value');
+            var value = tdsInstance.option('value');
             var reader = new FileReader();
 
             if (value.length === 0) {
-                form27AInstance.option('disabled', false);
-                form27AInstance.reset();
+                tdsInstance.option('disabled', false);
+                tdsInstance.reset();
                 return;
             }
 
@@ -785,7 +767,7 @@
 
                     };
 
-                    if(settings.extraCharge) {
+                    if (settings.extraCharge) {
                         obj['extra'] = settings.extraCharge;
                     }
 
@@ -837,8 +819,8 @@
                     positionTop += increment;
                 }
 
-                form27AInstance.option('disabled', false);
-                form27AInstance.reset();
+                tdsInstance.option('disabled', false);
+                tdsInstance.reset();
             };
 
             reader.readAsBinaryString(value[0]);
@@ -857,11 +839,8 @@
                 ackFileFormInstance.reset();
                 return;
             }
-            var count = 0;
-            console.log(acknowledgements.length);
-            acknowledgements.map(function (acknowledgement) {
-                count++;
-                console.log(count);
+            var promises = acknowledgements.map(function (acknowledgement) {
+
                 var acknowledgementNo = acknowledgement.name.split('.')[0];
 
                 var index = msUtils.getIndexByArray(vm.gridData, 'token', acknowledgementNo);
@@ -898,17 +877,20 @@
                                     var extraCharge = settings.extraCharge ? settings.extraCharge : 0;
                                     var totalCost = data.fees + extraCharge;
                                     if (tenant.creditBalance >= totalCost || tenant.paymentType == 'postpaid') {
-                                        rootRef.child('tenant-tin-requests-token/' + data.tenantId + '/' + acknowledgementNo).update(Object.assign(data, obj));
-                                        rootRef.child('tenant-tin-requests/' + data.tenantId + '/' + data['barcode']).update(Object.assign(data, obj));
-                                        rootRef.child('tenants/' + data.tenantId).update({ creditBalance: (tenant.creditBalance ? tenant.creditBalance : 0) - parseInt(totalCost) });
-                                        var tenantLedger = rootRef.child('tenant-payment-ledger').child(data.tenantId);
-                                        data.mode = 'debit';
-                                        data.debit = totalCost;
-                                        data.acknowledgementNo = acknowledgementNo;
-                                        firebaseUtils.addData(tenantLedger, data);
 
-                                        calculateRevenue(data);
-                                    
+                                        return new Promise(function (resolve, reject) {
+                                            rootRef.child('tenant-tin-requests-token/' + data.tenantId + '/' + acknowledgementNo).update(Object.assign(data, obj));
+                                            rootRef.child('tenant-tin-requests/' + data.tenantId + '/' + data['barcode']).update(Object.assign(data, obj));
+                                            rootRef.child('tenants/' + data.tenantId).update({ creditBalance: (tenant.creditBalance ? tenant.creditBalance : 0) - parseInt(totalCost) });
+                                            var tenantLedger = rootRef.child('tenant-payment-ledger').child(data.tenantId);
+                                            data.mode = 'debit';
+                                            data.debit = totalCost;
+                                            data.acknowledgementNo = acknowledgementNo;
+                                            firebaseUtils.addData(tenantLedger, data).then(function () {
+                                                return resolve(data);
+                                            });
+                                        });
+
                                     } else {
                                         rootRef.child('tenant-pending-tin-requests-token/' + data.tenantId + '/' + acknowledgementNo).update(Object.assign(data, obj));
                                         calculateRequiredBalance(data);
@@ -923,10 +905,14 @@
                     });
                 } else {
                     invalidTokens.push(acknowledgementNo);
-                }
 
+                }
                 ackFileFormInstance.option('disabled', false);
                 ackFileFormInstance.reset();
+            });
+
+            Promise.all(promises).then(function (data) {
+                console.log(data);
             });
             for (var i = 0; i < tokens.length; i++) {
                 $mdToast.show({
@@ -972,7 +958,7 @@
                 var extraCharge = settings.extraCharge ? settings.extraCharge : 0;
                 var totalCost = data.fees + extraCharge;
                 var prevBalance = snapshot.val().requiredBalance ? snapshot.val().requiredBalance : 0;
-                ref.update({ requiredBalance: prevBalance + totalCost})
+                ref.update({ requiredBalance: prevBalance + totalCost })
             });
         }
 
@@ -994,5 +980,409 @@
                 console.log("The read failed: " + errorObject.code);
             });
         }
+
+        vm.requestForm = {
+            onInitialized: function (e) {
+                formInstance = e.component;
+            },
+            validationGroup: "requestData",
+            colCount: 2,
+            items: [
+                
+                {
+                    dataField: 'tenantId',
+                    label: {
+                        text: 'Select Tenant'
+                    },
+                    editorType: 'dxSelectBox',
+                    editorOptions: {
+                        dataSource: customers,
+                        displayExpr: "company",
+                        valueExpr: "$id",
+                    },
+                    validationRules: [{
+                        type: 'required',
+                        message: 'Date is required'
+                    }]
+                }, {
+                    dataField: 'ref',
+                    label: {
+                        text: 'Reference'
+                    },
+                    editorType: 'dxTextBox'
+                },
+                {
+                    template: function (data, itemElement) {
+                        itemElement.append($("<div>").attr("id", "dxfu1").dxFileUploader({
+                            accept: 'application/pdf',
+                            selectButtonText: "Select Form 27As",
+                            multiple: 'true',
+                            uploadMode: "useButtons",
+                            onContentReady: function (e) {
+                                form27AInstance = e.component;
+                            },
+                            onValueChanged: function (e) {
+                                var values = e.component.option("values");
+                                $.each(values, function (index, value) {
+                                    e.element.find(".dx-fileuploader-upload-button").hide();
+                                });
+                                e.element.find(".dx-fileuploader-upload-button").hide();
+
+                                if (values.length > 0 && fvuInstance.option('value').length > 0) {
+                                    vm.uploadReqbtnDisabled = false;
+                                } else {
+                                    vm.uploadReqbtnDisabled = true;
+                                }
+                            }
+                        }));
+
+                        itemElement.append('<div id="button" dx-button="buttonOptions"></div>');
+                    }
+                }, {
+                    template: function (data, itemElement) {
+                        itemElement.append($("<div>").attr("id", "dxfu1").dxFileUploader({
+                            accept: '*.fvu',
+                            selectButtonText: "Select FVUs",
+                            multiple: true,
+                            uploadMode: "useButtons",
+                            onContentReady: function (e) {
+                                fvuInstance = e.component;
+                            },
+                            onValueChanged: function (e) {
+                                var values = e.component.option("values");
+                                $.each(values, function (index, value) {
+                                    e.element.find(".dx-fileuploader-upload-button").hide();
+                                });
+                                e.element.find(".dx-fileuploader-upload-button").hide();
+                                if (values.length > 0 && form27AInstance.option('value').length > 0) {
+                                    vm.uploadReqbtnDisabled = false;
+                                } else {
+                                    vm.uploadReqbtnDisabled = true;
+                                }
+                            }
+                        }));
+                    }
+                }
+            ]
+        };
+
+        
+        /**
+         * Save form data
+         * @returns {Object} Request Form data
+         */
+        function saveRequest(requestObj) {
+            vm.progressStatus = 'Creating Tin Request';
+            vm.showProgressBar = true;
+            var ref = rootRef.child('tin-requests');
+            if (!requestObj) {
+                requestObj = {};
+            }
+            if (!requestObj.date) {
+                requestObj.date = new Date();
+            }
+            requestObj.date = requestObj.date.toString();
+            requestObj.user = auth.$getAuth().uid;
+            requestObj.tenantId = formInstance.getEditor('tenantId').option('value');
+            firebaseUtils.addData(ref, requestObj).then(function (key) {
+
+                vm.requestNo = key;
+                submitForm(requestObj, key);
+            });
+        }
+
+
+        //////////
+        function submitForm(requestObj, key) {
+            $rootScope.loadingProgress = true;
+            var form27As = form27AInstance.option('value');
+            var tinrequests = {},
+                existingBarcodes = [],
+                invalidFiles = [],
+                tenantId = formInstance.getEditor('tenantId').option('value');
+            vm.showAlertMessage = false;
+            form27AInstance.option('disabled', true);
+            fvuInstance.option('disabled', true);
+            vm.progressStatus = 'Uploading Form27As';
+            vm.progressBarValue = 20;
+            var promises = form27As.map(function (form27A) {
+                return new Promise(function (resolve, reject) {
+                    var fileReader = new FileReader()
+                    fileReader.onload = function () {
+
+                        //Step 4:turn array buffer into typed array
+                        var typedarray = new Uint8Array(this.result);
+
+                        //Step 5:PDFJS should be able to read this
+                        pdfjsLib.getDocument(typedarray).then(function (pdf) {
+                            // do stuff
+                            pdf.getPage(1).then(function (page) {
+                                page.getTextContent().then(function (text) {
+                                    if (!text || !text.items || !text.items[3]) {
+                                        invalidFiles.push(form27A.name);
+                                        return resolve({});
+                                    }
+                                    var barcode = text.items[3].str.trim();
+
+                                    if (isNaN(Number(barcode))) {
+                                        invalidFiles.push(form27A.name);
+                                        return resolve({});
+                                    } else if (barcode.length != 20) {
+                                        invalidFiles.push(form27A.name);
+                                        return resolve({});
+                                    }
+
+                                    var storageRef = firebase.storage().ref("tenant-tin-requests/" + key + "/form27A/" + form27A.name),
+
+                                        metaData = {
+                                            customMetadata: {
+                                                'fileType': form27A.type,
+                                                'fileName': form27A.name,
+                                                'fileSize': form27A.size,
+                                                'requestNo': key,
+                                                'tenantId': tenantId
+                                            }
+                                        };
+
+                                    var barcodeAlreadyExist = msUtils.getIndexByArray(vm.gridData, 'barcode', barcode);
+
+                                    if (barcodeAlreadyExist > -1) {
+                                        existingBarcodes.push(barcode);
+                                        return resolve({});
+                                    } else {
+                                        $firebaseStorage(storageRef).$put(form27A, metaData).$complete(function (snapshot) {
+                                            //Step 2: Read the file using file reader
+                                            //pdfjsLib.GlobalWorkerOptions.workerSrc = '/node_modules/pdfjs-dist/build/pdf.worker.js';
+                                            var requestObj = { 'form27AFileName': form27A.name, 'barcode': barcode, 'form27AUrl': snapshot.downloadURL, 'requestId': key, 'tenantId': tenantId, 'status': 'pending' };
+
+                                            if (tinrequests.hasOwnProperty(barcode)) {
+                                                tinrequests[barcode].form27AUrl = snapshot.downloadURL;
+                                                tinrequests[barcode].form27AFileName = form27A.name;
+                                            } else {
+                                                tinrequests[barcode] = requestObj;
+                                            }
+
+                                            return resolve(tinrequests);
+                                        });
+                                    }
+                                });
+                            });
+                        });
+                    };
+                    //Step 3:Read the file as ArrayBuffer
+                    fileReader.readAsArrayBuffer(form27A);
+
+
+                });
+            });
+
+            Promise.all(promises).then(function () {
+                submitFVUs(tinrequests, existingBarcodes, invalidFiles, key);
+            });
+            //console.log(fvusInstance.option('value'));
+        }
+
+        /**
+         * Upload FVUs
+         * @param {*} key 
+         */
+        function submitFVUs(tinrequests, existingBarcodes, invalidFiles, key) {
+            var fvus = fvuInstance.option('value');
+            vm.progressStatus = 'Uploading FVUs';
+            vm.progressBarValue = 40,
+            tenantId = formInstance.getEditor('tenantId').option('value');
+
+            var promises = fvus.map(function (fvu) {
+                if (fvu.name.split('.').pop() !== 'fvu') {
+                    invalidFiles.push(fvu.name);
+                    return;
+                }
+                return new Promise(function (resolve, reject) {
+
+                    var reader = new FileReader();
+
+                    reader.addEventListener('load', function (e) {
+                        if (!e.target.result || !e.target.result.split('\n') || !e.target.result.split('\n')[7]) {
+                            invalidFiles.push(fvu.name);
+                            return resolve({});
+                        }
+                        var barcode = e.target.result.split('\n')[7].split('^');
+
+                        if (isNaN(Number(barcode))) {
+                            barcode = e.target.result.split('\n')[6].split('^');
+                        }
+                        //fs.writeFile('./fvucontent.json', barcode[barcode.length - 1]);
+                        barcode = barcode[barcode.length - 1].trim();
+
+
+                        if (isNaN(Number(barcode))) {
+                            invalidFiles.push(fvu.name);
+                            return resolve({});
+                        } else if (barcode.length != 20) {
+                            invalidFiles.push(fvu.name);
+                            return resolve({});
+                        }
+                        // if(typeof barcode === 'number') {
+                        //     barcode = barcode[barcode.length - 1].trim();
+                        // } else {
+                        //     barcode = e.target.result.split('\n')[7].split('^');
+                        //     barcode = barcode[barcode.length - 1].trim();
+                        // }
+
+                        var fvuRef = firebase.storage().ref("tenant-tin-requests/" + key + "/fvus/" + fvu.name),
+                            metaData = {
+                                customMetadata: {
+                                    'fileType': fvu.type,
+                                    'fileName': fvu.name,
+                                    'fileSize': fvu.size,
+                                    'requestNo': key,
+                                    'tenantId': tenantId
+                                }
+                            };
+
+                        var barcodeAlreadyExist = msUtils.getIndexByArray(vm.gridData, 'barcode', barcode);
+
+
+                        if (barcodeAlreadyExist > -1) {
+                            existingBarcodes.push(barcode);
+                            return resolve({});
+                        } else {
+                            $firebaseStorage(fvuRef).$put(fvu, metaData).$complete(function (snapshot) {
+                                //Step 3:Read the file as ArrayBuffer
+
+                                var requestObj = { 'fvuFileName': fvu.name, 'barcode': barcode, 'fvuFileUrl': snapshot.downloadURL, 'requestId': key, 'tenantId': tenantId, 'status': 'pending' };
+
+                                if (tinrequests.hasOwnProperty(barcode)) {
+                                    tinrequests[barcode].fvuFileUrl = snapshot.downloadURL;
+                                    tinrequests[barcode].fvuFileName = fvu.name;
+                                } else {
+                                    tinrequests[barcode] = requestObj;
+                                }
+
+                                return resolve(tinrequests);
+                            });
+                        }
+                    });
+
+                    reader.readAsBinaryString(fvu);
+
+
+                });
+            });
+
+
+            Promise.all(promises).then(function () {
+
+                var invalidReq = false,
+                    positionTop = 0,
+                    increment = 65,
+                    pendingCount = 0,
+                    failureCount = 0;
+                for (var request in tinrequests) {
+                    var requestObj = tinrequests[request];
+
+                    if (!requestObj.fvuFileUrl || !requestObj.form27AUrl) {
+                        invalidReq = true;
+                        requestObj.valid = false;
+                        requestObj.status = 'invalid';
+                    } else {
+                        requestObj.valid = true;
+                    }
+
+                    if (!requestObj.date) {
+                        requestObj.date = new Date();
+                        requestObj.date = requestObj.date.toString();
+                    }
+
+
+                    var barcodeAlreadyExist = msUtils.getIndexByArray(vm.gridData, 'barcode', request);
+                    var mergeObj = {};
+
+                    requestObj.refNo = settings.requestIdPrefix + (new Date()).getTime();
+                    requestObj.ref = formInstance.getEditor('ref').option('value') || '';
+                    mergeObj['tenant-tin-requests/' + tenantId + '/' + request] = requestObj;                    
+                    mergeObj['admin-tin-requests/' + request] = requestObj;
+                    if (requestObj.valid) {
+                        requestObj.latest = true;
+                        mergeObj['tin-requests/' + key + '/' + request] = requestObj;
+                        pendingCount++;
+                    } else {
+                        failureCount++;
+                    }
+                    rootRef.update(mergeObj, function (data) {
+                    });
+                }
+
+                firebaseUtils.setBadges('new_requests', 'admin', pendingCount);
+
+                for (var i = 0; i < existingBarcodes.length; i++) {
+                    $mdToast.show({
+                        template: '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Request for barcode ' + existingBarcodes[i] + ' already exist</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
+                        hideDelay: 7000,
+                        controller: 'ToastController',
+                        position: 'top right',
+                        parent: '#content',
+                        locals: {
+                            cssStyle: {
+                                'top': positionTop + 'px'
+                            }
+                        }
+                    }).then(function () {
+                        positionTop += increment;
+                    });
+                    positionTop += increment;
+                }
+
+                var positionLeft = 0;
+                for (var i = 0; i < invalidFiles.length; i++) {
+                    $mdToast.show({
+                        template: '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Invalid File ' + invalidFiles[i] + '</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
+                        hideDelay: 7000,
+                        controller: 'ToastController',
+                        position: 'top left',
+                        parent: '#content',
+                        locals: {
+                            cssStyle: {
+                                'top': positionLeft + 'px'
+                            }
+                        }
+                    }).then(function () {
+                        positionLeft += increment;
+                    });
+                    positionLeft += increment;
+                }
+
+                form27AInstance.option('disabled', false);
+                fvuInstance.option('disabled', false);
+                $rootScope.loadingProgress = false;
+                form27AInstance.reset();
+                fvuInstance.reset();
+                formInstance.option('formData', null);
+            });
+
+        }
+
+        vm.uploadForm27A = function uploadForm27A(barcode) {
+            var index = msUtils.getIndexByArray(vm.gridData, 'barcode', barcode),
+                request = vm.gridData[index];
+
+            $mdDialog.show({
+                controller: 'TinRequestDialogController',
+                templateUrl: 'app/main/apps/requests/views/TinRequestDialog/tin-request-dialog.html',
+                parent: angular.element(document.body),
+                controllerAs: 'vm',
+                clickOutsideToClose: true,
+                fullscreen: true, // Only for -xs, -sm breakpoints.,
+                locals: { barcode: barcode, request: request },
+                bindToController: true
+            })
+                .then(function (answer) {
+                    vm.requestNo = request.requestId;
+                    vm.showAdditonalFileProgressBar = true;
+                }, function () {
+                    $scope.status = 'You cancelled the dialog.';
+                });
+        };
     }
+
 })();

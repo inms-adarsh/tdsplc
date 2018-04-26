@@ -76,6 +76,29 @@
             onClick: function () {
                 vm.btnDisabled = true;
                 saveRequest();
+                $scope.visiblePopup = false;
+            }
+        };
+
+        vm.addTinRequests = {
+            text: 'Add New Request',
+            icon: "plus",
+            type: 'default',
+            onClick: function (e) {
+                $scope.visiblePopup = true;
+            }
+        }
+
+        vm.uploadPopupOptions = {
+            contentTemplate: "info",
+            showTitle: true,
+            width: '70%',
+            height: 'auto',
+            title: "Add Tin Requests",
+            dragEnabled: false,
+            closeOnOutsideClick: true,
+            bindingOptions: {
+                visible: "visiblePopup"
             }
         };
 
@@ -109,73 +132,68 @@
                 formInstance = e.component;
             },
             validationGroup: "customerData",
-            items: [{
-                itemType: "group",
-                caption: "Add TIN Request",
-                colCount: 3,
-
-                items: [
-                    {
-                        template: function (data, itemElement) {
-                            itemElement.append($("<div>").attr("id", "dxfu1").dxFileUploader({
-                                accept: 'application/pdf',
-                                selectButtonText: "Select Form 27As",
-                                multiple: 'true',
-                                uploadMode: "useButtons",
-                                onContentReady: function (e) {
-                                    form27AInstance = e.component;
-                                },
-                                onValueChanged: function (e) {
-                                    var values = e.component.option("values");
-                                    $.each(values, function (index, value) {
-                                        e.element.find(".dx-fileuploader-upload-button").hide();
-                                    });
+            colCount: 3,
+            items: [
+                {
+                    template: function (data, itemElement) {
+                        itemElement.append($("<div>").attr("id", "dxfu1").dxFileUploader({
+                            accept: 'application/pdf',
+                            selectButtonText: "Select Form 27As",
+                            multiple: 'true',
+                            uploadMode: "useButtons",
+                            onContentReady: function (e) {
+                                form27AInstance = e.component;
+                            },
+                            onValueChanged: function (e) {
+                                var values = e.component.option("values");
+                                $.each(values, function (index, value) {
                                     e.element.find(".dx-fileuploader-upload-button").hide();
+                                });
+                                e.element.find(".dx-fileuploader-upload-button").hide();
 
-                                    if (values.length > 0 && fvuInstance.option('value').length > 0) {
-                                        vm.btnDisabled = false;
-                                    } else {
-                                        vm.btnDisabled = true;
-                                    }
+                                if (values.length > 0 && fvuInstance.option('value').length > 0) {
+                                    vm.btnDisabled = false;
+                                } else {
+                                    vm.btnDisabled = true;
                                 }
-                            }));
+                            }
+                        }));
 
-                            itemElement.append('<div id="button" dx-button="buttonOptions"></div>');
-                        }
-                    }, {
-                        template: function (data, itemElement) {
-                            itemElement.append($("<div>").attr("id", "dxfu1").dxFileUploader({
-                                accept: '*.fvu',
-                                selectButtonText: "Select FVUs",
-                                multiple: true,
-                                uploadMode: "useButtons",
-                                onContentReady: function (e) {
-                                    fvuInstance = e.component;
-                                },
-                                onValueChanged: function (e) {
-                                    var values = e.component.option("values");
-                                    $.each(values, function (index, value) {
-                                        e.element.find(".dx-fileuploader-upload-button").hide();
-                                    });
-                                    e.element.find(".dx-fileuploader-upload-button").hide();
-                                    if (values.length > 0 && form27AInstance.option('value').length > 0) {
-                                        vm.btnDisabled = false;
-                                    } else {
-                                        vm.btnDisabled = true;
-                                    }
-                                }
-                            }));
-                        }
-                    }, {
-                        dataField: 'ref',
-                        label: {
-                            location: 'top',
-                            text: 'Reference'
-                        },
-                        editorType: 'dxTextBox'
+                        itemElement.append('<div id="button" dx-button="buttonOptions"></div>');
                     }
-                ]
-            }]
+                }, {
+                    template: function (data, itemElement) {
+                        itemElement.append($("<div>").attr("id", "dxfu1").dxFileUploader({
+                            accept: '*.fvu',
+                            selectButtonText: "Select FVUs",
+                            multiple: true,
+                            uploadMode: "useButtons",
+                            onContentReady: function (e) {
+                                fvuInstance = e.component;
+                            },
+                            onValueChanged: function (e) {
+                                var values = e.component.option("values");
+                                $.each(values, function (index, value) {
+                                    e.element.find(".dx-fileuploader-upload-button").hide();
+                                });
+                                e.element.find(".dx-fileuploader-upload-button").hide();
+                                if (values.length > 0 && form27AInstance.option('value').length > 0) {
+                                    vm.btnDisabled = false;
+                                } else {
+                                    vm.btnDisabled = true;
+                                }
+                            }
+                        }));
+                    }
+                }, {
+                    dataField: 'ref',
+                    label: {
+                        location: 'top',
+                        text: 'Reference'
+                    },
+                    editorType: 'dxTextBox'
+                }
+            ]
         };
 
 
@@ -372,6 +390,37 @@
                     }]
                 },
                 {
+                    dataField: 'attachment27a',
+                    caption: '27A',
+                    cellTemplate: function (container, options) {
+                        if (options.data.form27AUrl) {
+                            $compile($('<a class="md-button md-raised md-normal"  href="' + options.data.form27AUrl + '" download><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
+                        } else {
+                            $compile($('<a ng-click="vm.uploadForm27A(' + options.data.barcode + ')">Wrong Form27A! Click to Upload again</a>'))($scope).appendTo(container);
+                            //$compile($('<div dx-file-uploader="vm.form27AUploader(' + options.data.barcode + ')"></a>'))($scope).appendTo(container);
+                        }
+                    }
+                }, {
+                    dataField: 'attachmentfvu',
+                    caption: 'FVU',
+                    cellTemplate: function (container, options) {
+                        if (options.data.fvuFileUrl) {
+                            $compile($('<a class="md-button md-raised md-normal" href="' + options.data.fvuFileUrl + '" download><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
+                        } else {
+                            $compile($('<a ng-click="vm.uploadForm27A(' + options.data.barcode + ')">Wrong FVU! Click to Upload again</a>'))($scope).appendTo(container);
+                        }
+                    }
+                },
+                {
+                    dataField: 'acknowledgementUrl',
+                    caption: 'Acknowledge',
+                    cellTemplate: function (container, options) {
+                        if (options.data.acknowledgementUrl) {
+                            $compile($('<a class="md-button md-raised md-normal"  href="' + options.data.acknowledgementUrl + '" download><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
+                        }
+                    }
+                },
+                {
                     dataField: 'barcode',
                     caption: 'Bar Code',
                     dataType: 'string',
@@ -401,37 +450,7 @@
                     dataField: 'discount',
                     caption: 'Discount'
                 },
-                {
-                    dataField: 'attachment27a',
-                    caption: 'Attachment 27A',
-                    cellTemplate: function (container, options) {
-                        if (options.data.form27AUrl) {
-                            $compile($('<a class="md-button md-raised md-normal"  href="' + options.data.form27AUrl + '" download><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
-                        } else {
-                            $compile($('<a ng-click="vm.uploadForm27A(' + options.data.barcode + ')">Wrong Form27A! Click to Upload again</a>'))($scope).appendTo(container);
-                            //$compile($('<div dx-file-uploader="vm.form27AUploader(' + options.data.barcode + ')"></a>'))($scope).appendTo(container);
-                        }
-                    }
-                }, {
-                    dataField: 'attachmentfvu',
-                    caption: 'Attachment FVU',
-                    cellTemplate: function (container, options) {
-                        if (options.data.fvuFileUrl) {
-                            $compile($('<a class="md-button md-raised md-normal" href="' + options.data.fvuFileUrl + '" download><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
-                        } else {
-                            $compile($('<a ng-click="vm.uploadForm27A(' + options.data.barcode + ')">Wrong FVU! Click to Upload again</a>'))($scope).appendTo(container);
-                        }
-                    }
-                },
-                {
-                    dataField: 'acknowledgementUrl',
-                    caption: 'Acknowledge',
-                    cellTemplate: function (container, options) {
-                        if (options.data.acknowledgementUrl) {
-                            $compile($('<a class="md-button md-raised md-normal"  href="' + options.data.acknowledgementUrl + '" download><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
-                        }
-                    }
-                },
+
                 {
                     dataField: 'remarks',
                     caption: 'Remarks'
@@ -741,6 +760,10 @@
                     var reader = new FileReader();
 
                     reader.addEventListener('load', function (e) {
+                        if (!e.target.result || !e.target.result.split('\n') || !e.target.result.split('\n')[7]) {
+                            invalidFiles.push(fvu.name);
+                            return resolve({});
+                        }
                         var barcode = e.target.result.split('\n')[7].split('^');
 
                         if (isNaN(Number(barcode))) {

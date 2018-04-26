@@ -3,8 +3,8 @@
     <!-- TOP BACKGROUND -->
     <div class="top-bg md-accent-bg"></div>
     <!-- / TOP BACKGROUND -->
-    
-        <!-- SIDENAV -->
+
+    <!-- SIDENAV -->
     <!--<md-sidenav class="sidenav" md-is-locked-open="$mdMedia('gt-md')" md-component-id="sidenav"
      ng-include="'app/main/apps/requests/views/list-view/sidenavs/main-sidenav.html'" ms-scroll
                 ms-sidenav-helper>
@@ -27,15 +27,10 @@
 
         </div>
         <!-- / CONTENT HEADER -->
-      
-        <!-- CONTENT CARD -->
+        <!--       
         <div class="content-card">
-            <!-- CONTENT TOOLBAR -->
-            <!-- / CONTENT TOOLBAR -->
-            <!-- CONTENT -->
             <md-content class="content" ms-scroll flex>
                 
-                <!-- DEMO CONTENT -->
                 <form action="your-action" ng-submit="onFormSubmit($event)">
                     <div class="widget-container" style="margin-bottom: 10px; padding: 10px; border-bottom: 1px solid #ddd;">
                         <div dx-radio-group="vm.radioFileUpload"></div>
@@ -49,13 +44,52 @@
                     <div dx-button="vm.buttonOptions"></div>
                 </form>
                 
-                <!-- / DEMO CONTENT -->
 
             </md-content>
-            <!-- / CONTENT -->
 
-        </div>
-        <div class="content-card">
+        </div> -->
+
+        <md-card>
+            <md-card-actions layout="row" layout-align="start center">
+                <div dx-button="vm.addTinRequests"></div>
+            </md-card-actions>
+            <md-card-content>
+                <div ng-class="{'error-alert-message': vm.invalidRequest, 'success-alert-message': !vm.invalidRequest}" ng-show="vm.showAlertMessage">
+                    <span>Last Request generated with {{vm.invalidRequest == true? 'Errors': 'Success'}} :
+                        <a ng-click="showRequest()">Click to View</a>
+                    </span>
+                </div>
+                <!-- CONTENT TOOLBAR -->
+                <!-- / CONTENT TOOLBAR -->
+                <!-- CONTENT -->
+                <div class="popup" dx-popup="vm.uploadPopupOptions">
+                    <!-- <form action="your-action" ng-submit="onFormSubmit($event)">
+                    <div class="widget-container" style="margin-bottom: 10px; padding: 10px; border-bottom: 1px solid #ddd;">
+                        <div dx-radio-group="vm.radioFileUpload"></div>
+                    </div>
+                    <div class="widget-container" ng-if="vm.multiRequest">
+                        <div id="request-form" dx-form="vm.requestForm"></div>
+                    </div>
+                    <div class="widget-container" ng-if="!vm.multiRequest">
+                            <div id="request-form" dx-form="vm.manualRequestForm"></div>
+                    </div>
+                    <div dx-button="vm.buttonOptions"></div>
+                </form> -->
+
+                    <div data-options="dxTemplate: { name:'info' }">
+                        <div id="request-form" dx-form="vm.requestForm"></div>
+                        </br>
+                        <div style="text-align:center">
+                            <div dx-button="vm.buttonOptions"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="request-grid" dx-data-grid="vm.gridOptions"></div>
+                <!-- / DEMO CONTENT -->
+
+
+            </md-card-content>
 
             <!-- <div id="progress" class="content" ng-show="vm.showProgressBar">
                 <div id="progressBarStatus" dx-progress-bar="vm.progressBarOptions"></div>
@@ -63,22 +97,9 @@
             <div id="progress" class="content" ng-show="vm.showAdditonalFileProgressBar">
                 <div id="progressBarStatus" dx-progress-bar="vm.additonalFileProgressBarOptions"></div>
             </div> -->
-            <div ng-class="{'error-alert-message': vm.invalidRequest, 'success-alert-message': !vm.invalidRequest}" ng-show="vm.showAlertMessage">
-                <span>Last Request generated with {{vm.invalidRequest == true? 'Errors': 'Success'}} : <a ng-click="showRequest()">Click to View</a></span> 
-            </div>
-            <!-- CONTENT TOOLBAR -->
-            <!-- / CONTENT TOOLBAR -->
-            <!-- CONTENT -->
-            <md-content class="content" ms-scroll flex>
-
-              
-                <div id="request-grid" dx-data-grid="vm.gridOptions"></div>
-                <!-- / DEMO CONTENT -->
-
-            </md-content>
             <!-- / CONTENT -->
 
-        </div>
+        </md-card>
         <!-- / CONTENT CARD -->
 
     </div>

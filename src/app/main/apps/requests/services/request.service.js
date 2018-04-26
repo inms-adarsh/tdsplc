@@ -129,7 +129,7 @@
                         caption: 'Discount'
                     }, {
                         dataField: 'attachment27a',
-                        caption: 'Attachment 27A',
+                        caption: '27A',
                         cellTemplate: function(container, options) {
                             if(options.data.form27AUrl) {
                                 $('<a href="'+ options.data.form27AUrl+'" download>Download 27A</a>').appendTo(container);
@@ -139,7 +139,7 @@
                         }
                     }, {
                         dataField: 'attachmentfvu',
-                        caption: 'Attachment FVU',
+                        caption: 'FVU',
                         cellTemplate: function(container, options) {
                             if(options.data.fvuFileUrl) {
                                 $('<a href="'+ options.data.fvuFileUrl+'" download>Download FVU</a>').appendTo(container);

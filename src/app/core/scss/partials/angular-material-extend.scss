@@ -341,3 +341,10 @@ md-toolbar {
 md-progress-circular[disabled]{
     visibility: hidden;
 }
+
+.md-button {
+    margin: 0;
+    min-height: initial;
+    min-width: initial;
+
+}

@@ -7,7 +7,7 @@
         .controller('AddRequestDialogController', AddRequestDialogController);
 
     /** @ngInject */
-    function AddRequestDialogController($state, $firebaseObject, admin, authService, $mdToast, $scope, $mdDialog, $document, $firebaseStorage, firebaseUtils, requestService, customers)
+    function AddRequestDialogController($state, $firebaseObject, isAdmin, authService, $mdToast, $scope, $mdDialog, $document, $firebaseStorage, firebaseUtils, requestService, customers)
     {
         var vm = this,
             formInstance,
@@ -39,14 +39,10 @@
                     validationRules: [{
                         type: 'required',
                         message: 'Date is required'
-                    }]
-                }, {
-                    dataField: 'ref',
-                    label: {
-                        text: 'Reference'
-                    },
-                    editorType: 'dxTextBox'
-                },
+                    }],
+                    visible: isAdmin,
+                    colSpan: 2
+                }, 
                 {
                     template: function (data, itemElement) {
                         itemElement.append($("<div>").attr("id", "dxfu1").dxFileUploader({

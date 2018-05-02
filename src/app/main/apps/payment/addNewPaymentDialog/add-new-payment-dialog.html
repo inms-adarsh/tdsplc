@@ -1,0 +1,30 @@
+<md-dialog>
+        <form ng-cloak>
+            <md-toolbar class="md-accent md-hue-2">
+                <div class="md-toolbar-tools">
+                    <h2>Add New Payment</h2>
+                    <span flex></span>
+                    <md-button class="md-icon-button" ng-click="cancel()">
+                        <md-icon md-svg-src="img/icons/ic_close_24px.svg" aria-label="Close dialog"></md-icon>
+                    </md-button>
+                </div>
+            </md-toolbar>
+    
+            <md-dialog-content>
+                    <div id="request-form" dx-form="vm.paymentRequestForm"></div>
+            </md-dialog-content>
+            <md-dialog-actions layout="row" layout-align="space-between center">
+                <div layout="row" layout-align="start center">
+                    <md-button ng-click="vm.addPayment()" class="send-button md-accent md-raised" aria-label="Send">
+                        Submit
+                    </md-button>
+    
+                </div>
+    
+                <div layout="row">
+                    
+                </div>
+            </md-dialog-actions>
+    
+        </form>
+    </md-dialog>

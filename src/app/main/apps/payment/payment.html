@@ -31,32 +31,7 @@
        
         <!-- CONTENT CARD -->
         <md-card>
-            <md-card-actions>
-                <div dx-button="vm.addPaymentButton"></div>
-            </md-card-actions>
             <md-card-content>
-                <div class="popup" dx-popup="vm.uploadPopupOptions">
-                    <!-- <form action="your-action" ng-submit="onFormSubmit($event)">
-                                    <div class="widget-container" style="margin-bottom: 10px; padding: 10px; border-bottom: 1px solid #ddd;">
-                                        <div dx-radio-group="vm.radioFileUpload"></div>
-                                    </div>
-                                    <div class="widget-container" ng-if="vm.multiRequest">
-                                        <div id="request-form" dx-form="vm.requestForm"></div>
-                                    </div>
-                                    <div class="widget-container" ng-if="!vm.multiRequest">
-                                            <div id="request-form" dx-form="vm.manualRequestForm"></div>
-                                    </div>
-                                    <div dx-button="vm.buttonOptions"></div>
-                                </form> -->
-
-                    <div data-options="dxTemplate: { name:'info' }">
-                        <div id="request-form" dx-form="vm.paymentRequestForm"></div>
-                        </br>
-                        <div style="text-align:center">
-                            <div dx-button="vm.buttonOptions"></div>
-                        </div>
-                    </div>
-                </div>
                 <div id="request-grid" dx-data-grid="vm.gridOptions"></div>
             </md-card-content>
         </md-card>

@@ -193,13 +193,14 @@
                 }
 
                 if(!formObj.status) {
-                    formObj.status = 'pending';
+                    formObj.status = 0;
                 }
                 paymentService.addPayment(formObj).then(function(key) { 
-                    if(formObj.status == 'received') {
+                    if(formObj.status == 1) {
                         formObj.$id = key;
                         paymentService.approveSingleRecord(formObj);
-                    }                   
+                    }
+                    DevExpress.ui.dialog.alert('New request added successfully', 'Success');                   
                     $mdDialog.hide();  
                 });
 

@@ -12,7 +12,8 @@
             form27AInstance,
             fvuInstance,
             scope = $rootScope.$new(),
-            settings = {};
+            settings = {},
+            gridData = {};
         // Private variables
 
         adminService.getCurrentSettings().then(function (data) {
@@ -194,6 +195,10 @@
             if (!requestObj.date) {
                 requestObj.date = new Date();
             }
+            var role = localStorage.getItem('role');
+
+            gridData = $firebaseArray(rootRef.child('tenant-tin-requests'));
+
             requestObj.date = requestObj.date.toString();
             requestObj.user = auth.$getAuth().uid;
             requestObj.tenantId = formObj.tenantId;
@@ -253,17 +258,17 @@
                                             }
                                         };
 
-                                    var barcodeAlreadyExist = rootRef.child('tenant-tin-requests').child(barcode);
+                                    var barcodeAlreadyExist = msUtils.getIndexByArray(gridData, 'barcode', barcode);
 
-                                    barcodeAlreadyExist.once('value', function (snapshot) {
-                                        if (snapshot.val()) {
+                                   
+                                        if (barcodeAlreadyExist > -1) {
                                             existingBarcodes.push(barcode);
                                             return resolve({});
                                         } else {
                                             $firebaseStorage(storageRef).$put(form27A, metaData).$complete(function (snapshot) {
                                                 //Step 2: Read the file using file reader
                                                 //pdfjsLib.GlobalWorkerOptions.workerSrc = '/node_modules/pdfjs-dist/build/pdf.worker.js';
-                                                var requestObj = { 'form27AFileName': form27A.name, 'barcode': barcode, 'form27AUrl': snapshot.downloadURL, 'requestId': key, 'tenantId': formObj.tenantId, 'status': 'pending' };
+                                                var requestObj = { 'form27AFileName': form27A.name, 'barcode': barcode, 'form27AUrl': snapshot.downloadURL, 'requestId': key, 'tenantId': formObj.tenantId, 'status': 1 };
 
                                                 if (tinrequests.hasOwnProperty(barcode)) {
                                                     tinrequests[barcode].form27AUrl = snapshot.downloadURL;
@@ -275,7 +280,6 @@
                                                 return resolve(tinrequests);
                                             });
                                         }
-                                    })
                                 });
                             });
                         });
@@ -345,17 +349,17 @@
                                 }
                             };
 
-                        var barcodeAlreadyExist = rootRef.child('tenant-tin-requests').child(barcode);
+                            var barcodeAlreadyExist = msUtils.getIndexByArray(gridData, 'barcode', barcode);
 
-                        barcodeAlreadyExist.once('value', function (snapshot) {
-                            if (snapshot.val()) {
+                                   
+                            if (barcodeAlreadyExist > -1) {
                                 existingBarcodes.push(barcode);
                                 return resolve({});
                             } else {
                                 $firebaseStorage(fvuRef).$put(fvu, metaData).$complete(function (snapshot) {
                                     //Step 3:Read the file as ArrayBuffer
 
-                                    var requestObj = { 'fvuFileName': fvu.name, 'barcode': barcode, 'fvuFileUrl': snapshot.downloadURL, 'requestId': key, 'tenantId': formObj.tenantId, 'status': 'pending' };
+                                    var requestObj = { 'fvuFileName': fvu.name, 'barcode': barcode, 'fvuFileUrl': snapshot.downloadURL, 'requestId': key, 'tenantId': formObj.tenantId, 'status': 1 };
 
                                     if (tinrequests.hasOwnProperty(barcode)) {
                                         tinrequests[barcode].fvuFileUrl = snapshot.downloadURL;
@@ -367,7 +371,6 @@
                                     return resolve(tinrequests);
                                 });
                             }
-                        });
                     });
 
                     reader.readAsBinaryString(fvu);
@@ -384,13 +387,16 @@
                     increment = 65,
                     pendingCount = 0,
                     failureCount = 0;
+
+                var mergeObj = {};
+
                 for (var request in tinrequests) {
                     var requestObj = tinrequests[request];
 
                     if (!requestObj.fvuFileUrl || !requestObj.form27AUrl) {
                         invalidReq = true;
                         requestObj.valid = false;
-                        requestObj.status = 'invalid';
+                        requestObj.status = 0;
                     } else {
                         requestObj.valid = true;
                     }
@@ -400,7 +406,6 @@
                         requestObj.date = requestObj.date.toString();
                     }
 
-                    var mergeObj = {};
 
                     requestObj.refNo = settings.requestIdPrefix + (new Date()).getTime();
                     requestObj.ref = formObj.ref || '';
@@ -413,9 +418,12 @@
                     } else {
                         failureCount++;
                     }
-                    rootRef.update(mergeObj, function (data) {
-                    });
+                   
                 }
+
+                rootRef.update(mergeObj, function (data) {
+                    DevExpress.ui.dialog.alert('New tin-requests added', 'Success'); 
+                });
 
                 firebaseUtils.setBadges('new_requests', 'admin', pendingCount);
 

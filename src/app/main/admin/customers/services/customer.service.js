@@ -170,7 +170,7 @@
                                             zipFilename;
         
                                         latestRecords = vm.gridData.filter(function (request) {
-                                            return request.status == 'pending';
+                                            return request.status == 1;
                                         });
                                         gridInstance.selectRows(latestRecords);
                                     }

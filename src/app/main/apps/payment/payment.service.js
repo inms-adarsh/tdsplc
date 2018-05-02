@@ -114,7 +114,7 @@
                                             $firebaseStorage(storageRef).$put(form27A, metaData).$complete(function (snapshot) {
                                                 //Step 2: Read the file using file reader
                                                 //pdfjsLib.GlobalWorkerOptions.workerSrc = '/node_modules/pdfjs-dist/build/pdf.worker.js';
-                                                var requestObj = { 'form27AFileName': form27A.name, 'barcode': barcode, 'form27AUrl': snapshot.downloadURL, 'requestId': key, 'tenantId': formObj.tenantId, 'status': 'pending' };
+                                                var requestObj = { 'form27AFileName': form27A.name, 'barcode': barcode, 'form27AUrl': snapshot.downloadURL, 'requestId': key, 'tenantId': formObj.tenantId, 'status': 1 };
 
                                                 if (tinrequests.hasOwnProperty(barcode)) {
                                                     tinrequests[barcode].form27AUrl = snapshot.downloadURL;
@@ -206,7 +206,7 @@
                                 $firebaseStorage(fvuRef).$put(fvu, metaData).$complete(function (snapshot) {
                                     //Step 3:Read the file as ArrayBuffer
 
-                                    var requestObj = { 'fvuFileName': fvu.name, 'barcode': barcode, 'fvuFileUrl': snapshot.downloadURL, 'requestId': key, 'tenantId': formObj.tenantId, 'status': 'pending' };
+                                    var requestObj = { 'fvuFileName': fvu.name, 'barcode': barcode, 'fvuFileUrl': snapshot.downloadURL, 'requestId': key, 'tenantId': formObj.tenantId, 'status': 0 };
 
                                     if (tinrequests.hasOwnProperty(barcode)) {
                                         tinrequests[barcode].fvuFileUrl = snapshot.downloadURL;
@@ -241,7 +241,7 @@
                     if (!requestObj.fvuFileUrl || !requestObj.form27AUrl) {
                         invalidReq = true;
                         requestObj.valid = false;
-                        requestObj.status = 'invalid';
+                        requestObj.status = 0;
                     } else {
                         requestObj.valid = true;
                     }
@@ -469,9 +469,10 @@
                             var extraCharge = settings.extraCharge ? settings.extraCharge : 0;
                             var totalCost = request.fees  - (request.fees * discount * 0.01) + extraCharge;
                             if (totalCost <= creditBalance || data.paymentType == 'postpaid') {
-                                var obj = { ackAttached: true, remarks: '', status: 'acknowledged' };
+                                var obj = { ackAttached: true, remarks: '', status: 2 };
                                 rootRef.child('tenant-tin-requests-token/' + record.tenantId + '/' + id).update(Object.assign(request, obj));
                                 rootRef.child('tenant-tin-requests/' + record.tenantId + '/' + request['barcode']).update(Object.assign(request, obj));
+                                console.log(totalCost);
                                 creditBalance = creditBalance - totalCost;
                                 requiredBalance = requiredBalance - totalCost;
                                 rootRef.child('tenants').child(record.tenantId).update({ 'creditBalance': creditBalance, 'requiredBalance': requiredBalance }).then(function () {

@@ -6,7 +6,7 @@
         .factory('adminRequestService', adminRequestService);
 
     /** @ngInject */
-    function adminRequestService($firebaseArray, $firebaseObject, $q, authService, auth, firebaseUtils, dxUtils, config, msUtils, $firebaseStorage) {
+    function adminRequestService($firebaseArray, $firebaseObject, $mdToast, $q, authService, auth, firebaseUtils, dxUtils, config, msUtils, $firebaseStorage) {
         var tenantId = authService.getCurrentTenant(),
             formInstance,
             form27AInstance;

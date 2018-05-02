@@ -19,6 +19,13 @@
                 localStorage.clear();
                 $state.go(loginRedirectPath);
             }
+
+            if(error === 'EMAIL_VERIFICATION_REQUIRED') {
+                localStorage.clear();
+                DevExpress.ui.dialog.alert('You have not yet verified your registered email address! Please verify your email to login', 'Verify Email');
+                $state.go(loginRedirectPath);
+
+            }
         });
     }
 

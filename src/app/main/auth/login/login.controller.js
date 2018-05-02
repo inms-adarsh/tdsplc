@@ -18,7 +18,9 @@
 
         auth.$onAuthStateChanged(function (authData) {
           if (authData) {
-            vm.retrieveTenantId(authData);
+            if(authData.emailVerified) {
+              vm.retrieveTenantId(authData);
+            }
           } else {
             $state.go('app.auth_login');
             localStorage.clear();
@@ -29,26 +31,20 @@
            $rootScope.loadingProgress = true;
              auth.$signInWithEmailAndPassword(vm.form.email, vm.form.password)
               .then(function (authData) {
-                vm.retrieveTenantId(authData);
-                $rootScope.loadingProgress = false;
+                if(authData.emailVerified) {
+                  vm.retrieveTenantId(authData);
+                } else {
+                  DevExpress.ui.dialog.alert('You have not yet verified your registered email address! Please verify your email to login. A verification link has been sent to you', 'Verify Email');
+                  firebase.auth().currentUser.sendEmailVerification();
+                  $rootScope.loadingProgress = false;
+                }
               })
               .catch(function (error) {
                // showError(error);
-               $mdToast.show({
-                template : '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Invalid Username or Password</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
-                hideDelay: 7000,
-                controller: 'ToastController',
-                position : 'top right',
-                parent   : '#content',
-                locals: {
-                    cssStyle: {
-
-                    }
-                }
+                  DevExpress.ui.dialog.alert('Invalid Username or Password', 'Error');
               });
               
               $rootScope.loadingProgress = false;
-              });
         }
 
         function retrieveTenantId(authData) {
@@ -71,18 +67,7 @@
                       if(tenant.position == 'active') {
                         data.role == 'customer' ? $state.go('app.requests.list') : $state.go('app.tinrequests.list');
                       } else {
-                        $mdToast.show({
-                          template : '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Account Not active!</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
-                          hideDelay: 7000,
-                          controller: 'ToastController',
-                          position : 'top right',
-                          parent   : '#content',
-                          locals: {
-                              cssStyle: {
-
-                              }
-                          }
-                        });
+                        DevExpress.ui.dialog.alert('Account not Active ! Please wait untill administrator approves your account', 'Error');
                         auth.$signOut();
                       }
                     });

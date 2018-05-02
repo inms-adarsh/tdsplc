@@ -145,17 +145,7 @@
                 //saveRequest();
                 var formData = formInstance.option('formData');
                 rootRef.child('settings').update(formData).then(function() {
-                    $mdToast.show({
-                        template: '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Submitted Successfully</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
-                        hideDelay: 7000,
-                        controller: 'ToastController',
-                        position: 'top right',
-                        parent: '#content',
-                        locals: {
-                            cssStyle: {
-                            }
-                        }
-                    });  
+                    DevExpress.ui.dialog.alert('New settings saved successfully', 'Success');  
                 });
 
                 var logo = logoInstance.option('value');
@@ -166,17 +156,7 @@
                         var logoUrl = snapshot.downloadURL;
                         $scope.logoRef = logoUrl;
                         rootRef.child('settings').update({logo: logoUrl}).then(function(data) {
-                            $mdToast.show({
-                                template: '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Logo Uploaded</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
-                                hideDelay: 7000,
-                                controller: 'ToastController',
-                                position: 'top right',
-                                parent: '#content',
-                                locals: {
-                                    cssStyle: {
-                                    }
-                                }
-                            });  
+                            DevExpress.ui.dialog.alert('New logo uploaded successfully', 'Success');  
                         });
                         logoInstance.reset();
                     });

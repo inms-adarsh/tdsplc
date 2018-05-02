@@ -1,5 +1,4 @@
-(function ()
-{
+(function () {
     'use strict';
 
     angular
@@ -7,8 +6,7 @@
         .controller('TenantController', TenantController);
 
     /** @ngInject */
-    function TenantController(authService, currentAuth, $mdToast)
-    {
+    function TenantController(authService, currentAuth, $mdToast, loginRedirectPath, auth) {
         var vm = this;
         // Data
         vm.tenant = [];
@@ -23,12 +21,12 @@
          * Init function 
          */
         function init() {
-            authService.getCurrentUser(currentAuth.uid).then(function(data) {
+            authService.getCurrentUser(currentAuth.uid).then(function (data) {
                 vm.userInfo = data;
-                if('tenantId' in vm.userInfo || vm.userInfo.hasOwnProperty('tenantId') === true) {
+                if ('tenantId' in vm.userInfo || vm.userInfo.hasOwnProperty('tenantId') === true) {
                     vm.editMode = true;
                     vm.tenantIdExist = true;
-                    authService.retrieveTenant(vm.userInfo.tenantId).then(function(tenantData){
+                    authService.retrieveTenant(vm.userInfo.tenantId).then(function (tenantData) {
                         vm.tenant = tenantData;
                         vm.tenantId = vm.userInfo.tenantId;
                     });
@@ -43,36 +41,30 @@
          * @param tenant Information object
          */
         function addTenant(tenant) {
-          
-           if(vm.editMode === true) {
-             vm.editTenant(tenant);
-           } else {
-               tenant.date = new Date();
-               tenant.date = new Date().toString();
-               tenant.creditBalance = 0;
-               tenant.paymentType = 'prepaid';
-               authService.addTenant(tenant).then(function(key){
-                    authService.updateUserTenantId(currentAuth.uid, key, vm.userInfo).then(function(){
+
+            if (vm.editMode === true) {
+                vm.editTenant(tenant);
+            } else {
+                tenant.date = new Date();
+                tenant.date = new Date().toString();
+                tenant.creditBalance = 0;
+                tenant.paymentType = 'prepaid';
+                authService.addTenant(tenant).then(function (key) {
+                    authService.updateUserTenantId(currentAuth.uid, key, vm.userInfo).then(function () {
                         authService.setCurrentTenant(key);
                         vm.editMode = true;
-                        $mdToast.show({
-                            template : '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Details Saved Successfully</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
-                            hideDelay: 7000,
-                            controller: 'ToastController',
-                            position : 'top right',
-                            parent   : '#content',
-                            locals: {
-                                cssStyle: {
-
-                                }
-                            }
-                        });
+                        DevExpress.ui.dialog.alert('Details Saved Successfully', 'Success');
+                        authService.removeCurrentUser();
+                        auth.$signOut();
+                        $state.go(loginRedirectPath);
+                        vm.authData = null;
+                        localStorage.clear();
                     });
-                  return key;
-               }).catch(function(err){
+                    return key;
+                }).catch(function (err) {
 
-               });
-           }
+                });
+            }
         }
 
         /**
@@ -80,23 +72,12 @@
          * @param tenant Information object
          */
         function editTenant(tenant) {
-           authService.updateTenantInfo(tenant, vm.tenantId).then(function(data){
+            authService.updateTenantInfo(tenant, vm.tenantId).then(function (data) {
                 //authService.updateUserInfo(currentAuth.uid, data);
-                $mdToast.show({
-                    template : '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Details Saved Successfully</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
-                    hideDelay: 7000,
-                    controller: 'ToastController',
-                    position : 'top right',
-                    parent   : '#content',
-                    locals: {
-                        cssStyle: {
+                DevExpress.ui.dialog.alert('Details Saved Successfully', 'Success');
+            }).catch(function (err) {
 
-                        }
-                    }
-                });
-           }).catch(function(err){
-
-           });
+            });
         }
     }
 })();

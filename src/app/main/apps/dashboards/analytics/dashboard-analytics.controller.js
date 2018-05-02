@@ -53,14 +53,14 @@
             vm.clients = $firebaseArray(ref);
 
             if (role == 'employee') {
-                var ref = rootRef.child('employee-tin-requests').child(auth.$getAuth().uid).orderByChild('status').equalTo('pending');
+                var ref = rootRef.child('employee-tin-requests').child(auth.$getAuth().uid).orderByChild('status').equalTo(1);
             } else {
-                var ref = rootRef.child('admin-tin-requests').orderByChild('status').equalTo('pending');
+                var ref = rootRef.child('admin-tin-requests').orderByChild('status').equalTo(1);
             }
 
             vm.gridData = $firebaseArray(ref);
             vm.clientGridData = $firebaseArray(rootRef.child('tenants').orderByChild('requiredBalance').startAt(1));
-            vm.paymentRequestsgridData = $firebaseArray(rootRef.child('tenant-payments').orderByChild('status').equalTo('pending'));
+            vm.paymentRequestsgridData = $firebaseArray(rootRef.child('tenant-payments').orderByChild('status').equalTo(1));
             var date = new Date(),
                 month = date.getMonth(),
                 year = date.getFullYear();

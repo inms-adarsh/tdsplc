@@ -20,16 +20,16 @@
         vm.multiRequest = true;
 
         var requestStatus = [{
-            id: 'pending',
+            id: 1,
             name: 'Pending'
         }, {
-            id: 'invalid',
+            id: 0,
             name: 'Invalid'
         }, {
-            id: 'acknowledged',
+            id: 2,
             name: 'Uploaded'
         }, {
-            id: 'low_credit',
+            id: 3,
             name: 'Low Credit Balance'
         }];
         // Methods
@@ -272,7 +272,7 @@
                                     zipFilename;
 
                                 latestRecords = vm.gridData.filter(function (request) {
-                                    return request.status == 'acknowledged';
+                                    return request.status == 2;
                                 });
                                 gridInstance.selectRows(latestRecords);
                             }
@@ -285,7 +285,7 @@
                             text: 'Download Selected Acknowledgements',
                             onClick: function (e) {
                                 var latestRecords = gridInstance.getSelectedRowKeys().filter(function (record) {
-                                    return record.status == 'acknowledged';
+                                    return record.status == 2;
                                 }),
                                     zip = new JSZip(),
                                     count = 0,

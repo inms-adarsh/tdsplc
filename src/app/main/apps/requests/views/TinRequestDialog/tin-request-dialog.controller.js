@@ -116,7 +116,7 @@
                                             var ref = rootRef.child('tenant-tin-requests').child(tenantId).child(''+barcode);
                                             ref.once("value", function(request) {
                                                 var request = angular.copy(request.val()); 
-                                                Object.assign(request, {'form27AFileName': form27A.name, 'form27AUrl': snapshot.downloadURL, 'latest': true, 'valid': true, status: 'pending'});
+                                                Object.assign(request, {'form27AFileName': form27A.name, 'form27AUrl': snapshot.downloadURL, 'latest': true, 'valid': true, status: 1});
                                                 var mergeObj = {};
                                                 mergeObj['admin-tin-requests/'+barcode] = request;
                                                 mergeObj['tenant-tin-requests/'+request.tenantId+'/'+barcode] = request;
@@ -168,7 +168,7 @@
                                     var ref = rootRef.child('tenant-tin-requests').child(tenantId).child(''+barcode);
                                     ref.once("value", function(request) {
                                         var request = angular.copy(request.val()); 
-                                        Object.assign(request, {'fvuFileName': form27A.name, 'fvuFileUrl': snapshot.downloadURL, 'latest': true, 'valid': true, status: 'pending'});
+                                        Object.assign(request, {'fvuFileName': form27A.name, 'fvuFileUrl': snapshot.downloadURL, 'latest': true, 'valid': true, status: 1});
                                         //delete request.$id;
 
                                         var mergeObj = {};

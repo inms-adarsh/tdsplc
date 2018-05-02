@@ -31,7 +31,7 @@
             resolve  : {
                 currentAuth: ["auth", function (auth) {
                     // returns a promisse so the resolve waits for it to complete
-                    return auth.$requireSignIn();
+                    return auth.$requireSignIn(true);
                 }],
                 tenantInfo: function(auth, authService, currentAuth){
                     return authService.retrieveTenant();
@@ -58,7 +58,7 @@
             resolve  : {
                 currentAuth: ["auth", function (auth) {
                     // returns a promisse so the resolve waits for it to complete
-                    return auth.$requireSignIn();
+                    return auth.$requireSignIn(true);
                 }],
                 tenantInfo: function(auth, authService, currentAuth){
                     return authService.retrieveTenant();

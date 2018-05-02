@@ -262,7 +262,9 @@
                 var ref = rootRef.child('tenants').child(record.$id);
                 mergeObj['tenants/'+record.$id+'/position'] = 'active';
             });
-            rootRef.update(mergeObj);
+            rootRef.update(mergeObj).then(function() {
+                DevExpress.ui.dialog.alert('All accounts approved', 'Success');  
+            });
         }
 
     }

@@ -22,16 +22,16 @@
         //////////
 
         var requestStatus = [{
-            id: 'pending',
+            id: 1,
             name: 'Pending'
         }, {
-            id: 'invalid',
+            id: 0,
             name: 'Invalid'
         }, {
-            id: 'acknowledged',
+            id: 2,
             name: 'Uploaded'
         }, {
-            id: 'low_credit',
+            id: 3,
             name: 'Low Credit Balance'
         }];
 

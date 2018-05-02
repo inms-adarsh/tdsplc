@@ -39,7 +39,8 @@
             'app.requests',
             //'app.acknowledgements',
             'app.payment',
-            'app.settings'
+            'app.settings',
+            'app.profile'
             //'app.bulkbuys'
         ]);
 })();

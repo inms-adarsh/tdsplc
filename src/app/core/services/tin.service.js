@@ -123,7 +123,7 @@
                                 $firebaseStorage(storageRef).$put(form27A, metaData).$complete(function (snapshot) {
                                     //Step 2: Read the file using file reader
                                     //pdfjsLib.GlobalWorkerOptions.workerSrc = '/node_modules/pdfjs-dist/build/pdf.worker.js';
-                                    var requestObj = { 'form27AFileName': form27A.name, 'barcode': barcode, 'form27AUrl': snapshot.downloadURL, 'requestId': key, 'tenantId': tenantId, 'status': 'pending' };
+                                    var requestObj = { 'form27AFileName': form27A.name, 'barcode': barcode, 'form27AUrl': snapshot.downloadURL, 'requestId': key, 'tenantId': tenantId, 'status': 1 };
 
                                     if (tinrequests.hasOwnProperty(barcode)) {
                                         tinrequests[barcode].form27AUrl = snapshot.downloadURL;
@@ -304,7 +304,7 @@
                 $firebaseStorage(fvuRef).$put(fvu, metaData).$complete(function (snapshot) {
                     //Step 3:Read the file as ArrayBuffer
 
-                    var requestObj = { 'fvuFileName': fvu.name, 'barcode': barcode, 'fvuFileUrl': snapshot.downloadURL, 'requestId': key, 'tenantId': tenantId, 'status': 'pending' };
+                    var requestObj = { 'fvuFileName': fvu.name, 'barcode': barcode, 'fvuFileUrl': snapshot.downloadURL, 'requestId': key, 'tenantId': tenantId, 'status': 1 };
 
                     if (tinrequests.hasOwnProperty(barcode)) {
                         tinrequests[barcode].fvuFileUrl = snapshot.downloadURL;

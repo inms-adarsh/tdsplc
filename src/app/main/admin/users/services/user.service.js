@@ -6,7 +6,7 @@
         .factory('userService', userService);
 
     /** @ngInject */
-    function userService($firebaseArray, $firebaseObject, $q, authService, auth, firebaseUtils, dxUtils, config) {
+    function userService($firebaseArray, $firebaseObject, $q, $state, authService, auth, firebaseUtils, dxUtils, config, loginRedirectPath) {
         var tenantId = authService.getCurrentTenant(),
             dxFormInstance,
             gridInstance;
@@ -296,6 +296,12 @@
 
             authService.registerUser(user).then(function(data) {
                 authService.createProfile(user, data, tenantId).then(function() {
+                    firebase.auth().currentUser.sendEmailVerification().then(function() {
+                        $rootScope.loadingProgress = false;                    
+                        DevExpress.ui.dialog.alert('An Verification link has been sent to registered email Id! Please tell your employee to verify email to proceed', 'Verify Email');
+                    }).catch(function(error) {
+                    // An error happened.
+                    });
                     var ref = rootRef.child('tenant-users').child(tenantId).child(data.uid);
                     delete userObj.usrPassword;
                     if (!userObj.date) {
@@ -304,7 +310,7 @@
                     userObj.date = userObj.date.toString();
                     userObj.user = auth.$getAuth().uid;
                     ref.set(userObj).then(function(data) {
-                        
+                        $state.go(loginRedirectPath);                   
                     });
 
                     var ref = rootRef.child('employees').child(data.uid);

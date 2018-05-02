@@ -28,10 +28,10 @@
         }];
 
         vm.paymentStatus = [{
-            id: 'pending',
+            id: 0,
             name: 'Pending'
         }, {
-            id: 'received',
+            id: 1,
             name: 'Received'
         }];
 
@@ -103,7 +103,7 @@
                                     zipFilename;
 
                                 latestRecords = vm.gridData.filter(function (request) {
-                                    return request.status == 'pending';
+                                    return request.status == 0;
                                 });
                                 gridInstance.selectRows(latestRecords);
                             }
@@ -205,7 +205,7 @@
             onRowUpdated: function (e) {
                 var component = e.component;
 
-                if (e.key.status == 'received') {
+                if (e.key.status == 1) {
                     approveSingleRecord(e.key);
                 }
             },
@@ -260,7 +260,7 @@
          */
         function approveAll(latestRecords) {
             latestRecords.forEach(function (record) {
-                record.status = 'received';
+                record.status = 1;
                 paymentService.approveSingleRecord(record);
             });
 

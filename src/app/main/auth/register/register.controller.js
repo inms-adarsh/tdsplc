@@ -6,7 +6,7 @@
         .controller('RegisterController', RegisterController);
 
     /** @ngInject */
-    function RegisterController(auth, $state, $rootScope, $q, $firebaseObject, $firebaseArray, $timeout, authService) {
+    function RegisterController(auth, $state, $rootScope, $q, loginRedirectPath, $firebaseObject, $firebaseArray, $timeout, authService) {
         var vm = this;
         // Data
 
@@ -30,7 +30,14 @@
 
             authService.registerUser(user).then(function (data) {
                 authService.createProfile(user, data).then(function () {
-                    redirect();
+                    firebase.auth().currentUser.sendEmailVerification().then(function() {
+                        $rootScope.loadingProgress = false;                    
+                        DevExpress.ui.dialog.alert('An Verification link has been sent to your registered email Id! Please verify your email to proceed', 'Verify Email');
+                        $state.go(loginRedirectPath);
+                    }).catch(function(error) {
+                    // An error happened.
+                    });
+                    //redirect();
                     var ref = rootRef.child('tenants');
                     $firebaseArray(ref).$loaded().then(function (tenantdata) {
                         if (tenantdata.length == 0) {

@@ -27,13 +27,13 @@
         var role = JSON.parse(localStorage.getItem('role'));
 
         var requestStatus = [{
-            id: 'pending',
+            id: 1,
             name: 'Pending'
         }, {
-            id: 'invalid',
+            id: 0,
             name: 'Invalid'
         }, {
-            id: 'acknowledged',
+            id: 2,
             name: 'Uploaded'
         }];
 
@@ -198,17 +198,7 @@
             rootRef.update(mergeObj).then(function () {                
                 gridInstance.clearSelection();
                 employeeGridInstance.clearSelection();
-                $mdToast.show({
-                    template: '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Request Submitted Successfully</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
-                    hideDelay: 7000,
-                    controller: 'ToastController',
-                    position: 'top right',
-                    parent: '#content',
-                    locals: {
-                        cssStyle: {
-                        }
-                    }
-                });
+                DevExpress.ui.dialog.alert('All selected requests assigned successfully ', 'Success'); 
             });
         }
 
@@ -314,9 +304,19 @@
                         cellTemplate: function (cellElement, cellInfo) {
                             cellElement.text(cellInfo.row.dataIndex + 1)
                         }
+                    },
+                    {
+                        dataField: 'date',
+                        caption: 'Date',
+                        dataType: 'date',
+                        validationRules: [{
+                            type: 'required',
+                            message: 'Date is required'
+                        }],
+                        allowEditing: false
                     }, {
                         dataField: 'refNo',
-                        caption: 'Ref #'
+                        caption: 'Order Id #'
                     },  {
                         caption: 'Deductor/Collector Name',
                         dataField: 'deductor',
@@ -357,15 +357,6 @@
                                 $compile($('<a ng-click="vm.uploadForm27A(' + options.data.barcode + ')">Wrong FVU! Click to Upload again</a>'))($scope).appendTo(container);
                             }
                         },
-                        allowEditing: false
-                    }, {
-                        dataField: 'date',
-                        caption: 'Date',
-                        dataType: 'date',
-                        validationRules: [{
-                            type: 'required',
-                            message: 'Date is required'
-                        }],
                         allowEditing: false
                     },
                     {
@@ -801,7 +792,7 @@
                                 data.ackDate = new Date();
                                 data.ackDate = new Date().toString();
                                 $firebaseStorage(acknowledgementRef).$put(acknowledgement, metaData).$complete(function (snapshot) {
-                                    var obj = { acknowledgementFileName: acknowledgement.name, acknowledgementUrl: snapshot.downloadURL, ackAttached: true, status: 'acknowledged' };
+                                    var obj = { acknowledgementFileName: acknowledgement.name, acknowledgementUrl: snapshot.downloadURL, ackAttached: true, status: 2 };
                                     rootRef.child('admin-tin-requests/' + data['barcode']).update(obj);
                                     if (data.assignedTo) {
                                         rootRef.child('employee-tin-requests/' + data.assignedTo + '/' + data['barcode']).update(obj);
@@ -839,7 +830,7 @@
                                         } else {
                                             rootRef.child('tenant-pending-tin-requests-token/' + data.tenantId + '/' + acknowledgementNo).update(Object.assign(data, obj));
                                             calculateRequiredBalance(data);
-                                            rootRef.child('tenant-tin-requests/' + data.tenantId + '/' + data['barcode']).update({ status: 'low_credit', remarks: 'Credit Balance Low! Please Recharge ' }).then(function () {
+                                            rootRef.child('tenant-tin-requests/' + data.tenantId + '/' + data['barcode']).update({ status: 3, remarks: 'Credit Balance Low! Please Recharge ' }).then(function () {
                                             });
                                         }
                                     });

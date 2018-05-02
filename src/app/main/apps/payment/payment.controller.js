@@ -29,10 +29,10 @@
         }];
 
         vm.paymentStatus = [{
-            id: 'pending',
+            id: 0,
             name: 'Pending'
         }, {
-            id: 'received',
+            id: 1,
             name: 'Received'
         }];
 

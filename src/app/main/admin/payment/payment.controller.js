@@ -6,7 +6,7 @@
         .controller('PaymentController', PaymentController);
 
     /** @ngInject */
-    function PaymentController(currentAuth, msUtils, dxUtils, users, auth, customers, $firebaseArray, firebaseUtils, authService, settings, tenantInfo, $scope, paymentService, $state) {
+    function PaymentController(currentAuth, msUtils, dxUtils, users, auth, customers, accounts, $firebaseArray, firebaseUtils, authService, settings, tenantInfo, $scope, paymentService, $state) {
         var vm = this,
             formInstance,
             tenantId = authService.getCurrentTenant(),
@@ -120,7 +120,7 @@
             columns: [{
                 caption: '#',
                 cellTemplate: function (cellElement, cellInfo) {
-                    cellElement.text(cellInfo.row.rowIndex + 1)
+                    cellElement.text(cellInfo.row.dataIndex + 1)
                 },
                 allowEditing: false
             }, {
@@ -209,7 +209,14 @@
             },
             onContentReady: function (e) {
                 gridInstance = e.component;
+            },
+            summary: {
+                totalItems: [{
+                    column: '#',
+                    summaryType: 'count'
+                }]
             }
+
 
         }
 
@@ -332,8 +339,9 @@
                             message: 'Value must be more then 0'
                         }
                         ]
-                    }, {
+                    },{
                         dataField: "bankAccount",
+                        name: 'cashAccount',
                         label: {
                             text: 'Select Account'
                         },
@@ -343,9 +351,17 @@
                         validationRules: [{
                             type: 'required',
                             message: 'Please select bank name'
-                        }]
+                        }],
+                        editorOptions: {
+                            dataSource: accounts,
+                            displayExpr: "bankname",
+                            valueExpr: "$id",
+                            onValueChanged: function (e) {
+                            }
+                        }
                     }, {
                         dataField: "cashBy",
+                        name: 'cashBy',
                         label: {
                             text: 'Cash By'
                         },
@@ -354,8 +370,13 @@
                         editorType: 'dxSelectBox',
                         validationRules: [{
                             type: 'required',
-                            message: 'Please select a value'
-                        }]
+                            message: 'Please select a name'
+                        }],
+                        editorOptions: {
+                            dataSource: users,
+                            displayExpr: "name",
+                            valueExpr: "$id"
+                        }
                     }
                 ]
             };
@@ -490,7 +511,9 @@
                 year = date.getFullYear();
 
             var ref = rootRef.child("/tenant-monthly-revenues/" + year + "/" + month + "/" + data.tenantId),
-                totalref = rootRef.child("/tenant-revenues/" + data.tenantId);
+                totalref = rootRef.child("/tenant-revenues/" + data.tenantId),
+                totalMonthlyref = rootRef.child("/monthly-revenues/" + year + "/" + month + "/"),
+                totalYearlyref = rootRef.child("/yearly-revenues/" + year + "/");
             // Attach an asynchronous callback to read the data at our posts reference
             ref.once("value", function (snapshot) {
                 var totalRevenue = 0;
@@ -500,7 +523,42 @@
                     totalRevenue = 0;
                 }
                 ref.update({ 'totalRevenue': totalRevenue + data.amount });
+            }, function (errorObject) {
+                console.log("The read failed: " + errorObject.code);
+            });
+
+            totalref.once("value", function (snapshot) {
+                var totalRevenue = 0;
+                if (snapshot.val() && snapshot.val().totalRevenue) {
+                    totalRevenue = snapshot.val().totalRevenue;
+                } else {
+                    totalRevenue = 0;
+                }
                 totalref.update({ 'totalRevenue': totalRevenue + data.amount });
+            }, function (errorObject) {
+                console.log("The read failed: " + errorObject.code);
+            });
+            
+            totalMonthlyref.once("value", function (snapshot) {
+                var totalRevenue = 0;
+                if (snapshot.val() && snapshot.val().totalRevenue) {
+                    totalRevenue = snapshot.val().totalRevenue;
+                } else {
+                    totalRevenue = 0;
+                }
+                totalMonthlyref.update({ 'totalRevenue': totalRevenue + data.amount });
+            }, function (errorObject) {
+                console.log("The read failed: " + errorObject.code);
+            });
+
+            totalYearlyref.once("value", function (snapshot) {
+                var totalRevenue = 0;
+                if (snapshot.val() && snapshot.val().totalRevenue) {
+                    totalRevenue = snapshot.val().totalRevenue;
+                } else {
+                    totalRevenue = 0;
+                }
+                totalYearlyref.update({ 'totalRevenue': totalRevenue + data.amount });
             }, function (errorObject) {
                 console.log("The read failed: " + errorObject.code);
             });
@@ -572,7 +630,8 @@
             var ref = rootRef.child('tenants').child(record.tenantId);
             firebaseUtils.getItemByRef(ref).$loaded().then(function (data) {
                 var creditBalance = data.creditBalance ? data.creditBalance : 0,
-                    requiredBalance = data.requiredBalance ? data.requiredBalance : 0;
+                    requiredBalance = data.requiredBalance ? data.requiredBalance : 0,
+                    discount = data.discount ? data.discount : 0;
                 firebaseUtils.updateData(ref, { 'creditBalance': creditBalance + record.amount }).then(function (data) {
                     var ref = rootRef.child('tenant-pending-tin-requests-token/' + record.tenantId);
                     var creditBalance = data.creditBalance;
@@ -583,7 +642,7 @@
                             delete request.$conf;
                             delete request.$priority;
                             var extraCharge = settings.extraCharge ? settings.extraCharge : 0;
-                            var totalCost = request.fees + extraCharge;
+                            var totalCost = request.fees  - (request.fees * discount * 0.01) + extraCharge;
                             if (totalCost <= creditBalance || data.paymentType == 'postpaid') {
                                 var obj = { ackAttached: true, remarks: '', status: 'acknowledged' };
                                 rootRef.child('tenant-tin-requests-token/' + record.tenantId + '/' + id).update(Object.assign(request, obj));

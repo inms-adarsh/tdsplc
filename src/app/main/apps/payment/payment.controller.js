@@ -71,7 +71,7 @@
             columns: [{
                 caption: '#',
                 cellTemplate: function (cellElement, cellInfo) {
-                    cellElement.text(cellInfo.row.rowIndex + 1)
+                    cellElement.text(cellInfo.row.dataIndex + 1)
                 }
             }, {
                 dataField: 'date',

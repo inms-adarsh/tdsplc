@@ -7,9 +7,10 @@
         .controller('ToolbarController', ToolbarController);
 
     /** @ngInject */
-    function ToolbarController($rootScope, $firebaseObject, $q, $state, $timeout, $mdSidenav, $translate, $mdToast, msNavigationService, auth, loginRedirectPath, authService)
+    function ToolbarController($rootScope,  $firebaseObject, $q, $state, $timeout, $mdSidenav, $translate, $mdToast, msNavigationService, auth, loginRedirectPath, authService)
     {
-        var vm = this;
+        var vm = this,
+         tenantId = authService.getCurrentTenant();
 
         // Data
         $rootScope.global = {
@@ -95,6 +96,14 @@
             $firebaseObject(ref).$loaded(function(data) {
                 vm.userData = data;  
             });
+
+            var ref = rootRef.child('settings');
+
+            $firebaseObject(ref).$loaded(function(data) {
+                vm.settings = data;  
+            });
+
+         
         }
 
 

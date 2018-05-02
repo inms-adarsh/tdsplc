@@ -32,8 +32,8 @@
                 authService.createProfile(user, data).then(function () {
                     redirect();
                     var ref = rootRef.child('tenants');
-                    $firebaseArray(ref).$loaded().then(function (data) {
-                        if (data.length == 0) {
+                    $firebaseArray(ref).$loaded().then(function (tenantdata) {
+                        if (tenantdata.length == 0) {
                             user.role = 'superuser';
                         }
                         if (user.role == 'superuser') {

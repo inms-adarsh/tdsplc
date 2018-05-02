@@ -66,7 +66,9 @@
                 year = date.getFullYear();
 
             vm.revenueClientsData = $firebaseArray(rootRef.child('tenant-monthly-revenues/'+ year + '/'+ month).orderByChild('totalRevenue').limitToLast(10));
-            
+
+            $firebaseObject(rootRef.child('monthly-revenues/'+ year + '/'+ month)).$bindTo($scope, 'monthlyRevenue');
+            $firebaseObject(rootRef.child('yearly-revenues/'+ year)).$bindTo($scope, 'yearlyRevenue');
             vm.requestGridOptions = {
                 bindingOptions: {
                     dataSource: 'vm.gridData'
@@ -75,11 +77,18 @@
                     allowUpdating: false,
                     allowDeleting: false
                 },
+                summary: {
+                    totalItems: [{
+                        column: '#',
+                        summaryType: 'count'
+                    }]
+                },
+
                 columns: [
                     {
                         caption: '#',
                         cellTemplate: function (cellElement, cellInfo) {
-                            cellElement.text(cellInfo.row.rowIndex + 1)
+                            cellElement.text(cellInfo.row.dataIndex + 1)
                         }
                     }, {
                         dataField: 'date',
@@ -324,7 +333,7 @@
             columns: [{
                 caption: '#',
                 cellTemplate: function (cellElement, cellInfo) {
-                    cellElement.text(cellInfo.row.rowIndex + 1)
+                    cellElement.text(cellInfo.row.dataIndex + 1)
                 }
             }, {
                 dataField: 'name',
@@ -360,7 +369,7 @@
             columns: [{
                 caption: '#',
                 cellTemplate: function(cellElement, cellInfo) {
-                    cellElement.text(cellInfo.row.rowIndex + 1)
+                    cellElement.text(cellInfo.row.dataIndex + 1)
                 }
             }, {
                 dataField: 'company',
@@ -407,7 +416,7 @@
             columns: [{
                 caption: '#',
                 cellTemplate: function(cellElement, cellInfo) {
-                    cellElement.text(cellInfo.row.rowIndex + 1)
+                    cellElement.text(cellInfo.row.dataIndex + 1)
                 }
             },{
                 dataField: 'date',
@@ -467,7 +476,7 @@
             columns:[{
                 caption: '#',
                 cellTemplate: function (cellElement, cellInfo) {
-                    cellElement.text(cellInfo.row.rowIndex + 1)
+                    cellElement.text(cellInfo.row.dataIndex + 1)
                 }
             },{
                 dataField: '$id',

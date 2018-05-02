@@ -195,7 +195,7 @@
                     columns: [{
                         caption: '#',
                         cellTemplate: function(cellElement, cellInfo) {
-                            cellElement.text(cellInfo.row.rowIndex + 1)
+                            cellElement.text(cellInfo.row.dataIndex + 1)
                         }
                     },{
                         dataField: 'name',
@@ -339,10 +339,10 @@
          * @returns {Object} User data
          */
         function updateUser(key, userData) {
-            var ref = rootRef.child('tenant-users').child(tenantId).child(key['$id']);
-            return firebaseUtils.updateData(ref, userData);
+            var ref = rootRef.child('tenant-users').child(tenantId).child(key);
+            firebaseUtils.updateData(ref, userData);
 
-            var ref = rootRef.child('employees').child(key['$id']);
+            var ref = rootRef.child('employees').child(key);
             firebaseUtils.updateData(ref, userData);
 
         }
@@ -352,10 +352,10 @@
          * @returns {Object} user data
          */
         function deleteUser(key) {
-            var ref = rootRef.child('tenant-users').child(tenantId).child(key['$id']);
+            var ref = rootRef.child('tenant-users').child(tenantId).child(key);
             firebaseUtils.updateData(ref, { deactivated: false });
 
-            var ref = rootRef.child('employees').child(tenantId).child(key['$id']);
+            var ref = rootRef.child('employees').child(tenantId).child(key);
             firebaseUtils.updateData(ref, { deactivated: false });
         }
 

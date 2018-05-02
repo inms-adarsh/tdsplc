@@ -18,7 +18,8 @@
             updateRequest: updateRequest,
             fetchRequestList: fetchRequestList,
             requestForm: requestForm,
-            submitForm: submitForm
+            submitForm: submitForm,
+            submitEtds: submitEtds
         };
 
         return service;
@@ -27,31 +28,31 @@
         function submitForm(key) {
             var form27A = form27AInstance.option('value');
 
-            
-            for(var i=0; i<form27A.length; i++) {
-                var storageRef = firebase.storage().ref("admin-tin-requests/" + key+ "/form27A/"+form27A[i].name),
-                 
-                metaData = {
-                    customMetadata : {
-                        'fileType': form27A[i].type,
-                        'fileName': form27A[i].name,
-                        'fileSize': form27A[i].size,
-                        'requestNo': key,
-                        'tenantId': tenantId
-                    }
-                };
-                
-                $firebaseStorage(storageRef).$put(form27A[i], metaData).$complete(function(snapshot) {
+
+            for (var i = 0; i < form27A.length; i++) {
+                var storageRef = firebase.storage().ref("admin-tin-requests/" + key + "/form27A/" + form27A[i].name),
+
+                    metaData = {
+                        customMetadata: {
+                            'fileType': form27A[i].type,
+                            'fileName': form27A[i].name,
+                            'fileSize': form27A[i].size,
+                            'requestNo': key,
+                            'tenantId': tenantId
+                        }
+                    };
+
+                $firebaseStorage(storageRef).$put(form27A[i], metaData).$complete(function (snapshot) {
 
                     var ref = rootRef.child('admin-tin-requests').child(key);
-                    firebaseUtils.updateData(ref, {downloadURL: snapshot.downloadURL}).then(function (key) {
-                        
+                    firebaseUtils.updateData(ref, { downloadURL: snapshot.downloadURL }).then(function (key) {
+
                     });
                 });
             }
             //console.log(form27AInstance.option('value'));
         }
-        
+
         function requestForm() {
             var requestForm = {
                 onInitialized: function (e) {
@@ -71,12 +72,12 @@
                                     selectButtonText: "Select E-TDS",
                                     multiple: 'true',
                                     uploadMode: "useButtons",
-                                    onContentReady: function(e) {
+                                    onContentReady: function (e) {
                                         form27AInstance = e.component;
                                     },
                                     onValueChanged: function (e) {
                                         var values = e.component.option("values");
-                                        $.each(values, function (index, value) {                
+                                        $.each(values, function (index, value) {
                                             e.element.find(".dx-fileuploader-upload-button").hide();
                                         });
                                         e.element.find(".dx-fileuploader-upload-button").hide();
@@ -94,7 +95,7 @@
                                     uploadMode: "useButtons",
                                     onValueChanged: function (e) {
                                         var values = e.component.option("values");
-                                        $.each(values, function (index, value) {                
+                                        $.each(values, function (index, value) {
                                             e.element.find(".dx-fileuploader-upload-button").hide();
                                         });
                                         e.element.find(".dx-fileuploader-upload-button").hide();
@@ -181,7 +182,7 @@
                     }, {
                         dataField: 'barcode',
                         caption: 'Barcode'
-                    },  {
+                    }, {
                         dataField: 'module',
                         caption: 'Module'
                     }, {
@@ -226,8 +227,8 @@
                     }, {
                         dataField: 'attachment27a',
                         caption: '27A',
-                        cellTemplate: function(container, options) {
-                            $('<a href="'+ options.data.filePath+'" download>Download 27A</a>').appendTo(container);
+                        cellTemplate: function (container, options) {
+                            $('<a href="' + options.data.filePath + '" download>Download 27A</a>').appendTo(container);
                         }
                     }, {
                         dataField: 'attachmentfvu',
@@ -249,7 +250,7 @@
                         fileName: 'Requests',
                         allowExportSelectedData: true
                     },
-                   customizeColumns: function (columns) {
+                    customizeColumns: function (columns) {
                         $.each(columns, function (_, element) {
                             element.groupCellTemplate = groupCellTemplate;
                         });
@@ -267,7 +268,7 @@
          */
         function saveRequest(requestObj) {
             var ref = rootRef.child('admin-tin-requests');
-            if(!requestObj) {
+            if (!requestObj) {
                 requestObj = {};
             }
             if (!requestObj.date) {
@@ -277,7 +278,7 @@
             requestObj.user = auth.$getAuth().uid;
             requestObj.tenantId = tenantId;
             firebaseUtils.addData(ref, requestObj).then(function (key) {
-                submitForm(key);               
+                submitForm(key);
             });
         }
 
@@ -329,7 +330,7 @@
                             firebaseUtils.fetchList(ref).then(function (data) {
                                 var mergeObj = {};
                                 for (var i = 0; i < data.length; i++) {
-                                    mergeObj['tenant-redeems/' + tenantId + '/' + data[i]['$id'] + '/deactivated'] = false;
+                                    mergeObj['tenant-redeems/' + tenantId + '/' + xls['$id'] + '/deactivated'] = false;
                                 }
                                 firebaseUtils.updateData(rootRef, mergeObj);
                             });
@@ -339,5 +340,115 @@
             });
         }
 
+
+        function submitEtds(value, settings, gridData) {
+            var defer = $q.defer(),
+                reader = new FileReader();
+            reader.onload = function (e) {
+                /* read workbook */
+                var bstr = e.target.result,
+                    wb = XLSX.read(bstr, { type: 'binary' });
+
+                /* grab first sheet */
+                var wsname = wb.SheetNames[0],
+                    ws = wb.Sheets[wsname],
+                    data = [];
+
+                /* grab first row and generate column headers */
+                var aoa = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false }),
+                    cols = [];
+                for (var i = 0; i < aoa[0].length; ++i) cols[i] = { field: aoa[0][i] };
+
+                /* generate rest of the data */
+
+                for (var r = 1; r < aoa.length; ++r) {
+                    data[r - 1] = {};
+                    for (i = 0; i < aoa[r].length; ++i) {
+                        if (aoa[r][i] == null) continue;
+                        data[r - 1][aoa[0][i]] = aoa[r][i]
+                    }
+                }
+
+                var existingBarcodes = [];
+                var promises = data.forEach(function (xls) {
+                    var obj = {
+                        barcode: xls['Barcode Value'],
+                        token: xls['Token Number'],
+                        rdate: xls['Receipt Date'],
+                        deductor: xls['Deductor/Collector Name'],
+                        finYear: xls['Financial Year'],
+                        fees: parseInt(xls['Fees Charged']),
+                        formNo: xls['Form No.'],
+                        origTokenNo: xls['Original Token No.'],
+                        tan: xls['TAN'],
+                        userId: xls['User Id'],
+                        corrections: xls['Regular/ Correction'],
+                        qtr: xls['Quarter'],
+                        acknowledged: true
+
+                    };
+
+                    if (settings.extraCharge) {
+                        obj['extra'] = settings.extraCharge;
+                    }
+
+                    var ref = rootRef.child('admin-tin-requests').child('' + obj['barcode']);
+                    var index = msUtils.getIndexByArray(gridData, 'barcode', obj['barcode']);
+                    if (index > -1 && !gridData[index].acknowledged) {
+                        ref.once('value', function (data) {
+                            var data = data.val();
+                            var ref = rootRef.child('tenants').child(data.tenantId);
+
+                            ref.once('value', function (tenant) {
+                                if (tenant.val().discount) {
+                                    obj['discount'] = tenant.val().discount;
+                                }
+                            });
+                            rootRef.child('admin-tin-requests/' + obj['barcode']).update(obj);
+                            if (data.assignedTo) {
+                                rootRef.child('employee-tin-requests/' + data.assignedTo + '/' + obj['barcode']).update(obj);
+                            }
+                            rootRef.child('tin-requests/' + data.requestId + '/' + obj['barcode']).update(obj);
+
+                            Object.assign(obj, data);
+
+                            obj.requestId = data.requestId;
+                            obj.tenantId = data.tenantId;
+
+                            obj.date = new Date();
+                            obj.date = obj.date.toString();
+
+                            rootRef.child('tin-requests-token/' + obj.token).update(obj);
+                        });
+                    } else {
+                        existingBarcodes.push(obj['barcode']);
+                    }
+
+                });
+
+                var positionTop = 0,
+                    increment = 65;
+                for (var i = 0; i < existingBarcodes.length; i++) {
+                    $mdToast.show({
+                        template: '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>request for barcode ' + existingBarcodes[i] + ' not available or acknowledgement already generated.</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
+                        hideDelay: 7000,
+                        controller: 'ToastController',
+                        position: 'top right',
+                        parent: '#content',
+                        locals: {
+                            cssStyle: {
+                                'top': positionTop + 'px'
+                            }
+                        }
+                    }).then(function () {
+                        positionTop += increment;
+                    });
+                    positionTop += increment;
+                }
+
+            };
+
+            reader.readAsBinaryString(value[0]);
+        }
     }
 }());

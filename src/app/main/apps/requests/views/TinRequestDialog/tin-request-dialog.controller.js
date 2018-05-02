@@ -118,8 +118,8 @@
                                                 var request = angular.copy(request.val()); 
                                                 Object.assign(request, {'form27AFileName': form27A.name, 'form27AUrl': snapshot.downloadURL, 'latest': true, 'valid': true, status: 'pending'});
                                                 var mergeObj = {};
-                                                mergeObj['admin-tin-requests/'+barcode] = data;
-                                                mergeObj['tenant-tin-requests/'+request.tenantId+'/'+barcode] = data;
+                                                mergeObj['admin-tin-requests/'+barcode] = request;
+                                                mergeObj['tenant-tin-requests/'+request.tenantId+'/'+barcode] = request;
                                                 mergeObj['tin-requests/'+request.requestId+'/'+barcode] = request;
                                                 return resolve(rootRef.update(mergeObj));
                                             });

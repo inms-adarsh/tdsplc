@@ -16,36 +16,14 @@
         vm.retrieveTenantId = retrieveTenantId;
         //////////
 
-        // auth.$onAuthStateChanged(function (authData) {
-        //   if (authData) {
-        //     if(!authService.getCurrentTenant()) {
-        //       var userData = rootRef.child('users').child(authData.uid);
-        //       var obj = $firebaseObject(userData);
-        //       obj.$loaded().then(function(data) {
-        //         $timeout(function() {
-        //           $scope.userObj = data;
-        //           authService.setCurrentTenant($scope.userObj);
-        //           if($scope.userObj.role == 'customer') {
-        //             $state.go('app.requests.list');
-        //           } else {
-        //             $state.go('app.tinrequests.list')
-        //           }
-        //           $state.go($state.current, {reload: true});
-        //         });
-        //       });
-        //     } else {
-        //       var role = JSON.parse(localStorage.getItem('role'));
-        //       if(role == 'customer') {
-        //         $state.go('app.requests.list');
-        //       } else {
-        //         $state.go('app.tinrequests.list')
-        //       }
-        //     }
-        //   } else {
-        //     $state.go('app.auth_login');
-        //     localStorage.clear();
-        //   }
-        // });
+        auth.$onAuthStateChanged(function (authData) {
+          if (authData) {
+            vm.retrieveTenantId(authData);
+          } else {
+            $state.go('app.auth_login');
+            localStorage.clear();
+          }
+        });
         
         function login(loginForm) {
            $rootScope.loadingProgress = true;

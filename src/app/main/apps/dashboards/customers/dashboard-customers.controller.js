@@ -1,5 +1,4 @@
-(function ()
-{
+(function () {
     'use strict';
 
     angular
@@ -7,8 +6,7 @@
         .controller('DashboardCustomersController', DashboardCustomersController);
 
     /** @ngInject */
-    function DashboardCustomersController($state, auth, $mdToast, firebaseUtils, $compile, users, $firebaseStorage, $firebaseObject, authService, dxUtils, msUtils, $firebaseArray, $scope, $mdDialog, $document, adminRequestService, customers)
-    {
+    function DashboardCustomersController($state, auth, accounts, $mdToast, firebaseUtils, $compile, users, $firebaseStorage, $firebaseObject, authService, dxUtils, msUtils, $firebaseArray, $scope, $mdDialog, $document, adminRequestService, customers) {
         var vm = this,
             tenantId = authService.getCurrentTenant(),
             gridInstance,
@@ -41,25 +39,44 @@
         init();
 
 
-         /**
-         * Init
-         */
+        /**
+        * Init
+        */
         function init() {
             vm.gridOptions = dxUtils.createGrid(),
-                
-            vm.pendingPaymentGridOptions = dxUtils.createGrid();
 
-            var ref = rootRef.child('tenants');
-            vm.clients = $firebaseArray(ref);
+                vm.pendingPaymentGridOptions = dxUtils.createGrid();
+
+            var ref = rootRef.child('tenants').child(tenantId);
+            $firebaseObject(ref).$loaded(function (data) {
+                $scope.tenant = data;
+                if($scope.tenant.requiredBalance > 0) {
+                    DevExpress.ui.dialog.alert('Few acknowledgements are hidden due to low credit balance ! please recharge with minimum '+ $scope.tenant.requiredBalance +' to view all ', 'Balance Low !');
+                } 
+            });
 
             var ref = rootRef.child('tenant-tin-requests').child(tenantId).orderByChild('status').equalTo('pending');
-           
+
             vm.gridData = $firebaseArray(ref);
-            
+
+            var ref = rootRef.child('tenant-payments').orderByChild('tenantId').equalTo(tenantId);
+
+           $firebaseArray(ref).$loaded(function(data) {
+                vm.pendingPaymentData = data.filter(function(payment) {
+                    return payment.status == 'pending';
+                });
+            });
             vm.requestGridOptions = {
                 bindingOptions: {
                     dataSource: 'vm.gridData'
                 },
+                summary: {
+                    totalItems: [{
+                        column: '#',
+                        summaryType: 'count'
+                    }]
+                },
+
                 editing: {
                     allowUpdating: false,
                     allowDeleting: false
@@ -68,7 +85,7 @@
                     {
                         caption: '#',
                         cellTemplate: function (cellElement, cellInfo) {
-                            cellElement.text(cellInfo.row.rowIndex + 1)
+                            cellElement.text(cellInfo.row.dataIndex + 1)
                         }
                     }, {
                         dataField: 'date',
@@ -81,24 +98,13 @@
                         allowEditing: false
                     },
                     {
-                        dataField: 'assignedTo',
-                        caption: "Assigned To",
-                        lookup: {
-                            dataSource: users,
-                            valueExpr: '$id',
-                            displayExpr: 'name'
-                        }
+                        dataField: 'refNo',
+                        caption: 'Order Id #'
                     },
                     {
-                        dataField: 'tenantId',
-                        caption: 'client',
-                        dataType: 'string',
-                        calculateCellValue: function (options) {
-                            var index = msUtils.getIndexByArray(vm.clients, '$id', options.tenantId);
-                            return vm.clients[index].company;
-                        },
-                        allowEditing: false
-                    }, 
+                        dataField: 'barcode',
+                        caption: 'Barcode'
+                    },
                     {
                         dataField: 'attachment27a',
                         caption: '27A',
@@ -139,6 +145,76 @@
 
             };
 
+
+            vm.pendingPayments = {
+                columnAutoWidth: true,
+                bindingOptions: {
+                    dataSource: 'vm.pendingPaymentData'
+                },
+                summary: {
+                    totalItems: [{
+                        column: '#',
+                        summaryType: 'count'
+                    }]
+                },
+
+                columns: [{
+                    caption: '#',
+                    cellTemplate: function (cellElement, cellInfo) {
+                        cellElement.text(cellInfo.row.dataIndex + 1)
+                    }
+                }, {
+                    dataField: 'date',
+                    caption: 'Date',
+                    dataType: 'date'
+                }, {
+                    dataField: 'paymentMode',
+                    caption: 'Payment Mode',
+                    calculateCellValue: function (data) {
+                        var index = msUtils.getIndexByArray(vm.paymentModes, 'id', data.paymentMode);
+                        if (index > -1) {
+                            return vm.paymentModes[index].name;
+                        } else {
+                            return '';
+                        }
+                    }
+                }, {
+                    dataField: 'amount',
+                    caption: 'Amount'
+                }, {
+                    dataField: 'chequeNumber',
+                    caption: 'Cheque No'
+                },
+                {
+                    dataField: 'bankAccount',
+                    caption: 'Bank Account',
+                    lookup: {
+                        dataSource: accounts,
+                        displayExpr: 'bankname',
+                        valueExpr: "$id"
+                    }
+                }, {
+                    dataField: 'cashBy',
+                    caption: 'Received By',
+                    lookup: {
+                        dataSource: users,
+                        displayExpr: 'name',
+                        valueExpr: "$id"
+                    }
+
+                }, {
+                    dataField: 'status',
+                    caption: 'Status',
+                    lookup: {
+                        dataSource: vm.paymentStatus,
+                        displayExpr: "name",
+                        valueExpr: "id"
+                    }
+                }, {
+                    dataField: 'remarks',
+                    caption: 'Remarks'
+                }]
+            }
             angular.extend(vm.gridOptions, vm.requestGridOptions);
         }
 
@@ -159,9 +235,9 @@
             }
         };
 
-          /**
-         * Assign Button
-         */
+        /**
+       * Assign Button
+       */
         vm.assignButtonOptions = {
             text: "Assign",
             type: "success",
@@ -179,8 +255,8 @@
          * assign requests function
          */
         function assignRequests() {
-            
-            var data = gridInstance.getSelectedRowKeys();            
+
+            var data = gridInstance.getSelectedRowKeys();
             var mergeObj = {};
 
             for (var i = 0; i < data.length; i++) {
@@ -206,7 +282,7 @@
 
                 }
             }
-            
+
             rootRef.update(mergeObj).then(function () {
                 $mdToast.show({
                     template: '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Request Submitted Successfully</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
@@ -237,7 +313,7 @@
             columns: [{
                 caption: '#',
                 cellTemplate: function (cellElement, cellInfo) {
-                    cellElement.text(cellInfo.row.rowIndex + 1)
+                    cellElement.text(cellInfo.row.dataIndex + 1)
                 }
             }, {
                 dataField: 'name',
@@ -266,63 +342,18 @@
             }
         };
 
-        vm.pendingPayments = {
-            bindingOptions: {
-                dataSource: 'vm.clientGridData'
-            },
-            columns: [{
-                caption: '#',
-                cellTemplate: function(cellElement, cellInfo) {
-                    cellElement.text(cellInfo.row.rowIndex + 1)
-                }
-            }, {
-                dataField: 'company',
-                caption: 'Firm name',
-                validationRules: [{
-                    type: 'required',
-                    message: 'Name is required'
-                }],
-            },{
-                dataField: 'creditBalance',
-                caption: 'Credit Balance'
-            }, {
-                dataField: 'requiredBalance',
-                caption: 'Required Balance'
-            }, {
-                dataField: 'phone',
-                caption: 'Phone',
-                dataType: 'number',
-                validationRules: [{
-                    type: 'required',
-                    message: 'Phone number is required'
-                }]
-            }, {
-                dataField: 'paymentType',
-                caption: 'Customer Type',
-                lookup: {
-                    dataSource: paymentMode,
-                    displayExpr: "name",
-                    valueExpr: "id"
-                },
-                validationRules: [{
-                    type: 'required',
-                    message: 'Field is required'
-                }]
+      
 
-            }]
-        };
-
-        
         vm.paymentRequests = {
             bindingOptions: {
                 dataSource: 'vm.paymentRequestsgridData'
             },
             columns: [{
                 caption: '#',
-                cellTemplate: function(cellElement, cellInfo) {
-                    cellElement.text(cellInfo.row.rowIndex + 1)
+                cellTemplate: function (cellElement, cellInfo) {
+                    cellElement.text(cellInfo.row.dataIndex + 1)
                 }
-            },{
+            }, {
                 dataField: 'date',
                 caption: 'Date',
                 dataType: 'date',
@@ -377,12 +408,12 @@
             bindingOptions: {
                 dataSource: 'vm.revenueClientsData'
             },
-            columns:[{
+            columns: [{
                 caption: '#',
                 cellTemplate: function (cellElement, cellInfo) {
-                    cellElement.text(cellInfo.row.rowIndex + 1)
+                    cellElement.text(cellInfo.row.dataIndex + 1)
                 }
-            },{
+            }, {
                 dataField: '$id',
                 caption: 'Client',
                 allowEditing: false,

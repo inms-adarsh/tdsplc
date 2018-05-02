@@ -33,16 +33,16 @@
                         // returns a promisse so the resolve waits for it to complete
                         return auth.$requireSignIn();
                     }],
-                    tenantInfo: function(auth, authService){
+                    tenantInfo: function(auth, authService, currentAuth){
                         return authService.retrieveTenant();
                     },
-                    customers: function(adminService) {
+                    customers: function(adminService, currentAuth) {
                         return adminService.getCurrentCustomers();
                     },
-                    users: function(adminService) {
+                    users: function(adminService, currentAuth) {
                         return adminService.fetchEmployeeList();
                     },
-                    settings: function(adminService) {
+                    settings: function(adminService, currentAuth) {
                         return adminService.getCurrentSettings();
                     }
                 },

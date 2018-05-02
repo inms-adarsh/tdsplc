@@ -63,6 +63,10 @@
         $scope.$watch('tenant', function (newVal) {
             vm.creditBalance = 'Credit Balance: ' + newVal.creditBalance;
             $scope.buttonType = newVal.creditBalance < 0 ? 'danger' : 'success';
+
+            if(newVal.requiredBalance > 0) {
+                DevExpress.ui.dialog.alert('Few acknowledgements are hidden due to low credit balance ! please recharge with minimum '+ newVal.requiredBalance +' to view all ', 'Balance Low !');
+            }  
         });
 
         vm.buttonOptions = {
@@ -85,7 +89,21 @@
             icon: "plus",
             type: 'default',
             onClick: function (e) {
-                $scope.visiblePopup = true;
+                $mdDialog.show({
+                    controller: 'AddRequestDialogController',
+                    templateUrl: 'app/main/apps/requests/views/addNewRequestDialog/add-new-request-dialog.html',
+                    parent: angular.element(document.body),
+                    controllerAs: 'vm',
+                    clickOutsideToClose: true,
+                    fullscreen: true, // Only for -xs, -sm breakpoints.,
+                    bindToController: true
+                })
+                .then(function (answer) {
+                    
+                }, function () {
+                    $scope.status = 'You cancelled the dialog.';
+                });
+                //$scope.visiblePopup = true;
             }
         }
 
@@ -287,6 +305,12 @@
             bindingOptions: {
                 dataSource: 'vm.gridData'
             },
+                summary: {
+                    totalItems: [{
+                        column: 'barcode',
+                        summaryType: 'count'
+                    }]
+                },
             onToolbarPreparing: function (e) {
                 var dataGrid = e.component;
 
@@ -372,21 +396,32 @@
                 {
                     caption: '#',
                     cellTemplate: function (cellElement, cellInfo) {
-                        cellElement.text(cellInfo.row.rowIndex + 1)
+                        cellElement.text(cellInfo.row.dataIndex + 1)
                     }
-                }, {
-                    dataField: 'refNo',
-                    caption: 'Ref #'
-                }, {
-                    dataField: 'ref',
-                    caption: 'Reference'
-                }, {
+                },
+                {
                     dataField: 'date',
                     caption: 'Date',
                     dataType: 'date',
                     validationRules: [{
                         type: 'required',
                         message: 'Date is required'
+                    }]
+                }, {
+                    dataField: 'refNo',
+                    caption: 'Order Id #'
+                },  
+                {
+                    caption: 'Deductor/Collector Name',
+                    dataField: 'deductor'
+                },
+                {
+                    dataField: 'barcode',
+                    caption: 'Bar Code',
+                    dataType: 'string',
+                    validationRules: [{
+                        type: 'required',
+                        message: 'Barcode is required'
                     }]
                 },
                 {
@@ -420,15 +455,7 @@
                         }
                     }
                 },
-                {
-                    dataField: 'barcode',
-                    caption: 'Bar Code',
-                    dataType: 'string',
-                    validationRules: [{
-                        type: 'required',
-                        message: 'Barcode is required'
-                    }]
-                },
+                
                 {
                     dataField: 'token',
                     caption: 'Token Number'
@@ -437,10 +464,7 @@
                 {
                     dataField: 'rdate',
                     caption: 'R Date'
-                }, {
-                    caption: 'Deductor/Collector Name',
-                    dataField: 'deductor'
-                }, {
+                },  {
                     dataField: 'fees',
                     caption: 'Fees'
                 }, {
@@ -450,7 +474,19 @@
                     dataField: 'discount',
                     caption: 'Discount'
                 },
-
+                {
+                    dataField: 'totalCost',
+                    caption: 'Total Cost',
+                    dataType: 'number',
+                    calculateCellValue: function(data) {
+                        if(data.fees) {
+                            var discount = data.discount ? data.discount : 0;
+                            return data.fees - (data.fees * discount * 0.01 ) + data.extra;
+                        } else {
+                            return '';
+                        }
+                    }
+                },
                 {
                     dataField: 'remarks',
                     caption: 'Remarks'
@@ -461,7 +497,12 @@
                         dataSource: requestStatus,
                         displayExpr: "name",
                         valueExpr: "id"
-                    }
+                    },
+                    sortOrder: "asc"
+                },
+                {
+                    dataField: 'ref',
+                    caption: 'Reference'
                 }],
             export: {
                 enabled: true,

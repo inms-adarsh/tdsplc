@@ -7,7 +7,7 @@
         .controller('CustomersController', CustomersController);
 
     /** @ngInject */
-    function CustomersController($state, $scope, $mdDialog, $firebaseArray, $document, dxUtils, authService, auth, customerService)
+    function CustomersController($state, $scope, $mdDialog, firebaseUtils, $firebaseArray, $document, dxUtils, authService, auth, customerService)
     {
         var vm = this,
          tenantId = authService.getCurrentTenant(),
@@ -48,12 +48,7 @@
                 bindingOptions: {
                     dataSource: 'vm.gridData'
                 },
-                summary: {
-                    totalItems: [{
-                        column: 'name',
-                        summaryType: 'count'
-                    }]
-                },
+               
                 onToolbarPreparing: function (e) {
                     var dataGrid = e.component;
     
@@ -100,7 +95,7 @@
                 columns: [{
                     caption: '#',
                     cellTemplate: function(cellElement, cellInfo) {
-                        cellElement.text(cellInfo.row.rowIndex + 1)
+                        cellElement.text(cellInfo.row.dataIndex + 1)
                     }
                 }, {
                     dataField: 'company',
@@ -202,7 +197,14 @@
                 },
                 onContentReady: function(e) {
                     gridInstance = e.component;
+                },
+                summary: {
+                    totalItems: [{
+                        column: '#',
+                        summaryType: 'count'
+                    }]
                 }
+
             };
 
             angular.extend(vm.gridOptions, otherConfig);

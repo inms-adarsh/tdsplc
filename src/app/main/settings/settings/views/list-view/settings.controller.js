@@ -52,6 +52,16 @@
                     text: 'Extra charge per TIN request (e.g. 2/-)'
                 }
             }, {
+                dataField: 'smtpHost',
+                label: {
+                    text: 'SMTP Host'
+                }
+            }, {
+                dataField: 'smtpPort',
+                label: {
+                    text: 'SMTP Port'
+                }
+            }, {
                 dataField: 'smtpEmail',
                 label: {
                     text: 'SMTP Email'
@@ -60,6 +70,11 @@
                 dataField: 'smtpPassword',
                 label: {
                     text: 'SMTP Password'
+                }
+            }, {
+                dataField: 'fromEmail',
+                label: {
+                    text: 'From Email'
                 }
             }, {
                 dataField: 'supportEmail',
@@ -143,7 +158,7 @@
                     });  
                 });
 
-                var logo = logoInstance.option('values');
+                var logo = logoInstance.option('value');
 
                 if(logo.length > 0) {
                     var logoRef = firebase.storage().ref('settings').child('logo');
@@ -163,6 +178,7 @@
                                 }
                             });  
                         });
+                        logoInstance.reset();
                     });
                 }
             }

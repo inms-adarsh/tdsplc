@@ -2,11 +2,11 @@
     'use strict';
 
     angular
-        .module('app.payment')
-        .factory('paymentService', paymentService);
+        .module('app.paymentledger')
+        .factory('paymentledgerService', paymentledgerService);
 
     /** @ngInject */
-    function paymentService($rootScope, $firebaseArray, $mdDialog, $mdToast, $firebaseObject, $compile, $q, adminService, authService, auth, firebaseUtils, dxUtils, config, msUtils, $firebaseStorage) {
+    function paymentledgerService($rootScope, $firebaseArray, $mdDialog, $mdToast, $firebaseObject, $compile, $q, adminService, authService, auth, firebaseUtils, dxUtils, config, msUtils, $firebaseStorage) {
         var tenantId = authService.getCurrentTenant(),
             formInstance,
             form27AInstance,
@@ -20,7 +20,7 @@
         });
 
         var service = {
-            addPayment: addPayment,
+            addpaymentledger: addpaymentledger,
             calculateRevenue: calculateRevenue,
             approveSingleRecord: approveSingleRecord
         };
@@ -39,12 +39,12 @@
          * Add New tin request
          */
 
-        function addPayment(formData) {
+        function addpaymentledger(formData) {
             if (!formData.date) {
                 formData.date = new Date();
             }
             formData.date = formData.date.toString();
-            var ref = rootRef.child('tenant-payments');
+            var ref = rootRef.child('tenant-paymentledgers');
 
             formData.user = auth.$getAuth().uid;
             return firebaseUtils.addData(ref, formData);
@@ -122,21 +122,18 @@
         function approveSingleRecord(record) {
             calculateRevenue(record);
                               
-            var paymentId = record.$id;
+            var paymentledgerId = record.$id;
             delete record.$id;
             delete record.$conf;
             delete record.$priority;
 
-            var ref = rootRef.child('tenant-payments').child(paymentId);
+            var ref = rootRef.child('tenant-paymentledgers').child(paymentledgerId);
             firebaseUtils.updateData(ref, record);
 
-            var tenantLedger = rootRef.child('tenant-payment-ledger').child(record.tenantId);
+            var tenantLedger = rootRef.child('tenant-paymentledger-ledger').child(record.tenantId);
             record.mode = 'credit';
             record.credit = record.amount;
             firebaseUtils.addData(tenantLedger, record);
-            
-            var adminLedger = rootRef.child('payment-ledger');
-            firebaseUtils.addData(adminLedger, record);
 
             var ref = rootRef.child('tenants').child(record.tenantId);
             firebaseUtils.getItemByRef(ref).$loaded().then(function (data) {
@@ -154,7 +151,7 @@
                             delete request.$priority;
                             var extraCharge = settings.extraCharge ? settings.extraCharge : 0;
                             var totalCost = request.fees  - (request.fees * discount * 0.01) + extraCharge;
-                            if (totalCost <= creditBalance || data.paymentType == 'postpaid') {
+                            if (totalCost <= creditBalance || data.paymentledgerType == 'postpaid') {
                                 var obj = { ackAttached: true, remarks: '', status: 2 };
                                 rootRef.child('tenant-tin-requests-token/' + record.tenantId + '/' + id).update(Object.assign(request, obj));
                                 rootRef.child('tenant-tin-requests/' + record.tenantId + '/' + request['barcode']).update(Object.assign(request, obj));
@@ -162,11 +159,11 @@
                                 creditBalance = creditBalance - totalCost;
                                 requiredBalance = requiredBalance - totalCost;
                                 rootRef.child('tenants').child(record.tenantId).update({ 'creditBalance': creditBalance, 'requiredBalance': requiredBalance }).then(function () {
-                                    // var tenantLedger = rootRef.child('tenant-payment-ledger').child(request.tenantId);
-                                    // request.mode = 'debit';
-                                    // request.debit = totalCost;
-                                    // request.acknowledgementNo = id;
-                                    // firebaseUtils.addData(tenantLedger, request);
+                                    var tenantLedger = rootRef.child('tenant-paymentledger-ledger').child(request.tenantId);
+                                    request.mode = 'debit';
+                                    request.debit = totalCost;
+                                    request.acknowledgementNo = id;
+                                    firebaseUtils.addData(tenantLedger, request);
 
                                     var ref = rootRef.child('tenant-pending-tin-requests-token/' + request.tenantId + '/' + request.token);
                                     ref.update(null);

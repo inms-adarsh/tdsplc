@@ -1,0 +1,43 @@
+<div class="page-layout carded left-sidenav single-scroll" id="paymentledger" layout="row">
+
+    <!-- TOP BACKGROUND -->
+    <div class="top-bg md-accent-bg"></div>
+    <!-- / TOP BACKGROUND -->
+
+    <!-- SIDENAV -->
+    <!--<md-sidenav class="sidenav" md-is-locked-open="$mdMedia('gt-md')" md-component-id="sidenav"
+     ng-include="'app/main/apps/requests/views/list-view/sidenavs/main-sidenav.html'" ms-scroll
+                ms-sidenav-helper>
+
+    </md-sidenav>-->
+    <!-- / SIDENAV -->
+
+    <!-- CENTER -->
+    <div class="center" flex>
+
+        <!-- CONTENT HEADER -->
+        <div class="header" layout="row" layout-align="space-between center">
+
+            <div class="logo" layout="row" layout-align="start center">
+                <span class="logo-icon">
+                    <md-icon md-font-icon="icon-sale" class="icon"></md-icon>
+                </span>
+                <span class="logo-text" translate="paymentledger.TITLE" flex></span>
+            </div>
+
+        </div>
+        <!-- / CONTENT HEADER -->
+
+       
+        <!-- CONTENT CARD -->
+        <md-card>
+            <md-card-content>
+                <div id="request-grid" dx-data-grid="vm.gridOptions"></div>
+            </md-card-content>
+        </md-card>
+
+
+    </div>
+    <!-- / CENTER -->
+
+</div>

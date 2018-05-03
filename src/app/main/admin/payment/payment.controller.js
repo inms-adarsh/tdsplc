@@ -264,6 +264,7 @@
                 paymentService.approveSingleRecord(record);
             });
 
+            DevExpress.ui.dialog.alert('All requests approved', 'Success'); 
         }
 
         /**

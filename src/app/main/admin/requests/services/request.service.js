@@ -447,7 +447,7 @@
                 }
 
             };
-
+            DevExpress.ui.dialog.alert('E-TDS File Uploaded successfully ', 'Success'); 
             reader.readAsBinaryString(value[0]);
         }
     }

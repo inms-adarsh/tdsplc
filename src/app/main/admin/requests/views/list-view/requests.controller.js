@@ -6,7 +6,7 @@
         .controller('AdminRequestsController', AdminRequestsController);
 
     /** @ngInject */
-    function AdminRequestsController($rootScope, $state, auth, $mdToast, firebaseUtils, $compile, users, $firebaseStorage, $firebaseObject, authService, dxUtils, msUtils, $firebaseArray, $scope, $mdDialog, $document, adminRequestService, settings, customers) {
+    function AdminRequestsController($rootScope, $state, auth, $mdToast, firebaseUtils, $compile, users, $firebaseStorage, $firebaseObject, authService, dxUtils, msUtils, $firebaseArray, $scope, $mdDialog, $document, adminRequestService, requestService, settings, customers) {
         var vm = this,
             tenantId = authService.getCurrentTenant(),
             requestForm,
@@ -805,19 +805,28 @@
                                     var ref = rootRef.child('tenants').child(data.tenantId);
 
                                     $firebaseObject(ref).$loaded(function (tenant) {
+                                        
                                         var extraCharge = settings.extraCharge ? settings.extraCharge : 0;
                                         var discount = tenant.discount ? tenant.discount : 0;
                                         var totalCost = data.fees - (data.fees * discount * 0.01) + extraCharge;
+                                        
+                                        var tenantLedger = rootRef.child('tenant-payment-ledger').child(data.tenantId);
+                                       
+                                        data.mode = 'debit';
+                                        data.debit = totalCost;
+                                        data.acknowledgementNo = acknowledgementNo;
+                                        
+                                        var adminLedger = rootRef.child('payment-ledger');
+                                        firebaseUtils.addData(adminLedger, data);
+
+                                        firebaseUtils.addData(tenantLedger, data);
+
                                         if (tenant.creditBalance >= totalCost || tenant.paymentType == 'postpaid') {
 
                                             rootRef.child('tenant-tin-requests-token/' + data.tenantId + '/' + acknowledgementNo).update(Object.assign(data, obj));
                                             rootRef.child('tenant-tin-requests/' + data.tenantId + '/' + data['barcode']).update(Object.assign(data, obj));
                                             rootRef.child('tenants/' + data.tenantId).update({ creditBalance: (tenant.creditBalance ? tenant.creditBalance : 0) - parseInt(totalCost) });
-                                            var tenantLedger = rootRef.child('tenant-payment-ledger').child(data.tenantId);
-                                            data.mode = 'debit';
-                                            data.debit = totalCost;
-                                            data.acknowledgementNo = acknowledgementNo;
-                                            firebaseUtils.addData(tenantLedger, data).then(function () {
+                                            
                                                 if(uploadedAcknowledgement[data.tenantId]) {
                                                     uploadedAcknowledgement[data.tenantId].push(data);
                                                     return resolve(data);
@@ -826,7 +835,6 @@
                                                     uploadedAcknowledgement[data.tenantId].push(data);
                                                     return resolve(data);
                                                 }
-                                            });
                                         } else {
                                             rootRef.child('tenant-pending-tin-requests-token/' + data.tenantId + '/' + acknowledgementNo).update(Object.assign(data, obj));
                                             calculateRequiredBalance(data);
@@ -855,6 +863,9 @@
                     var ref = rootRef.child('tenant-acknowledgement-mail').child(tenant);
                     firebaseUtils.addData(ref, uploadedAcknowledgement[tenant]);
                 }
+
+                DevExpress.ui.dialog.alert('Acknowledgemnts have been generated successfully', 'Success');
+                //requestService.generate_cutomPDF();
             });
             for (var i = 0; i < tokens.length; i++) {
                 $mdToast.show({

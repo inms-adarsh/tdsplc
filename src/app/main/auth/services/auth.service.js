@@ -285,9 +285,9 @@
             var def = $q.defer();
 
             auth.$sendPasswordResetEmail(email).then(function() {
-                  console.log("Password reset email sent successfully!");
+                DevExpress.ui.dialog.alert('Password reset email sent successfully', 'Success');
             }).catch(function(error) {
-                  console.error("Error: ", error);
+                DevExpress.ui.dialog.alert(error.message, 'Error');
              });
         }
     }

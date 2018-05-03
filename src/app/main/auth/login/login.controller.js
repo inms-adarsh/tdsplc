@@ -7,7 +7,7 @@
         .controller('LoginController', LoginController);
 
     /** @ngInject */
-    function LoginController(auth, $rootScope, $state, $mdToast, $firebaseObject, authService, $scope, $timeout)
+    function LoginController(auth, $rootScope, $location, $state, $mdToast, $firebaseObject, authService, $scope, $timeout)
     {
         // Data
         var vm = this;
@@ -15,6 +15,37 @@
         vm.login = login;
         vm.retrieveTenantId = retrieveTenantId;
         //////////
+        init();
+
+        function init() {
+          var mode = $location.search()['mode'];
+          // Get the one-time code from the query parameter.
+          var actionCode = $location.search()['oobCode'];
+          // (Optional) Get the API key from the query parameter.
+          var apiKey = $location.search()['apiKey'];
+          // (Optional) Get the continue URL from the query parameter if available.
+          var continueUrl = $location.search()['continueUrl'];
+        
+          var auth = firebase.auth();
+        
+          // Handle the user management action.
+          switch (mode) {
+            case 'resetPassword':
+              // Display reset password handler and UI.
+              handleResetPassword(auth, actionCode, continueUrl);
+              break;
+            case 'recoverEmail':
+              // Display email recovery handler and UI.
+              handleRecoverEmail(auth, actionCode);
+              break;
+            case 'verifyEmail':
+              // Display email verification handler and UI.
+              handleVerifyEmail(auth, actionCode, continueUrl);
+              break;
+            default:
+              // Error: invalid mode.
+          }
+        }
 
         auth.$onAuthStateChanged(function (authData) {
           if (authData) {
@@ -68,7 +99,6 @@
                         data.role == 'customer' ? $state.go('app.requests.list') : $state.go('app.tinrequests.list');
                       } else {
                         DevExpress.ui.dialog.alert('Account not Active ! Please wait untill administrator approves your account', 'Error');
-                        auth.$signOut();
                       }
                     });
                   } else {
@@ -76,6 +106,15 @@
                   }
                 }
             });
+        }
+
+        function handleVerifyEmail(auth, actionCode, continueUrl) {
+          // Try to apply the email verification code.
+          auth.applyActionCode(actionCode).then(function(resp) {
+            DevExpress.ui.dialog.alert('Email Verified Successfully', 'Success');
+          }).catch(function(error) {
+            DevExpress.ui.dialog.alert('Email Verification code expired', 'Error');
+          });
         }
     }
 })();

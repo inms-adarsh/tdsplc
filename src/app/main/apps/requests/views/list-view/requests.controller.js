@@ -65,8 +65,13 @@
             $scope.buttonType = newVal.creditBalance < 0 ? 'danger' : 'success';
 
             if(newVal.requiredBalance > 0) {
-                DevExpress.ui.dialog.alert('Few acknowledgements are hidden due to low credit balance ! please recharge with minimum '+ newVal.requiredBalance +' to view all ', 'Balance Low !');
-            }  
+                vm.debitBalance = newVal.requiredBalance || 0;
+                vm.requiredBalance = newVal.requiredBalance - newVal.creditBalance;
+                DevExpress.ui.dialog.alert('Few acknowledgements are hidden due to low credit balance ! please recharge with minimum '+ vm.requiredBalance +' to view all ', 'Balance Low !');
+            } else {
+                vm.debitBalance = 0;
+                vm.requiredBalance = 0;
+            }
         });
 
         vm.buttonOptions = {
@@ -236,12 +241,7 @@
             bindingOptions: {
                 dataSource: 'vm.gridData'
             },
-                summary: {
-                    totalItems: [{
-                        column: 'barcode',
-                        summaryType: 'count'
-                    }]
-                },
+            
             onToolbarPreparing: function (e) {
                 var dataGrid = e.component;
 
@@ -403,7 +403,12 @@
                     caption: 'Extra'
                 }, {
                     dataField: 'discount',
-                    caption: 'Discount'
+                    caption: 'Discount',
+                    alignment: 'right',
+                    allowEditing: false,
+                    calculateCellValue: function(data) {
+                        return data.discount? data.discount + '%' : '';
+                    }
                 },
                 {
                     dataField: 'totalCost',
@@ -447,6 +452,16 @@
                 if (info.rowType == 'data' && info.data.ackAttached == true) {
                     info.rowElement.addClass("md-green-50-bg");
                 }
+
+            },
+            summary: {
+                totalItems: [{
+                    column: 'barcode',
+                    summaryType: 'count'
+                }, {
+                    column: "totalCost",
+                    summaryType: "sum"
+                }]
 
             },
 

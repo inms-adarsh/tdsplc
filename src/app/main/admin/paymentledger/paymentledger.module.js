@@ -33,6 +33,9 @@
                         },
                         users: function(adminService, currentAuth) {
                             return adminService.fetchEmployeeList();
+                        },
+                        customers: function(adminService, currentAuth) {
+                                return adminService.getCurrentCustomers();
                         }
                     }
                 }
@@ -45,8 +48,8 @@
         $translatePartialLoaderProvider.addPart('app/main/apps/paymentledger');
 
         // Navigation
-        msNavigationServiceProvider.saveItem('paymentledger', {
-            title : 'credit/debit history',
+        msNavigationServiceProvider.saveItem('adminpaymentledger', {
+            title : 'Account history',
             state : 'app.admin_paymentledger_credit',
             icon  : 'icon-store',
             weight: 5,

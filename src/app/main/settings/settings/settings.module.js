@@ -58,6 +58,7 @@
 
         msNavigationServiceProvider.saveItem('settings', {
             title: 'Settings',
+            weight: 7,
             state: 'app.settings.list',
             roles: ['superuser']
         });

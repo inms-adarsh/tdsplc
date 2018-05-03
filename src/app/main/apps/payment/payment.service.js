@@ -33,7 +33,7 @@
          * Grid Options for request list
          * @param {Object} dataSource 
          */
-     
+
 
         /**
          * Add New tin request
@@ -50,7 +50,7 @@
             return firebaseUtils.addData(ref, formData);
         }
 
-    
+
         /**
          * Calculate revenue
          * @param {*} data 
@@ -88,7 +88,7 @@
             }, function (errorObject) {
                 console.log("The read failed: " + errorObject.code);
             });
-            
+
             totalMonthlyref.once("value", function (snapshot) {
                 var totalRevenue = 0;
                 if (snapshot.val() && snapshot.val().totalRevenue) {
@@ -115,13 +115,13 @@
         }
 
 
-         /**
-         * Approve Single Record
-         * @param {*} record 
-         */
+        /**
+        * Approve Single Record
+        * @param {*} record 
+        */
         function approveSingleRecord(record) {
-            calculateRevenue(record);
-                              
+           // calculateRevenue(record);
+
             var paymentId = record.$id;
             delete record.$id;
             delete record.$conf;
@@ -134,50 +134,62 @@
             record.mode = 'credit';
             record.credit = record.amount;
             firebaseUtils.addData(tenantLedger, record);
-            
+
             var adminLedger = rootRef.child('payment-ledger');
             firebaseUtils.addData(adminLedger, record);
 
             var ref = rootRef.child('tenants').child(record.tenantId);
-            firebaseUtils.getItemByRef(ref).$loaded().then(function (data) {
-                var creditBalance = data.creditBalance ? data.creditBalance : 0,
-                    requiredBalance = data.requiredBalance ? data.requiredBalance : 0,
-                    discount = data.discount ? data.discount : 0;
+            firebaseUtils.getItemByRef(ref).$loaded().then(function (tenant) {
+                var creditBalance = tenant.creditBalance ? tenant.creditBalance : 0,
+                    requiredBalance = tenant.requiredBalance ? tenant.requiredBalance : 0,
+                    discount = tenant.discount ? tenant.discount : 0;
                 firebaseUtils.updateData(ref, { 'creditBalance': creditBalance + record.amount }).then(function (data) {
                     var ref = rootRef.child('tenant-pending-tin-requests-token/' + record.tenantId);
                     var creditBalance = data.creditBalance;
+                    tenant.creditBalance = creditBalance;
                     firebaseUtils.fetchList(ref).then(function (requests) {
-                        requests.forEach(function (request) {
-                            var id = request.$id;
-                            delete request.$id;
-                            delete request.$conf;
-                            delete request.$priority;
-                            var extraCharge = settings.extraCharge ? settings.extraCharge : 0;
-                            var totalCost = request.fees  - (request.fees * discount * 0.01) + extraCharge;
-                            if (totalCost <= creditBalance || data.paymentType == 'postpaid') {
-                                var obj = { ackAttached: true, remarks: '', status: 2 };
-                                rootRef.child('tenant-tin-requests-token/' + record.tenantId + '/' + id).update(Object.assign(request, obj));
-                                rootRef.child('tenant-tin-requests/' + record.tenantId + '/' + request['barcode']).update(Object.assign(request, obj));
-                                console.log(totalCost);
-                                creditBalance = creditBalance - totalCost;
-                                requiredBalance = requiredBalance - totalCost;
-                                rootRef.child('tenants').child(record.tenantId).update({ 'creditBalance': creditBalance, 'requiredBalance': requiredBalance }).then(function () {
-                                    // var tenantLedger = rootRef.child('tenant-payment-ledger').child(request.tenantId);
-                                    // request.mode = 'debit';
-                                    // request.debit = totalCost;
-                                    // request.acknowledgementNo = id;
-                                    // firebaseUtils.addData(tenantLedger, request);
-
-                                    var ref = rootRef.child('tenant-pending-tin-requests-token/' + request.tenantId + '/' + request.token);
-                                    ref.update(null);
-                                });
-
-                            }
-                        });
+                        releaseAcknowledgemnts(requests, tenant, record.tenantId);
                     })
                 });
             });
 
+        }
+
+        function releaseAcknowledgemnts(requests, tenant, tenantId) {            
+            var creditBalance = tenant.creditBalance ? tenant.creditBalance : 0,
+            requiredBalance = tenant.requiredBalance ? tenant.requiredBalance : 0,
+            discount = tenant.discount ? tenant.discount : 0;
+            var promises = requests.map(function (request) {
+                return new Promise(function (resolve, reject) {
+                    var id = request.$id;
+                    delete request.$id;
+                    delete request.$conf;
+                    delete request.$priority;
+                    var extraCharge = settings.extraCharge ? settings.extraCharge : 0;
+                    var totalCost = request.fees - (request.fees * discount * 0.01) + extraCharge;
+                    if (totalCost <= creditBalance || tenant.paymentType == 'postpaid') {
+                        var obj = { ackAttached: true, remarks: '', status: 2 };
+                        rootRef.child('tenant-tin-requests-token/' + tenantId + '/' + id).update(Object.assign(request, obj));
+                        rootRef.child('tenant-tin-requests/' + tenantId + '/' + request['barcode']).update(Object.assign(request, obj));
+                        console.log(totalCost);
+                        creditBalance = creditBalance - totalCost;
+                        requiredBalance = requiredBalance - totalCost;
+                        rootRef.child('tenants').child(tenantId).update({ 'creditBalance': creditBalance, 'requiredBalance': requiredBalance }).then(function () {
+                            var mergeObj = {};
+                            var tenantLedger = rootRef.child('tenant-payment-ledger').child(tenantId);
+                            request.mode = 'debit';
+                            request.debit = totalCost;
+                            request.acknowledgementNo = id;
+                            firebaseUtils.addData(tenantLedger, request);
+                            mergeObj['tenant-pending-tin-requests-token/' + request.tenantId + '/' + request.token] = null;
+                            rootRef.update(mergeObj);
+                            return resolve({});
+                        });
+                    } else {
+                        return resolve({});
+                    }
+                });
+            });
         }
 
 

@@ -52,7 +52,7 @@
         msNavigationServiceProvider.saveItem('accounts', {
             title: 'Bank Accounts',
             state: 'app.accounts.list',
-            weight: 2,
+            weight: 6,
             icon: 'icon-person-plus',
             roles: ['superuser']
         });

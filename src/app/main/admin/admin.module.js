@@ -8,7 +8,8 @@
             'app.admin.requests',
             'app.admin.payment',
             'app.admin.employees',
-            'app.admin.accounts'
+            'app.admin.accounts',
+            'app.adminpaymentledger'
            // 'app.admin.beers'
             //'app.admin.kegs'
         ])

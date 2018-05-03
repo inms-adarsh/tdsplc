@@ -6,7 +6,7 @@
         .controller('AdminPaymentLedgerRequestController', AdminPaymentLedgerRequestController);
 
     /** @ngInject */
-    function AdminPaymentLedgerRequestController(currentAuth, msUtils, $mdDialog, users, accounts, dxUtils, auth, $firebaseArray, $firebaseObject, firebaseUtils, authService, settings, tenantInfo, $scope, adminpaymentledgerService, $state) {
+    function AdminPaymentLedgerRequestController(currentAuth, msUtils, $mdDialog, users, customers, accounts, dxUtils, auth, $firebaseArray, $firebaseObject, firebaseUtils, authService, settings, tenantInfo, $scope, adminpaymentledgerService, $state) {
         var vm = this,
             formInstance,
             tenantId = authService.getCurrentTenant();
@@ -112,7 +112,7 @@
                 caption: 'Credit'
             }],
             onCellPrepared: function (e) {
-                if (e.rowType == 'data' && e.row.data.status === "received") {
+                if (e.rowType == 'data' && e.row.data.status === 1) {
                     e.cellElement.find(".dx-link-delete").remove();
                 }
             },
@@ -121,6 +121,22 @@
 
                 var ref = rootRef.child('tenant-paymentledgers').child(e.key.$id);
                 firebaseUtils.deleteData(ref);
+            }, 
+            onContentReady: function(e) {
+                var gridInstance = e.component;
+                $scope.creditBalance = gridInstance.getTotalSummaryValue('credit');
+                $scope.debitBalance = gridInstance.getTotalSummaryValue('debit');
+            },
+            summary: {
+                totalItems: [{
+                    column: "credit",
+                    summaryType: "sum",
+                    name: "credit"
+                }, {
+                    column: "debit",
+                    summaryType: "sum",
+                    name: "debit"
+                }]
             }
         }
 
@@ -128,7 +144,7 @@
 
 
         function init() {
-            var ref = rootRef.child('payment-ledger');
+            var ref = rootRef.child('payment-ledger').orderByChild('date');
             vm.gridData = $firebaseArray(ref);
         }
 

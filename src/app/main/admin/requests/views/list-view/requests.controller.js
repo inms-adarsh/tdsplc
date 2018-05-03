@@ -360,6 +360,16 @@
                         allowEditing: false
                     },
                     {
+                        dataField: 'acknowledgementUrl',
+                        caption: 'Acknowledgement',
+                        cellTemplate: function (container, options) {
+                            if (options.data.acknowledgementUrl) {
+                                $compile($('<a class="md-button md-raised md-normal"  href="' + options.data.acknowledgementUrl + '" download><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
+                            }
+                        },
+                        allowEditing: false
+                    },
+                    {
                         dataField: 'assignedTo',
                         caption: "Assigned To",
                         lookup: {
@@ -445,19 +455,14 @@
                         caption: 'Total Cost',
                         dataType: 'number',
                         calculateCellValue: function(data) {
-                            var discount = data.discount ? data.discount : 0;
-                            return data.fees - (data.fees * discount * 0.01 ) + data.extra;
-                        }
-                    }, {
-                        dataField: 'acknowledgementUrl',
-                        caption: 'Acknowledgement',
-                        cellTemplate: function (container, options) {
-                            if (options.data.acknowledgementUrl) {
-                                $compile($('<a class="md-button md-raised md-normal"  href="' + options.data.acknowledgementUrl + '" download><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
+                            if(data.fees) {
+                                var discount = data.discount ? data.discount : 0;
+                                return data.fees - (data.fees * discount * 0.01 ) + data.extra;
+                            } else {
+                                return '';
                             }
-                        },
-                        allowEditing: false
-                    }, {
+                        }
+                    },  {
                         dataField: 'remarks',
                         caption: 'Remarks'
                     }, {
@@ -521,7 +526,7 @@
                                         zipFilename;
 
                                     latestRecords = vm.gridData.filter(function (request) {
-                                        return request.latest == true;
+                                        return request.latest == true && request.acknowledged != true;
                                     });
                                     gridInstance.selectRows(latestRecords);
                                 }
@@ -593,7 +598,7 @@
                     });
                 },
                 onCellPrepared: function (e) {
-                    if (e.rowType == 'data' && e.row.data.acknowledged === true) {
+                    if (e.rowType == 'data' && e.row.data.acknowledged === true && role == 'superuser') {
                         e.cellElement.find(".dx-link-delete").remove();
                         //e.cellElement.find(".dx-link-edit").remove();
                     }
@@ -601,8 +606,13 @@
                 onRowPrepared: function (info) {
                     if (info.rowType == 'data' && info.data.latest == true)
                         info.rowElement.addClass("md-light-blue-50-bg");
-                    if (info.rowType == 'data' && info.data.ackAttached == true)
+
+                    if (info.rowType == 'data' && info.data.acknowledged == true && info.data.ackAttached != true) {
+                        info.rowElement.addClass("md-white-bg");
+                    } else if(info.rowType == 'data' && info.data.ackAttached == true) {
                         info.rowElement.addClass("md-green-50-bg");
+                    }
+
                     if (info.rowType == 'data' && info.data.valid == false) {
                         info.rowElement.addClass("md-red-50-bg");
                     }
@@ -661,7 +671,6 @@
                                 itemElement.append($("<div>").attr("id", "dxfu1").dxFileUploader({
                                     accept: 'application/xls',
                                     selectButtonText: "Select E-TDS",
-                                    multiple: 'false',
                                     uploadMode: "useButtons",
                                     onContentReady: function (e) {
                                         tdsInstance = e.component;
@@ -810,22 +819,19 @@
                                         var discount = tenant.discount ? tenant.discount : 0;
                                         var totalCost = data.fees - (data.fees * discount * 0.01) + extraCharge;
                                         
-                                        var tenantLedger = rootRef.child('tenant-payment-ledger').child(data.tenantId);
+                                        var tenantLedger = rootRef.child('tenant-payment-ledger').child(data.tenantId).child(acknowledgementNo);
                                        
                                         data.mode = 'debit';
                                         data.debit = totalCost;
                                         data.acknowledgementNo = acknowledgementNo;
                                         
-                                        var adminLedger = rootRef.child('payment-ledger');
-                                        firebaseUtils.addData(adminLedger, data);
-
-                                        firebaseUtils.addData(tenantLedger, data);
+                                        var adminLedger = rootRef.child('payment-ledger').child(acknowledgementNo);
+                                        adminLedger.set(data);
 
                                         if (tenant.creditBalance >= totalCost || tenant.paymentType == 'postpaid') {
-
                                             rootRef.child('tenant-tin-requests-token/' + data.tenantId + '/' + acknowledgementNo).update(Object.assign(data, obj));
                                             rootRef.child('tenant-tin-requests/' + data.tenantId + '/' + data['barcode']).update(Object.assign(data, obj));
-                                            rootRef.child('tenants/' + data.tenantId).update({ creditBalance: (tenant.creditBalance ? tenant.creditBalance : 0) - parseInt(totalCost) });
+                                            rootRef.child('tenants/' + data.tenantId).update({ creditBalance: (tenant.creditBalance ? tenant.creditBalance : 0) - parseInt(totalCost) }).then(function() {
                                             
                                                 if(uploadedAcknowledgement[data.tenantId]) {
                                                     uploadedAcknowledgement[data.tenantId].push(data);
@@ -835,10 +841,18 @@
                                                     uploadedAcknowledgement[data.tenantId].push(data);
                                                     return resolve(data);
                                                 }
+                                            });
+                                            tenantLedger.set(data);
                                         } else {
                                             rootRef.child('tenant-pending-tin-requests-token/' + data.tenantId + '/' + acknowledgementNo).update(Object.assign(data, obj));
                                             calculateRequiredBalance(data);
-                                            rootRef.child('tenant-tin-requests/' + data.tenantId + '/' + data['barcode']).update({ status: 3, remarks: 'Credit Balance Low! Please Recharge ' }).then(function () {
+                                            rootRef.child('tenant-tin-requests/' + data.tenantId + '/' + data['barcode']).update({ 
+                                                status: 3, 
+                                                remarks: 'Credit Balance Low! Please Recharge ',
+                                                fees: data['fees'],
+                                                extra: data['extra'],
+                                                discount: data['discount']
+                                            }).then(function () {
                                             });
                                         }
                                     });
@@ -867,41 +881,41 @@
                 DevExpress.ui.dialog.alert('Acknowledgemnts have been generated successfully', 'Success');
                 //requestService.generate_cutomPDF();
             });
-            for (var i = 0; i < tokens.length; i++) {
-                $mdToast.show({
-                    template: '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Acknowledgement already attached for token ' + tokens[i] + '</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
-                    hideDelay: 7000,
-                    controller: 'ToastController',
-                    position: 'top right',
-                    parent: '#content',
-                    locals: {
-                        cssStyle: {
-                            'top': positionTop + 'px'
-                        }
-                    }
-                }).then(function () {
-                    positionTop += increment;
-                });
-                positionTop += increment;
-            }
+            // for (var i = 0; i < tokens.length; i++) {
+            //     $mdToast.show({
+            //         template: '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Acknowledgement already attached for token ' + tokens[i] + '</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
+            //         hideDelay: 7000,
+            //         controller: 'ToastController',
+            //         position: 'top right',
+            //         parent: '#content',
+            //         locals: {
+            //             cssStyle: {
+            //                 'top': positionTop + 'px'
+            //             }
+            //         }
+            //     }).then(function () {
+            //         positionTop += increment;
+            //     });
+            //     positionTop += increment;
+            // }
 
-            for (var i = 0; i < invalidTokens.length; i++) {
-                $mdToast.show({
-                    template: '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Invalid Acknowledgement File  ' + invalidTokens[i] + '</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
-                    hideDelay: 7000,
-                    controller: 'ToastController',
-                    position: 'top left',
-                    parent: '#content',
-                    locals: {
-                        cssStyle: {
-                            'top': positionLeft + 'px'
-                        }
-                    }
-                }).then(function () {
-                    positionLeft += increment;
-                });
-                positionLeft += increment;
-            }
+            // for (var i = 0; i < invalidTokens.length; i++) {
+            //     $mdToast.show({
+            //         template: '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Invalid Acknowledgement File  ' + invalidTokens[i] + '</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
+            //         hideDelay: 7000,
+            //         controller: 'ToastController',
+            //         position: 'top left',
+            //         parent: '#content',
+            //         locals: {
+            //             cssStyle: {
+            //                 'top': positionLeft + 'px'
+            //             }
+            //         }
+            //     }).then(function () {
+            //         positionLeft += increment;
+            //     });
+            //     positionLeft += increment;
+            // }
         }
 
 

@@ -55,7 +55,7 @@
         msNavigationServiceProvider.saveItem('employees', {
             title: 'Employees',
             state: 'app.employees.list',
-            weight: 2,
+            weight: 4,
             icon: 'icon-person-plus',
             roles: ['superuser']
         });

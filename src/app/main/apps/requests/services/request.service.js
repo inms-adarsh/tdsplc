@@ -502,42 +502,42 @@
 
                 firebaseUtils.setBadges('new_requests', 'admin', pendingCount);
 
-                for (var i = 0; i < existingBarcodes.length; i++) {
-                    $mdToast.show({
-                        template: '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Request for barcode ' + existingBarcodes[i] + ' already exist</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
-                        hideDelay: 7000,
-                        controller: 'ToastController',
-                        position: 'top right',
-                        parent: '#content',
-                        locals: {
-                            cssStyle: {
-                                'top': positionTop + 'px'
-                            }
-                        }
-                    }).then(function () {
-                        positionTop += increment;
-                    });
-                    positionTop += increment;
-                }
+                // for (var i = 0; i < existingBarcodes.length; i++) {
+                //     $mdToast.show({
+                //         template: '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Request for barcode ' + existingBarcodes[i] + ' already exist</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
+                //         hideDelay: 7000,
+                //         controller: 'ToastController',
+                //         position: 'top right',
+                //         parent: '#content',
+                //         locals: {
+                //             cssStyle: {
+                //                 'top': positionTop + 'px'
+                //             }
+                //         }
+                //     }).then(function () {
+                //         positionTop += increment;
+                //     });
+                //     positionTop += increment;
+                // }
 
-                var positionLeft = 0;
-                for (var i = 0; i < invalidFiles.length; i++) {
-                    $mdToast.show({
-                        template: '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Invalid File ' + invalidFiles[i] + '</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
-                        hideDelay: 7000,
-                        controller: 'ToastController',
-                        position: 'top left',
-                        parent: '#content',
-                        locals: {
-                            cssStyle: {
-                                'top': positionLeft + 'px'
-                            }
-                        }
-                    }).then(function () {
-                        positionLeft += increment;
-                    });
-                    positionLeft += increment;
-                }
+                // var positionLeft = 0;
+                // for (var i = 0; i < invalidFiles.length; i++) {
+                //     $mdToast.show({
+                //         template: '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Invalid File ' + invalidFiles[i] + '</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
+                //         hideDelay: 7000,
+                //         controller: 'ToastController',
+                //         position: 'top left',
+                //         parent: '#content',
+                //         locals: {
+                //             cssStyle: {
+                //                 'top': positionLeft + 'px'
+                //             }
+                //         }
+                //     }).then(function () {
+                //         positionLeft += increment;
+                //     });
+                //     positionLeft += increment;
+                // }
                 $rootScope.loadingProgress = false;
             });
 

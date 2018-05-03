@@ -51,7 +51,7 @@
             title : 'Payment Requests',
             state : 'app.payment_requests',
             icon  : 'icon-store',
-            weight: 1, 
+            weight: 2, 
             roles: ['superuser']
         });
 

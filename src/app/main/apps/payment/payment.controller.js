@@ -125,7 +125,7 @@
                 caption: 'Remarks'
             }],
             onCellPrepared: function (e) {
-                if (e.rowType == 'data' && e.row.data.status === "received") {
+                if (e.rowType == 'data' && e.row.data.status === 1) {
                     e.cellElement.find(".dx-link-delete").remove();
                 }
             },

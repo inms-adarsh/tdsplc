@@ -34,6 +34,9 @@
             <md-card-content>
                 <div id="request-grid" dx-data-grid="vm.gridOptions"></div>
             </md-card-content>
+            <md-card-footer layout="row" layout-align="end center">
+                    <strong>Balance Amount: {{creditBalance - debitBalance}}</strong>
+                </md-card-footer>
         </md-card>
 
 

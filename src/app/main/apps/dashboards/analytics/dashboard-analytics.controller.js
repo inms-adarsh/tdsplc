@@ -60,7 +60,7 @@
 
             vm.gridData = $firebaseArray(ref);
             vm.clientGridData = $firebaseArray(rootRef.child('tenants').orderByChild('requiredBalance').startAt(1));
-            vm.paymentRequestsgridData = $firebaseArray(rootRef.child('tenant-payments').orderByChild('status').equalTo(1));
+            vm.paymentRequestsgridData = $firebaseArray(rootRef.child('tenant-payments').orderByChild('status').equalTo(0));
             var date = new Date(),
                 month = date.getMonth(),
                 year = date.getFullYear();

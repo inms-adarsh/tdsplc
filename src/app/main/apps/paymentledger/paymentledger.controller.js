@@ -91,7 +91,8 @@
             }, {
                 dataField: 'token',
                 caption: 'Token No'
-            }, {
+            },
+             {
                 dataField: 'reference',
                 caption: 'Reference'
             },
@@ -103,7 +104,7 @@
                 caption: 'Credit'
             }],
             onCellPrepared: function (e) {
-                if (e.rowType == 'data' && e.row.data.status === "received") {
+                if (e.rowType == 'data' && e.row.data.status === 1) {
                     e.cellElement.find(".dx-link-delete").remove();
                 }
             },
@@ -113,56 +114,20 @@
                 var ref = rootRef.child('tenant-paymentledgers').child(e.key.$id);
                 firebaseUtils.deleteData(ref);
             },
-            onToolbarPreparing: function (e) {
-                var dataGrid = e.component;
+            summary: {
+                totalItems: [{
+                    column: "credit",
+                    summaryType: "sum"
+                }, {
+                    column: "debit",
+                    summaryType: "sum"
+                }]
 
-                e.toolbarOptions.items.unshift(
-                    {
-                        location: "before",
-                        widget: "dxButton",
-                        options: {
-                            text: 'Add New paymentledger',
-                            icon: "plus",
-                            type: 'default',
-                            onClick: function (e) {
-                                $mdDialog.show({
-                                    controller: 'AddpaymentledgerDialogController',
-                                    templateUrl: 'app/main/apps/paymentledger/addNewpaymentledgerDialog/add-new-paymentledger-dialog.html',
-                                    parent: angular.element(document.body),
-                                    controllerAs: 'vm',
-                                    clickOutsideToClose: true,
-                                    fullscreen: true, // Only for -xs, -sm breakpoints.,
-                                    bindToController: true,
-                                    locals: { isAdmin: false, prerequisites: {
-                                        customers: {},
-                                        accounts: accounts,
-                                        users: users,
-                                        paymentledgerModes: vm.paymentledgerModes,
-                                        paymentledgerStatus: vm.paymentledgerStatus
-                                    } }
-                                })
-                                .then(function (answer) {
-                                    
-                                }, function () {
-                                    $scope.status = 'You cancelled the dialog.';
-                                });
-                            }
-
-                        }
-                    },
-                    {
-                        location: "before",
-                        widget: "dxButton",
-                        options: {
-                            hint: 'Credit Balance',
-                            icon: "money",
-                            type: 'danger',
-                            bindingOptions: {
-                                text: 'vm.creditBalance',
-                                type: 'buttonType'
-                            }
-                        }
-                    });
+            }, 
+            onContentReady: function(e) {
+                var gridInstance = e.component;
+                $scope.creditBalance = gridInstance.getTotalSummaryValue('credit');
+                $scope.debitBalance = gridInstance.getTotalSummaryValue('debit');
             }
         }
 
@@ -177,7 +142,7 @@
         }
 
         function init() {
-            var ref = rootRef.child('tenant-payment-ledger').child(tenantId);
+            var ref = rootRef.child('tenant-payment-ledger').child(tenantId).orderByChild('date');
             vm.gridData = $firebaseArray(ref);
         }
 

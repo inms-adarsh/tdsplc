@@ -59,7 +59,7 @@
         // Navigation
 
         msNavigationServiceProvider.saveItem('requests', {
-            weight: 2,
+            weight: 1,
             title: 'New/Pending TIN Requests',
             state: 'app.requests.list',
             icon: 'icon-sale',

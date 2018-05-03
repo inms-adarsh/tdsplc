@@ -426,25 +426,25 @@
 
                 });
 
-                var positionTop = 0,
-                    increment = 65;
-                for (var i = 0; i < existingBarcodes.length; i++) {
-                    $mdToast.show({
-                        template: '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>request for barcode ' + existingBarcodes[i] + ' not available or acknowledgement already generated.</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
-                        hideDelay: 7000,
-                        controller: 'ToastController',
-                        position: 'top right',
-                        parent: '#content',
-                        locals: {
-                            cssStyle: {
-                                'top': positionTop + 'px'
-                            }
-                        }
-                    }).then(function () {
-                        positionTop += increment;
-                    });
-                    positionTop += increment;
-                }
+                // var positionTop = 0,
+                //     increment = 65;
+                // for (var i = 0; i < existingBarcodes.length; i++) {
+                //     $mdToast.show({
+                //         template: '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>request for barcode ' + existingBarcodes[i] + ' not available or acknowledgement already generated.</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
+                //         hideDelay: 7000,
+                //         controller: 'ToastController',
+                //         position: 'top right',
+                //         parent: '#content',
+                //         locals: {
+                //             cssStyle: {
+                //                 'top': positionTop + 'px'
+                //             }
+                //         }
+                //     }).then(function () {
+                //         positionTop += increment;
+                //     });
+                //     positionTop += increment;
+                // }
 
             };
             DevExpress.ui.dialog.alert('E-TDS File Uploaded successfully ', 'Success'); 

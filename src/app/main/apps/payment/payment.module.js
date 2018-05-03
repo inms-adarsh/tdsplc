@@ -49,7 +49,7 @@
             title : 'Payment/Recharge',
             state : 'app.payment_credit',
             icon  : 'icon-store',
-            weight: 5,
+            weight: 2,
             roles: ['customer'],
             badgeId: ['new_requests']
         });

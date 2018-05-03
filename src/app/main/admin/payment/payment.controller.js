@@ -211,7 +211,7 @@
             },
             onCellPrepared: function (e) {
                 var role = JSON.parse(localStorage.getItem('role'));
-                if (e.rowType == 'data' && e.row.data.status === "received" && role != 'superuser') {
+                if (e.rowType == 'data' && e.row.data.status === 1 && role != 'superuser') {
                     e.cellElement.find(".dx-link-delete").remove();
                     e.cellElement.find(".dx-link-edit").remove();
                 }

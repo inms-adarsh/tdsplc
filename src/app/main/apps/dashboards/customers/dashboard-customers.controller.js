@@ -53,13 +53,11 @@
                 if($scope.tenant.requiredBalance > 0) {
                     vm.debitBalance = $scope.tenant.requiredBalance || 0;
                     vm.requiredBalance = $scope.tenant.requiredBalance - $scope.tenant.creditBalance;
+                    DevExpress.ui.dialog.alert('Few acknowledgements are hidden due to low credit balance ! please recharge with minimum '+ vm.requiredBalance +' to view all ', 'Balance Low !');
                 } else {
                     vm.debitBalance = 0;
                     vm.requiredBalance = 0;
                 }
-                if($scope.tenant.requiredBalance > 0) {
-                    DevExpress.ui.dialog.alert('Few acknowledgements are hidden due to low credit balance ! please recharge with minimum '+ $scope.tenant.requiredBalance +' to view all ', 'Balance Low !');
-                } 
             });
 
             var ref = rootRef.child('tenant-tin-requests').child(tenantId).orderByChild('status').equalTo(1);
@@ -70,7 +68,7 @@
 
            $firebaseArray(ref).$loaded(function(data) {
                 vm.pendingPaymentData = data.filter(function(payment) {
-                    return payment.status == 1;
+                    return payment.status == 0;
                 });
             });
             vm.requestGridOptions = {

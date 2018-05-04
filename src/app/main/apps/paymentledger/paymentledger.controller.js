@@ -124,6 +124,11 @@
                 }]
 
             }, 
+            export: {
+                enabled: true,
+                fileName: 'Account History',
+                allowExportSelectedData: true
+            },
             onContentReady: function(e) {
                 var gridInstance = e.component;
                 $scope.creditBalance = gridInstance.getTotalSummaryValue('credit');

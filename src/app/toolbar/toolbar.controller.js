@@ -276,6 +276,7 @@
             mergeObj['tin-requests/'] = null;
             mergeObj['tenant-tin-requests/'] = null;
             mergeObj['tenant-payment-ledger/'] = null;
+            mergeObj['payment-ledger/'] = null;
             rootRef.update(mergeObj);
         }
     }

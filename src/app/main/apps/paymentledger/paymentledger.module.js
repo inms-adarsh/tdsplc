@@ -46,7 +46,7 @@
 
         // Navigation
         msNavigationServiceProvider.saveItem('paymentledger', {
-            title : 'credit/debit history',
+            title : 'Account history',
             state : 'app.paymentledger_credit',
             icon  : 'icon-store',
             weight: 5,

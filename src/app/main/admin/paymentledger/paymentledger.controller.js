@@ -137,6 +137,10 @@
                     summaryType: "sum",
                     name: "debit"
                 }]
+            },export: {
+                enabled: true,
+                fileName: 'Account History',
+                allowExportSelectedData: true
             }
         }
 

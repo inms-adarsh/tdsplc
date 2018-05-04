@@ -133,7 +133,7 @@
             onClick: function (e) {
                 var assignedTo = employeeGridInstance.getSelectedRowKeys()[0].$id;
                 assignRequests(assignedTo);
-                
+
                 $scope.visiblePopup = false;
             }
         };
@@ -168,37 +168,37 @@
          */
         function assignRequests(assignedTo) {
 
-            if(assignedTo == auth.$getAuth().uid) {
+            if (assignedTo == auth.$getAuth().uid) {
                 return;
             }
             var data = gridInstance.getSelectedRowKeys();
             var mergeObj = {};
 
-            data.forEach(function(tinrequest) {
+            data.forEach(function (tinrequest) {
                 if (!tinrequest.acknowledged) {
-                        tinrequest.latest = true;
+                    tinrequest.latest = true;
 
-                        if (tinrequest.assignedTo) {
-                            mergeObj['employee-tin-requests/' + tinrequest.assignedTo + '/' + tinrequest.$id] = null;
-                        }
-                        
-                        tinrequest.assignedTo = assignedTo;
-                        mergeObj['admin-tin-requests/' + tinrequest.$id + '/latest'] = false;
-                        mergeObj['admin-tin-requests/' + tinrequest.$id + '/assignedTo'] = assignedTo;
-                        mergeObj['tenant-tin-requests/' + tinrequest.tenantId + '/' + tinrequest.$id + '/assignedTo'] = assignedTo;
-                        mergeObj['tin-requests/' + tinrequest.requestId + '/assignedTo'] = assignedTo;
-                        var id = tinrequest.$id;
-                        delete tinrequest.$id;
-                        delete tinrequest.$priority;
-                        mergeObj['employee-tin-requests/' + assignedTo + '/' + id] = tinrequest;
+                    if (tinrequest.assignedTo) {
+                        mergeObj['employee-tin-requests/' + tinrequest.assignedTo + '/' + tinrequest.$id] = null;
+                    }
+
+                    tinrequest.assignedTo = assignedTo;
+                    mergeObj['admin-tin-requests/' + tinrequest.$id + '/latest'] = false;
+                    mergeObj['admin-tin-requests/' + tinrequest.$id + '/assignedTo'] = assignedTo;
+                    mergeObj['tenant-tin-requests/' + tinrequest.tenantId + '/' + tinrequest.$id + '/assignedTo'] = assignedTo;
+                    mergeObj['tin-requests/' + tinrequest.requestId + '/assignedTo'] = assignedTo;
+                    var id = tinrequest.$id;
+                    delete tinrequest.$id;
+                    delete tinrequest.$priority;
+                    mergeObj['employee-tin-requests/' + assignedTo + '/' + id] = tinrequest;
 
                 }
             });
 
-            rootRef.update(mergeObj).then(function () {                
+            rootRef.update(mergeObj).then(function () {
                 gridInstance.clearSelection();
                 employeeGridInstance.clearSelection();
-                DevExpress.ui.dialog.alert('All selected requests assigned successfully ', 'Success'); 
+                DevExpress.ui.dialog.alert('All selected requests assigned successfully ', 'Success');
             });
         }
 
@@ -317,7 +317,7 @@
                     }, {
                         dataField: 'refNo',
                         caption: 'Order Id #'
-                    },  {
+                    }, {
                         caption: 'Deductor/Collector Name',
                         dataField: 'deductor',
                         allowEditing: false
@@ -328,14 +328,14 @@
                         dataType: 'string',
                         calculateCellValue: function (options) {
                             var index = msUtils.getIndexByArray(vm.clients, '$id', options.tenantId);
-                            if(index > -1) {
+                            if (index > -1) {
                                 return vm.clients[index].company;
                             } else {
                                 return '';
                             }
                         },
                         allowEditing: false
-                    },{
+                    }, {
                         dataField: 'attachment27a',
                         caption: '27A',
                         cellTemplate: function (container, options) {
@@ -398,7 +398,7 @@
                         dataField: 'module',
                         caption: 'Module',
                         allowEditing: false
-                    },  {
+                    }, {
                         caption: 'Finacial Year',
                         dataField: 'finYear',
                         allowEditing: false
@@ -447,22 +447,22 @@
                         caption: 'Discount',
                         alignment: 'right',
                         allowEditing: false,
-                        calculateCellValue: function(data) {
-                            return data.discount? data.discount + '%' : '';
+                        calculateCellValue: function (data) {
+                            return data.discount ? data.discount + '%' : '';
                         }
                     }, {
                         dataField: 'totalCost',
                         caption: 'Total Cost',
                         dataType: 'number',
-                        calculateCellValue: function(data) {
-                            if(data.fees) {
+                        calculateCellValue: function (data) {
+                            if (data.fees) {
                                 var discount = data.discount ? data.discount : 0;
-                                return data.fees - (data.fees * discount * 0.01 ) + data.extra;
+                                return data.fees - (data.fees * discount * 0.01) + data.extra;
                             } else {
                                 return '';
                             }
                         }
-                    },  {
+                    }, {
                         dataField: 'remarks',
                         caption: 'Remarks'
                     }, {
@@ -502,11 +502,11 @@
                                         bindToController: true,
                                         locals: { isAdmin: true, customers: customers }
                                     })
-                                    .then(function (answer) {
-                                        
-                                    }, function () {
-                                        $scope.status = 'You cancelled the dialog.';
-                                    });
+                                        .then(function (answer) {
+
+                                        }, function () {
+                                            $scope.status = 'You cancelled the dialog.';
+                                        });
                                 }
 
                             }
@@ -609,7 +609,7 @@
 
                     if (info.rowType == 'data' && info.data.acknowledged == true && info.data.ackAttached != true) {
                         info.rowElement.addClass("md-white-bg");
-                    } else if(info.rowType == 'data' && info.data.ackAttached == true) {
+                    } else if (info.rowType == 'data' && info.data.ackAttached == true) {
                         info.rowElement.addClass("md-green-50-bg");
                     }
 
@@ -760,7 +760,7 @@
                 return;
             }
 
-            adminRequestService.submitEtds(value, settings, vm.gridData);             
+            adminRequestService.submitEtds(value, settings, vm.gridData);
             tdsInstance.option('disabled', false);
             tdsInstance.reset();
         }
@@ -814,26 +814,26 @@
                                     var ref = rootRef.child('tenants').child(data.tenantId);
 
                                     $firebaseObject(ref).$loaded(function (tenant) {
-                                        
+
                                         var extraCharge = settings.extraCharge ? settings.extraCharge : 0;
                                         var discount = tenant.discount ? tenant.discount : 0;
                                         var totalCost = data.fees - (data.fees * discount * 0.01) + extraCharge;
-                                        
+
                                         var tenantLedger = rootRef.child('tenant-payment-ledger').child(data.tenantId).child(acknowledgementNo);
-                                       
+
                                         data.mode = 'debit';
                                         data.debit = totalCost;
                                         data.acknowledgementNo = acknowledgementNo;
-                                        
+
                                         var adminLedger = rootRef.child('payment-ledger').child(acknowledgementNo);
                                         adminLedger.set(data);
 
                                         if (tenant.creditBalance >= totalCost || tenant.paymentType == 'postpaid') {
                                             rootRef.child('tenant-tin-requests-token/' + data.tenantId + '/' + acknowledgementNo).update(Object.assign(data, obj));
                                             rootRef.child('tenant-tin-requests/' + data.tenantId + '/' + data['barcode']).update(Object.assign(data, obj));
-                                            rootRef.child('tenants/' + data.tenantId).update({ creditBalance: (tenant.creditBalance ? tenant.creditBalance : 0) - parseInt(totalCost) }).then(function() {
-                                            
-                                                if(uploadedAcknowledgement[data.tenantId]) {
+                                            rootRef.child('tenants/' + data.tenantId).update({ creditBalance: (tenant.creditBalance ? tenant.creditBalance : 0) - parseInt(totalCost) }).then(function () {
+
+                                                if (uploadedAcknowledgement[data.tenantId]) {
                                                     uploadedAcknowledgement[data.tenantId].push(data);
                                                     return resolve(data);
                                                 } else {
@@ -846,13 +846,19 @@
                                         } else {
                                             rootRef.child('tenant-pending-tin-requests-token/' + data.tenantId + '/' + acknowledgementNo).update(Object.assign(data, obj));
                                             calculateRequiredBalance(data);
-                                            rootRef.child('tenant-tin-requests/' + data.tenantId + '/' + data['barcode']).update({ 
-                                                status: 3, 
+                                            var tenantObj = {
+                                                status: 3,
                                                 remarks: 'Credit Balance Low! Please Recharge ',
-                                                fees: data['fees'],
-                                                extra: data['extra'],
-                                                discount: data['discount']
-                                            }).then(function () {
+                                                fees: data['fees']
+                                            };
+
+                                            if (data['extra']) {
+                                                tenantObj['extra'] = data['extra'];
+                                            }
+                                            if (data['discount']) {
+                                                tenantObj['discount'] = data['discount'];
+                                            }
+                                            rootRef.child('tenant-tin-requests/' + data.tenantId + '/' + data['barcode']).update(tenantObj).then(function () {
                                             });
                                         }
                                     });
@@ -873,7 +879,7 @@
             });
 
             Promise.all(promises).then(function (promise) {
-                for(var tenant in uploadedAcknowledgement) {
+                for (var tenant in uploadedAcknowledgement) {
                     var ref = rootRef.child('tenant-acknowledgement-mail').child(tenant);
                     firebaseUtils.addData(ref, uploadedAcknowledgement[tenant]);
                 }
@@ -924,7 +930,7 @@
             ref.once('value', function (snapshot) {
                 var extraCharge = settings.extraCharge ? settings.extraCharge : 0;
                 var discount = snapshot.val().discount ? snapshot.val().discount : 0;
-                var totalCost = data.fees  - (data.fees * discount * 0.01) + extraCharge;
+                var totalCost = data.fees - (data.fees * discount * 0.01) + extraCharge;
                 var prevBalance = snapshot.val().requiredBalance ? snapshot.val().requiredBalance : 0;
                 ref.update({ requiredBalance: prevBalance + totalCost })
             });
@@ -941,7 +947,7 @@
             // Attach an asynchronous callback to read the data at our posts reference
             ref.once("value", function (snapshot) {
                 var extraCharge = settings.extraCharge ? settings.extraCharge : 0;
-                var totalCost = data.fees  + extraCharge;
+                var totalCost = data.fees + extraCharge;
                 ref.update({ totalRevenue: snapshot.val().totalRevenue + totalCost });
                 totalref.update({ totalRevenue: snapshot.val().totalRevenue + totalCost });
             }, function (errorObject) {

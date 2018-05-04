@@ -80,14 +80,82 @@
             }, {
                 dataField: 'particulars',
                 caption: 'Description',
-                calculateCellValue: function (data) {
-                    var index = msUtils.getIndexByArray(vm.paymentledgerModes, 'id', data.paymentledgerMode);
-                    if (index > -1) {
-                        return vm.paymentledgerModes[index].name;
-                    } else {
-                        return '';
+                cellTemplate: function (container, options) {
+                    var str = '<div>',
+                        data = options.data;
+                    if (data.debit) {
+                        if (data.barcode) {
+                            str += 'Barcode: ' + data.barcode + '</br>';
+                        }
+                        if (data.qtr) {
+                            str += 'QTR: ' + data.qtr + '</br>';
+                        }
+                        if (data.deductor) {
+                            str += 'Deductor/Collector Name: ' + data.deductor + '</br';
+                        }
+
+                        str += '</div>';
+                    } else if (data.credit) {
+                        if (data.paymentMode) {
+                            var index = msUtils.getIndexByArray(vm.paymentledgerModes, 'id', data.paymentMode);
+                            str += 'Payment Mode: ' + vm.paymentledgerModes[index].name + '</br>';
+
+                        }
+
+                        if (data.chequeNumber) {
+                            str += 'Cheque No: ' + data.chequeNumber + '</br>';
+                        }
+                        if (data.bankAccount) {
+                            var index = msUtils.getIndexByArray(accounts, '$id', data.bankAccount);
+                            str += 'Account Name: ' + accounts[index].bankName + '</br>';
+                        }
+                        if (data.cashBy) {
+                            var index = msUtils.getIndexByArray(users, '$id', data.cashBy);
+                            str += 'Received By: ' + users[index].name + '</br>';
+                        }
+                        str += '</div>';
                     }
+                    $(str).appendTo(container);
+                },
+                calculateCellValue: function (data) {
+                    var str = '';
+                    if (data.debit) {
+                        if (data.barcode) {
+                            str += 'Barcode: ' + data.barcode + '';
+                        }
+                        if (data.qtr) {
+                            str += 'QTR: ' + data.qtr + '';
+                        }
+                        if (data.deductor) {
+                            str += 'Deductor/Collector Name: ' + data.deductor + '</br';
+                        }
+
+                        str += '';
+                    } else if (data.credit) {
+                        if (data.paymentMode) {
+                            var index = msUtils.getIndexByArray(vm.paymentledgerModes, 'id', data.paymentMode);
+                            str += 'Payment Mode: ' + vm.paymentledgerModes[index].name + '';
+                        }
+
+                        if (data.chequeNumber) {
+                            str += 'Cheque No: ' + data.chequeNumber + '';
+                        }
+                        if (data.bankAccount) {
+                            var index = msUtils.getIndexByArray(accounts, '$id', data.bankAccount);
+                            str += 'Account Name: ' + accounts[index].bankName + '';
+                        }
+                        if (data.cashBy) {
+                            var index = msUtils.getIndexByArray(users, '$id', data.cashBy);
+                            str += 'Received By: ' + users[index].name + '';
+                        }
+                        str += '';
+                    }
+                    return str;
                 }
+               
+            }, {
+                dataField: 'mode',
+                caption: 'Mode'
             }, {
                 dataField: 'token',
                 caption: 'Token No'

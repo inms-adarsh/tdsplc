@@ -1,0 +1,35 @@
+[debug] [2018-05-04T06:57:56.204Z] ----------------------------------------------------------------------
+[debug] [2018-05-04T06:57:56.204Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\Somana5\AppData\Roaming\npm\node_modules\firebase-tools\bin\firebase deploy
+[debug] [2018-05-04T06:57:56.204Z] CLI Version:   3.17.4
+[debug] [2018-05-04T06:57:56.204Z] Platform:      win32
+[debug] [2018-05-04T06:57:56.204Z] Node Version:  v8.9.3
+[debug] [2018-05-04T06:57:56.204Z] Time:          Fri May 04 2018 12:27:56 GMT+0530 (India Standard Time)
+[debug] [2018-05-04T06:57:56.204Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2018-05-04T06:57:56.204Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2018-05-04T06:57:56.204Z] > authorizing via signed-in user
+[debug] [2018-05-04T06:57:56.220Z] > refreshing access token with scopes: ["email","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","openid"]
+[debug] [2018-05-04T06:57:56.220Z] >>> HTTP REQUEST POST https://www.googleapis.com/oauth2/v3/token  
+ { refresh_token: '1/bdY4SO6UDZYA67O9MxHtp2UdH2XkopOsH36p25vKXvk',
+  client_id: '563584335869-fgrhgmd47bqnekij5i8b5pr03ho849e6.apps.googleusercontent.com',
+  client_secret: 'j9iVZfS8kkCEFUPaAeJV0sAi',
+  grant_type: 'refresh_token',
+  scope: 'email https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/cloudplatformprojects.readonly https://www.googleapis.com/auth/firebase openid' } 
+ Fri May 04 2018 12:27:56 GMT+0530 (India Standard Time)
+[debug] [2018-05-04T06:57:57.811Z] <<< HTTP RESPONSE 200
+[debug] [2018-05-04T06:57:57.828Z] >>> HTTP REQUEST GET https://admin.firebase.com/v1/projects/tdsplc-staging  
+  
+ Fri May 04 2018 12:27:57 GMT+0530 (India Standard Time)
+[debug] [2018-05-04T06:57:59.968Z] <<< HTTP RESPONSE 200
+[debug] [2018-05-04T06:57:59.968Z] >>> HTTP REQUEST GET https://admin.firebase.com/v1/database/tdsplc-staging/tokens  
+  
+ Fri May 04 2018 12:27:59 GMT+0530 (India Standard Time)
+[debug] [2018-05-04T06:58:01.510Z] <<< HTTP RESPONSE 200
+[info] 
+[info] === Deploying to 'tdsplc-staging'...
+[info] 
+[info] i  deploying hosting
+[info] i  hosting: preparing dist directory for upload...
+[debug] [2018-05-04T06:58:20.913Z] >>> HTTP REQUEST PUT https://deploy.firebase.com/v1/hosting/tdsplc-staging/uploads/-LBdwN4kod9mDFNiQl56?fileCount=561&message=  
+  
+ Fri May 04 2018 12:28:20 GMT+0530 (India Standard Time)

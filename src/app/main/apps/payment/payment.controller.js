@@ -6,7 +6,7 @@
         .controller('PaymentRequestController', PaymentRequestController);
 
     /** @ngInject */
-    function PaymentRequestController(currentAuth, msUtils, $mdDialog, users, accounts, dxUtils, auth, $firebaseArray, $firebaseObject, firebaseUtils, authService, settings, tenantInfo, $scope, paymentService, $state) {
+    function PaymentRequestController(currentAuth, msUtils, accountService, $mdDialog, users, accounts, dxUtils, auth, $firebaseArray, $firebaseObject, firebaseUtils, authService, settings, tenantInfo, $scope, paymentService, $state) {
         var vm = this,
             formInstance,
             tenantId = authService.getCurrentTenant();
@@ -204,6 +204,10 @@
 
             var tenantRef = rootRef.child('tenants').child(tenantId);
             $firebaseObject(tenantRef).$bindTo($scope, 'tenant');
+
+            var ref = rootRef.child('tenant-accounts');
+
+            vm.accountsData = $firebaseArray(ref);
         }
 
         init();
@@ -213,6 +217,27 @@
             vm.creditBalance = 'Credit Balance: ' + newVal.creditBalance;
             $scope.buttonType = newVal.creditBalance < 0 ? 'danger' : 'success';
         });
+
+        vm.accountGridOptions = {
+            bindingOptions: {
+                dataSource: 'vm.accountsData'
+            },
+            columns: [{
+                dataField: 'bankname',
+                caption: 'Bank Name',
+                validationRules: [{
+                    type: 'required',
+                    message: 'Name is required'
+                }],
+            }, {
+                dataField: 'ifsc',
+                caption: 'IFSC Code'
+            },
+            {
+                dataField: 'accountNo',
+                caption: 'Account No'
+            }]
+        }
 
     }
 })();

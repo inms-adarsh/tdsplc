@@ -119,10 +119,14 @@
         * Approve Single Record
         * @param {*} record 
         */
-        function approveSingleRecord(record) {
+        function approveSingleRecord(record, uid) {
            // calculateRevenue(record);
 
             var paymentId = record.$id;
+
+            if(record.paymentMode === 'cash') {
+                record.cashBy = uid;
+            }
             delete record.$id;
             delete record.$conf;
             delete record.$priority;
@@ -165,8 +169,7 @@
                     delete request.$id;
                     delete request.$conf;
                     delete request.$priority;
-                    var extraCharge = settings.extraCharge ? settings.extraCharge : 0;
-                    var totalCost = request.fees - (request.fees * discount * 0.01) + extraCharge;
+                    var totalCost = request.fees - (request.fees * discount * 0.01) + request.extra || 0;
                     if (totalCost <= creditBalance || tenant.paymentType == 'postpaid') {
                         var obj = { ackAttached: true, remarks: '', status: 2 };
                         rootRef.child('tenant-tin-requests-token/' + tenantId + '/' + id).update(Object.assign(request, obj));

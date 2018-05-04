@@ -223,20 +223,39 @@
                 dataSource: 'vm.accountsData'
             },
             columns: [{
-                dataField: 'bankname',
-                caption: 'Bank Name',
-                validationRules: [{
-                    type: 'required',
-                    message: 'Name is required'
-                }],
-            }, {
-                dataField: 'ifsc',
-                caption: 'IFSC Code'
-            },
-            {
-                dataField: 'accountNo',
-                caption: 'Account No'
-            }]
+                dataField: 'accountHolder',
+                caption: 'Account Holder Name' 
+             }, {
+                 dataField: 'bankname',
+                 caption: 'Bank Name',
+                 validationRules: [{
+                     type: 'required',
+                     message: 'Name is required'
+                 }],
+             }, {
+                 dataField: 'ifsc',
+                 caption: 'IFSC Code'
+             },
+             {
+                 dataField: 'accountNo',
+                 caption: 'Account No'
+             }, 
+             {
+                 dataField: 'accountType',
+                 caption: 'Account Type',
+                 lookup: {
+                     dataSource: [{
+                         name: 'Current',
+                         id: 'current'
+                     }, {
+                         name: 'Saving',
+                         id: 'saving'
+                     }],
+                     displayExpr: 'name',
+                     valueExpr: 'id'
+                 }
+                 
+             }]
         }
 
     }

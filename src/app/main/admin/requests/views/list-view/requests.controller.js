@@ -815,7 +815,7 @@
 
                                     $firebaseObject(ref).$loaded(function (tenant) {
 
-                                        var extraCharge = settings.extraCharge ? settings.extraCharge : 0;
+                                        var extraCharge = data.extra ? data.extra : 0;
                                         var discount = tenant.discount ? tenant.discount : 0;
                                         var totalCost = data.fees - (data.fees * discount * 0.01) + extraCharge;
 
@@ -859,17 +859,25 @@
                                                 tenantObj['discount'] = data['discount'];
                                             }
                                             rootRef.child('tenant-tin-requests/' + data.tenantId + '/' + data['barcode']).update(tenantObj).then(function () {
+                                                return resolve(data);
                                             });
                                         }
                                     });
                                 });
                             } else {
-                                tokens.push(acknowledgementNo);
+                                tokens.push({
+                                    'description': acknowledgementNo,
+                                    'reason': 'Acknowledgement Already Generated'
+                                });
+                                return resolve({});
                             }
                         });
                     } else {
-                        invalidTokens.push(acknowledgementNo);
-
+                        tokens.push({
+                            'description': acknowledgementNo,
+                            'reason': 'No such token in the worklist for file ' + acknowledgement.name
+                        });
+                        return resolve({});
                     }
                     ackFileFormInstance.option('disabled', false);
                     ackFileFormInstance.reset();
@@ -884,7 +892,28 @@
                     firebaseUtils.addData(ref, uploadedAcknowledgement[tenant]);
                 }
 
-                DevExpress.ui.dialog.alert('Acknowledgemnts have been generated successfully', 'Success');
+                if(tokens.length ==  0) {
+                    DevExpress.ui.dialog.alert('Acknowledgemnts have uploaded successfully', 'Success');
+                } else {
+                    
+                    $mdDialog.show({
+                        controller: 'ErrorDialogController',
+                        templateUrl: 'app/main/admin/errorDialog/error-dialog.html',
+                        parent: angular.element(document.body),
+                        controllerAs: 'vm',
+                        clickOutsideToClose: true,
+                        fullscreen: true, // Only for -xs, -sm breakpoints.,
+                        locals: { errors: tokens },
+                        bindToController: true
+                    })
+                        .then(function (answer) {
+                        }, function () {
+                            $scope.status = 'You cancelled the dialog.';
+                        });
+
+                    
+                }
+                
                 //requestService.generate_cutomPDF();
             });
             // for (var i = 0; i < tokens.length; i++) {
@@ -928,30 +957,11 @@
         function calculateRequiredBalance(data) {
             var ref = rootRef.child("/tenants/" + data.tenantId);
             ref.once('value', function (snapshot) {
-                var extraCharge = settings.extraCharge ? settings.extraCharge : 0;
+                var extraCharge = data.extra ? data.extra : 0;
                 var discount = snapshot.val().discount ? snapshot.val().discount : 0;
                 var totalCost = data.fees - (data.fees * discount * 0.01) + extraCharge;
                 var prevBalance = snapshot.val().requiredBalance ? snapshot.val().requiredBalance : 0;
                 ref.update({ requiredBalance: prevBalance + totalCost })
-            });
-        }
-
-
-        function calculateRevenue(data) {
-            var date = new Date(),
-                month = date.getMonth(),
-                year = date.getFullYear();
-
-            var ref = rootRef.child("/tenant-monthly-revenues/" + year + "/" + month + "/" + data.tenantId),
-                totalref = rootRef.child("/tenant-revenues/" + data.tenantId);
-            // Attach an asynchronous callback to read the data at our posts reference
-            ref.once("value", function (snapshot) {
-                var extraCharge = settings.extraCharge ? settings.extraCharge : 0;
-                var totalCost = data.fees + extraCharge;
-                ref.update({ totalRevenue: snapshot.val().totalRevenue + totalCost });
-                totalref.update({ totalRevenue: snapshot.val().totalRevenue + totalCost });
-            }, function (errorObject) {
-                console.log("The read failed: " + errorObject.code);
             });
         }
 

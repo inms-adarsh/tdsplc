@@ -115,13 +115,19 @@
                             type: 'success',
                             text: 'Approve Selected',
                             onClick: function (e) {
-                                var latestRecords = gridInstance.getSelectedRowKeys(),
-                                    zip = new JSZip(),
-                                    count = 0,
-                                    mergeObj = {},
-                                    zipFilename;
+                                var result = DevExpress.ui.dialog.confirm("Do you want to approve selected records? Once approved, record can not be modified", "Confirm changes");
+                                result.done(function (dialogResult) {
+                                    if(dialogResult == true) {
+                                        var latestRecords = gridInstance.getSelectedRowKeys(),
+                                            zip = new JSZip(),
+                                            count = 0,
+                                            mergeObj = {},
+                                            zipFilename;
 
-                                approveAll(latestRecords);
+                                        approveAll(latestRecords, auth.$getAuth().uid);
+                                    }
+                                });
+                                
                             }
                         }
                     }
@@ -176,9 +182,14 @@
                 caption: 'Cheque No',
                 allowEditing: false
             }, {
-                dataField: 'bank',
+                dataField: 'bankAccount',
                 caption: 'Bank Account',
-                allowEditing: false
+                allowEditing: false,
+                lookup: {
+                    dataSource: accounts,
+                    displayExpr: 'bankname',
+                    valueExpr: "$id"
+                }
             }, {
                 dataField: 'cashBy',
                 caption: 'Received By',
@@ -206,12 +217,12 @@
                 var component = e.component;
 
                 if (e.key.status == 1) {
-                    approveSingleRecord(e.key);
+                    paymentService.approveSingleRecord(e.key, auth.$getAuth().uid);
                 }
             },
             onCellPrepared: function (e) {
                 var role = JSON.parse(localStorage.getItem('role'));
-                if (e.rowType == 'data' && e.row.data.status === 1 && role != 'superuser') {
+                if (e.rowType == 'data' && e.row.data.status === 1) {
                     e.cellElement.find(".dx-link-delete").remove();
                     e.cellElement.find(".dx-link-edit").remove();
                 }
@@ -261,7 +272,7 @@
         function approveAll(latestRecords) {
             latestRecords.forEach(function (record) {
                 record.status = 1;
-                paymentService.approveSingleRecord(record);
+                paymentService.approveSingleRecord(record, auth.$getAuth().uid);
             });
 
             DevExpress.ui.dialog.alert('All requests approved', 'Success'); 

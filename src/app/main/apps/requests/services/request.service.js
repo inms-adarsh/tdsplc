@@ -292,7 +292,6 @@
             $rootScope.loadingProgress = true;
             var form27As = formObj.form27As;
             var tinrequests = {},
-                existingBarcodes = [],
                 invalidFiles = [];
             var promises = form27As.map(function (form27A) {
                 return new Promise(function (resolve, reject) {
@@ -308,16 +307,25 @@
                             pdf.getPage(1).then(function (page) {
                                 page.getTextContent().then(function (text) {
                                     if (!text || !text.items || !text.items[3]) {
-                                        invalidFiles.push(form27A.name);
+                                        invalidFiles.push({
+                                            'description': form27A.name,
+                                            'reason': 'Invalid form27A File'
+                                        });
                                         return resolve({});
                                     }
                                     var barcode = text.items[3].str.trim();
 
                                     if (isNaN(Number(barcode))) {
-                                        invalidFiles.push(form27A.name);
+                                        invalidFiles.push({
+                                            'description': form27A.name,
+                                            'reason': 'Invalid form27A File'
+                                        });
                                         return resolve({});
                                     } else if (barcode.length != 20) {
-                                        invalidFiles.push(form27A.name);
+                                        invalidFiles.push({
+                                            'description': form27A.name,
+                                            'reason': 'Invalid form27A File'
+                                        });
                                         return resolve({});
                                     }
 
@@ -337,7 +345,10 @@
 
                                    
                                         if (barcodeAlreadyExist > -1) {
-                                            existingBarcodes.push(barcode);
+                                            invalidFiles.push({
+                                                'description': barcode,
+                                                'reason': 'Form 27A File for barcode already uploaded'
+                                            });
                                             return resolve({});
                                         } else {
                                             $firebaseStorage(storageRef).$put(form27A, metaData).$complete(function (snapshot) {
@@ -367,18 +378,21 @@
             });
 
             Promise.all(promises).then(function () {
-                submitFVUs(tinrequests, existingBarcodes, invalidFiles, key, formObj);
+                submitFVUs(tinrequests,  invalidFiles, key, formObj);
             });
             //console.log(fvusInstance.option('value'));
         }
 
 
-        function submitFVUs(tinrequests, existingBarcodes, invalidFiles, key, formObj) {
+        function submitFVUs(tinrequests,  invalidFiles, key, formObj) {
             var fvus = formObj.fvus;
 
             var promises = fvus.map(function (fvu) {
                 if (fvu.name.split('.').pop() !== 'fvu') {
-                    invalidFiles.push(fvu.name);
+                    invalidFiles.push({
+                        'description': fvu.name,
+                        'reason': 'Invalid FVU File'
+                    });
                     return;
                 }
                 return new Promise(function (resolve, reject) {
@@ -387,7 +401,10 @@
 
                     reader.addEventListener('load', function (e) {
                         if (!e.target.result || !e.target.result.split('\n') || !e.target.result.split('\n')[7]) {
-                            invalidFiles.push(fvu.name);
+                            invalidFiles.push({
+                                'description': fvu.name,
+                                'reason': 'Invalid FVU File'
+                            });
                             return resolve({});
                         }
                         var barcode = e.target.result.split('\n')[7].split('^');
@@ -400,10 +417,16 @@
 
 
                         if (isNaN(Number(barcode))) {
-                            invalidFiles.push(fvu.name);
+                            invalidFiles.push({
+                                'description': fvu.name,
+                                'reason': 'Invalid FVU File'
+                            });
                             return resolve({});
                         } else if (barcode.length != 20) {
-                            invalidFiles.push(fvu.name);
+                            invalidFiles.push({
+                                'description': fvu.name,
+                                'reason': 'Invalid FVU File'
+                            });
                             return resolve({});
                         }
                         // if(typeof barcode === 'number') {
@@ -428,7 +451,10 @@
 
                                    
                             if (barcodeAlreadyExist > -1) {
-                                existingBarcodes.push(barcode);
+                                invalidFiles.push({
+                                    'description': barcode,
+                                    'reason': 'FVU File for barcode already uploaded'
+                                });
                                 return resolve({});
                             } else {
                                 $firebaseStorage(fvuRef).$put(fvu, metaData).$complete(function (snapshot) {
@@ -491,20 +517,40 @@
                         mergeObj['tin-requests/' + key + '/' + request] = requestObj;
                         pendingCount++;
                     } else {
+                        if(formObj.isAdmin) {
+                            mergeObj['admin-tin-requests/' + request] = requestObj;
+                        }
                         failureCount++;
                     }
                    
                 }
 
                 rootRef.update(mergeObj, function (data) {
-                    DevExpress.ui.dialog.alert('New tin-requests added', 'Success'); 
+                    if(invalidFiles.length == 0 && invalidFiles.length == 0) {
+                        DevExpress.ui.dialog.alert('New tin-requests added', 'Success'); 
+                    } else {
+                        $mdDialog.show({
+                            controller: 'ErrorDialogController',
+                            templateUrl: 'app/main/admin/errorDialog/error-dialog.html',
+                            parent: angular.element(document.body),
+                            controllerAs: 'vm',
+                            clickOutsideToClose: true,
+                            fullscreen: true, // Only for -xs, -sm breakpoints.,
+                            locals: { errors: invalidFiles },
+                            bindToController: true
+                        })
+                            .then(function (answer) {
+                            }, function () {
+                                $scope.status = 'You cancelled the dialog.';
+                            });
+                    }
                 });
 
                 firebaseUtils.setBadges('new_requests', 'admin', pendingCount);
 
-                // for (var i = 0; i < existingBarcodes.length; i++) {
+                // for (var i = 0; i < invalidFiles.length; i++) {
                 //     $mdToast.show({
-                //         template: '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Request for barcode ' + existingBarcodes[i] + ' already exist</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
+                //         template: '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Request for barcode ' + invalidFiles[i] + ' already exist</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
                 //         hideDelay: 7000,
                 //         controller: 'ToastController',
                 //         position: 'top right',

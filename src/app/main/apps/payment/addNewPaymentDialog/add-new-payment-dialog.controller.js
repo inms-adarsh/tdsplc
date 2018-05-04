@@ -7,7 +7,7 @@
         .controller('AddPaymentDialogController', AddPaymentDialogController);
 
     /** @ngInject */
-    function AddPaymentDialogController($state, $firebaseObject, isAdmin, authService, $mdToast, $scope, $mdDialog, $document, $firebaseStorage, firebaseUtils, paymentService, prerequisites)
+    function AddPaymentDialogController(auth, $state, $firebaseObject, isAdmin, authService, $mdToast, $scope, $mdDialog, $document, $firebaseStorage, firebaseUtils, paymentService, prerequisites)
     {
         var vm = this,
             formInstance,
@@ -89,7 +89,6 @@
                                 formInstance.itemOption('chequeNumber', 'visible', true);
                             } else if (e.value == 'cash') {
                                 formInstance.itemOption('amount', 'visible', true);
-                                formInstance.itemOption('cashBy', 'visible', true);
                             } else if (e.value == 'neft') {
                                 formInstance.itemOption('bankAccount', 'visible', true);
                                 formInstance.itemOption('amount', 'visible', true);
@@ -156,24 +155,6 @@
                         onValueChanged: function (e) {
                         }
                     }
-                }, {
-                    dataField: "cashBy",
-                    name: 'cashBy',
-                    label: {
-                        text: 'Cash By'
-                    },
-                    visible: false,
-                    width: 125,
-                    editorType: 'dxSelectBox',
-                    validationRules: [{
-                        type: 'required',
-                        message: 'Please select a name'
-                    }],
-                    editorOptions: {
-                        dataSource: prerequisites.users,
-                        displayExpr: "name",
-                        valueExpr: "$id"
-                    }
                 }
             ]
         };
@@ -198,7 +179,7 @@
                 paymentService.addPayment(formObj).then(function(key) { 
                     if(formObj.status == 1) {
                         formObj.$id = key;
-                        paymentService.approveSingleRecord(formObj);
+                        paymentService.approveSingleRecord(formObj, auth.$getAuth().uid);
                     }
                     DevExpress.ui.dialog.alert('New request added successfully', 'Success');                   
                     $mdDialog.hide();  
@@ -216,7 +197,6 @@
             //formInstance.itemOption('payment.chequeAmount', 'visible', false);
             formInstance.itemOption('chequeNumber', 'visible', false);
             formInstance.itemOption('amount', 'visible', false);
-            formInstance.itemOption('cashBy', 'visible', false);
             formInstance.itemOption('bankAccount', 'visible', false);
             //formInstance.itemOption('payment.neftAmount', 'visible', false);
         }

@@ -6,7 +6,7 @@
         .factory('adminRequestService', adminRequestService);
 
     /** @ngInject */
-    function adminRequestService($firebaseArray, $firebaseObject, $mdToast, $q, authService, auth, firebaseUtils, dxUtils, config, msUtils, $firebaseStorage) {
+    function adminRequestService($firebaseArray, $mdDialog, $firebaseObject, $mdToast, $q, authService, auth, firebaseUtils, dxUtils, config, msUtils, $firebaseStorage) {
         var tenantId = authService.getCurrentTenant(),
             formInstance,
             form27AInstance;
@@ -370,62 +370,96 @@
                 }
 
                 var existingBarcodes = [];
-                var promises = data.forEach(function (xls) {
-                    var obj = {
-                        barcode: xls['Barcode Value'],
-                        token: xls['Token Number'],
-                        rdate: xls['Receipt Date'],
-                        deductor: xls['Deductor/Collector Name'],
-                        finYear: xls['Financial Year'],
-                        fees: parseInt(xls['Fees Charged']),
-                        formNo: xls['Form No.'],
-                        origTokenNo: xls['Original Token No.'],
-                        tan: xls['TAN'],
-                        userId: xls['User Id'],
-                        corrections: xls['Regular/ Correction'],
-                        qtr: xls['Quarter'],
-                        acknowledged: true
+                var promises = data.map(function (xls) {
+                    return new Promise(function (resolve, reject) {
+                        var obj = {
+                            barcode: xls['Barcode Value'],
+                            token: xls['Token Number'],
+                            rdate: xls['Receipt Date'],
+                            deductor: xls['Deductor/Collector Name'],
+                            finYear: xls['Financial Year'],
+                            fees: parseInt(xls['Fees Charged']),
+                            formNo: xls['Form No.'],
+                            origTokenNo: xls['Original Token No.'],
+                            tan: xls['TAN'],
+                            userId: xls['User Id'],
+                            corrections: xls['Regular/ Correction'],
+                            qtr: xls['Quarter'],
+                            acknowledged: true
 
-                    };
+                        };
 
-                    if (settings.extraCharge) {
-                        obj['extra'] = settings.extraCharge;
-                    }
+                        if (settings.extraCharge) {
+                            obj['extra'] = settings.extraCharge;
+                        }
 
-                    var ref = rootRef.child('admin-tin-requests').child('' + obj['barcode']);
-                    var index = msUtils.getIndexByArray(gridData, 'barcode', obj['barcode']);
-                    if (index > -1 && !gridData[index].acknowledged) {
-                        ref.once('value', function (data) {
-                            var data = data.val();
-                            var ref = rootRef.child('tenants').child(data.tenantId);
+                        var ref = rootRef.child('admin-tin-requests').child('' + obj['barcode']);
+                        var index = msUtils.getIndexByArray(gridData, 'barcode', obj['barcode']);
+                        if (index > -1 && !gridData[index].acknowledged) {
+                            ref.once('value', function (data) {
+                                var data = data.val();
+                                var ref = rootRef.child('tenants').child(data.tenantId);
 
-                            ref.once('value', function (tenant) {
-                                if (tenant.val().discount) {
-                                    obj['discount'] = tenant.val().discount;
+                                ref.once('value', function (tenant) {
+                                    if (tenant.val().discount) {
+                                        obj['discount'] = tenant.val().discount;
+                                    }
+                                });
+                                rootRef.child('admin-tin-requests/' + obj['barcode']).update(obj);
+                                if (data.assignedTo) {
+                                    rootRef.child('employee-tin-requests/' + data.assignedTo + '/' + obj['barcode']).update(obj);
                                 }
+                                rootRef.child('tin-requests/' + data.requestId + '/' + obj['barcode']).update(obj);
+
+                                Object.assign(obj, data);
+
+                                obj.requestId = data.requestId;
+                                obj.tenantId = data.tenantId;
+
+                                obj.date = new Date();
+                                obj.date = obj.date.toString();
+
+                                rootRef.child('tin-requests-token/' + obj.token).update(obj).then(function(data) {
+                                    return resolve(data);
+                                });
                             });
-                            rootRef.child('admin-tin-requests/' + obj['barcode']).update(obj);
-                            if (data.assignedTo) {
-                                rootRef.child('employee-tin-requests/' + data.assignedTo + '/' + obj['barcode']).update(obj);
+                        } else {
+                            if(index == -1) {
+                                existingBarcodes.push({
+                                    'description': obj['barcode'],
+                                    'reason': 'barcode is not in your worklist'
+                                });
+                            } else if(gridData[index].acknowledged) {
+                                existingBarcodes.push({
+                                    'description': obj['barcode'],
+                                    'reason': 'e-TDS for barcode already uploaded'
+                                });
                             }
-                            rootRef.child('tin-requests/' + data.requestId + '/' + obj['barcode']).update(obj);
-
-                            Object.assign(obj, data);
-
-                            obj.requestId = data.requestId;
-                            obj.tenantId = data.tenantId;
-
-                            obj.date = new Date();
-                            obj.date = obj.date.toString();
-
-                            rootRef.child('tin-requests-token/' + obj.token).update(obj);
-                        });
-                    } else {
-                        existingBarcodes.push(obj['barcode']);
-                    }
-
+                            return resolve({});
+                        }
+                    });
                 });
 
+                Promise.all(promises).then(function () {
+                    if (existingBarcodes.length == 0) {
+                        DevExpress.ui.dialog.alert('E-TDS File Uploaded successfully ', 'Success');
+                    } else {
+                        $mdDialog.show({
+                            controller: 'ErrorDialogController',
+                            templateUrl: 'app/main/admin/errorDialog/error-dialog.html',
+                            parent: angular.element(document.body),
+                            controllerAs: 'vm',
+                            clickOutsideToClose: true,
+                            fullscreen: true, // Only for -xs, -sm breakpoints.,
+                            locals: { errors: existingBarcodes },
+                            bindToController: true
+                        })
+                            .then(function (answer) {
+                            }, function () {
+                                $scope.status = 'You cancelled the dialog.';
+                            });
+                    }
+                });
                 // var positionTop = 0,
                 //     increment = 65;
                 // for (var i = 0; i < existingBarcodes.length; i++) {
@@ -447,7 +481,7 @@
                 // }
 
             };
-            DevExpress.ui.dialog.alert('E-TDS File Uploaded successfully ', 'Success'); 
+
             reader.readAsBinaryString(value[0]);
         }
     }

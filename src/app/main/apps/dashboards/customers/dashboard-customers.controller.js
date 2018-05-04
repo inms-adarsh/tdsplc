@@ -45,11 +45,11 @@
         function init() {
             vm.gridOptions = dxUtils.createGrid(),
 
-                vm.pendingPaymentGridOptions = dxUtils.createGrid();
+            vm.pendingPaymentGridOptions = dxUtils.createGrid();
 
             var ref = rootRef.child('tenants').child(tenantId);
-            $firebaseObject(ref).$loaded(function (data) {
-                $scope.tenant = data;
+            ref.on('value', function (data) {                
+                $scope.tenant = data.val();
                 if($scope.tenant.requiredBalance > 0) {
                     vm.debitBalance = $scope.tenant.requiredBalance || 0;
                     vm.requiredBalance = $scope.tenant.requiredBalance - $scope.tenant.creditBalance;

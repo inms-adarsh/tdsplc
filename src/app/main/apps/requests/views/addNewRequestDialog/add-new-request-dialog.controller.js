@@ -118,6 +118,7 @@
                 if(!formObj.tenantId) {
                     formObj.tenantId = tenantId;
                 }
+                formObj.isAdmin = isAdmin;
                 requestService.saveRequest(formObj);
 
                 $mdDialog.hide();

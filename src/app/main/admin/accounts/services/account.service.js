@@ -110,6 +110,9 @@
                         }]
                     },
                     columns: [{
+                       dataField: 'accountHolder',
+                       caption: 'Account Holder Name' 
+                    }, {
                         dataField: 'bankname',
                         caption: 'Bank Name',
                         validationRules: [{
@@ -123,6 +126,22 @@
                     {
                         dataField: 'accountNo',
                         caption: 'Account No'
+                    }, 
+                    {
+                        dataField: 'accountType',
+                        caption: 'Account Type',
+                        lookup: {
+                            dataSource: [{
+                                name: 'Current',
+                                id: 'current'
+                            }, {
+                                name: 'Saving',
+                                id: 'saving'
+                            }],
+                            displayExpr: 'name',
+                            valueExpr: 'id'
+                        }
+                        
                     }],
                     export: {
                         enabled: true,
@@ -184,7 +203,7 @@
          * @returns {Object} Account data
          */
         function updateAccount(key, accountData) {
-            var ref = rootRef.child('tenant-accounts');
+            var ref = rootRef.child('tenant-accounts').child(key['$id']);
             return firebaseUtils.updateData(ref, accountData);
         }
 

@@ -34,6 +34,9 @@
         }, {
             id: 1,
             name: 'Received'
+        }, {
+            id: 2,
+            name: 'Rejected'
         }];
 
         vm.gridOptions = dxUtils.createGrid();
@@ -119,7 +122,9 @@
                     dataSource: vm.paymentStatus,
                     displayExpr: "name",
                     valueExpr: "id"
-                }
+                },
+                sortIndex: 0,
+                sortOrder: "asc"
             }, {
                 dataField: 'remarks',
                 caption: 'Remarks'
@@ -128,6 +133,7 @@
                 if (e.rowType == 'data' && e.row.data.status === 1) {
                     e.cellElement.find(".dx-link-delete").remove();
                 }
+                
             },
             onRowRemoving: function (e) {
                 var component = e.component;
@@ -155,19 +161,21 @@
                                     clickOutsideToClose: true,
                                     fullscreen: true, // Only for -xs, -sm breakpoints.,
                                     bindToController: true,
-                                    locals: { isAdmin: false, prerequisites: {
-                                        customers: {},
-                                        accounts: accounts,
-                                        users: users,
-                                        paymentModes: vm.paymentModes,
-                                        paymentStatus: vm.paymentStatus
-                                    } }
+                                    locals: {
+                                        isAdmin: false, prerequisites: {
+                                            customers: {},
+                                            accounts: accounts,
+                                            users: users,
+                                            paymentModes: vm.paymentModes,
+                                            paymentStatus: vm.paymentStatus
+                                        }
+                                    }
                                 })
-                                .then(function (answer) {
-                                    
-                                }, function () {
-                                    $scope.status = 'You cancelled the dialog.';
-                                });
+                                    .then(function (answer) {
+
+                                    }, function () {
+                                        $scope.status = 'You cancelled the dialog.';
+                                    });
                             }
 
                         }
@@ -185,6 +193,17 @@
                             }
                         }
                     });
+            },
+            onRowPrepared: function (info) {
+                if (info.rowType == 'data' && info.data.status == 0)
+                    info.rowElement.addClass("md-light-blue-50-bg");
+
+                if (info.rowType == 'data' && info.data.status == 1)
+                    info.rowElement.addClass("md-green-50-bg");
+                
+                if (info.rowType == 'data' && info.data.status == 2)
+                    info.rowElement.addClass("md-red-50-bg");
+
             }
         }
 
@@ -224,38 +243,38 @@
             },
             columns: [{
                 dataField: 'accountHolder',
-                caption: 'Account Holder Name' 
-             }, {
-                 dataField: 'bankname',
-                 caption: 'Bank Name',
-                 validationRules: [{
-                     type: 'required',
-                     message: 'Name is required'
-                 }],
-             }, {
-                 dataField: 'ifsc',
-                 caption: 'IFSC Code'
-             },
-             {
-                 dataField: 'accountNo',
-                 caption: 'Account No'
-             }, 
-             {
-                 dataField: 'accountType',
-                 caption: 'Account Type',
-                 lookup: {
-                     dataSource: [{
-                         name: 'Current',
-                         id: 'current'
-                     }, {
-                         name: 'Saving',
-                         id: 'saving'
-                     }],
-                     displayExpr: 'name',
-                     valueExpr: 'id'
-                 }
-                 
-             }]
+                caption: 'Account Holder Name'
+            }, {
+                dataField: 'bankname',
+                caption: 'Bank Name',
+                validationRules: [{
+                    type: 'required',
+                    message: 'Name is required'
+                }],
+            }, {
+                dataField: 'ifsc',
+                caption: 'IFSC Code'
+            },
+            {
+                dataField: 'accountNo',
+                caption: 'Account No'
+            },
+            {
+                dataField: 'accountType',
+                caption: 'Account Type',
+                lookup: {
+                    dataSource: [{
+                        name: 'Current',
+                        id: 'current'
+                    }, {
+                        name: 'Saving',
+                        id: 'saving'
+                    }],
+                    displayExpr: 'name',
+                    valueExpr: 'id'
+                }
+
+            }]
         }
 
     }

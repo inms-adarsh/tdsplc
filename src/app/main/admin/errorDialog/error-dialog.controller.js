@@ -19,12 +19,25 @@
         vm.errorGridOptions = {
             dataSource: errors,
             columns: [{
+                caption: '#',
+                cellTemplate: function (cellElement, cellInfo) {
+                    cellElement.text(cellInfo.row.dataIndex + 1)
+                },
+                width: 50
+            },{
                 dataField: 'description',
                 caption: 'Description' 
              }, {
                  dataField: 'reason',
                  caption: 'Reason'
-             }]
+             }],
+             summary: {
+                totalItems: [{
+                    column: 'description',
+                    summaryType: 'count'
+                }]
+            }
+            
         };
 
         vm.closeDialog = function closeDialog() {

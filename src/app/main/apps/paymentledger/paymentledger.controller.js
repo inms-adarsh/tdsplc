@@ -161,7 +161,7 @@
                 caption: 'Token No'
             },
              {
-                dataField: 'reference',
+                dataField: 'ref',
                 caption: 'Reference'
             },
             {

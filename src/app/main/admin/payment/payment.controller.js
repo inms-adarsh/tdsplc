@@ -33,6 +33,9 @@
         }, {
             id: 1,
             name: 'Received'
+        }, {
+            id: 2,
+            name: 'Rejected'
         }];
 
         vm.gridOptions = dxUtils.createGrid();
@@ -207,7 +210,9 @@
                     dataSource: vm.paymentStatus,
                     displayExpr: "name",
                     valueExpr: "id"
-                }
+                },
+                sortIndex: 0,
+                sortOrder: "asc"
             }, {
                 dataField: 'remarks',
                 caption: 'Remarks',
@@ -224,6 +229,10 @@
                 var role = JSON.parse(localStorage.getItem('role'));
                 if (e.rowType == 'data' && e.row.data.status === 1) {
                     e.cellElement.find(".dx-link-delete").remove();
+                    e.cellElement.find(".dx-link-edit").remove();
+                }
+
+                if (e.rowType == 'data' && e.row.data.status === 2) {
                     e.cellElement.find(".dx-link-edit").remove();
                 }
             },
@@ -246,6 +255,17 @@
                     column: '#',
                     summaryType: 'count'
                 }]
+            },
+            onRowPrepared: function (info) {
+                if (info.rowType == 'data' && info.data.status == 0)
+                    info.rowElement.addClass("md-light-blue-50-bg");
+
+                if (info.rowType == 'data' && info.data.status == 1)
+                    info.rowElement.addClass("md-green-50-bg");
+
+                if (info.rowType == 'data' && info.data.status == 2)
+                    info.rowElement.addClass("md-red-50-bg");
+
             }
 
 

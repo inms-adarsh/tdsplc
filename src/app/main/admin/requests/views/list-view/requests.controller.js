@@ -901,7 +901,7 @@
                         templateUrl: 'app/main/admin/errorDialog/error-dialog.html',
                         parent: angular.element(document.body),
                         controllerAs: 'vm',
-                        clickOutsideToClose: true,
+                        clickOutsideToClose: false,
                         fullscreen: true, // Only for -xs, -sm breakpoints.,
                         locals: { errors: tokens },
                         bindToController: true

@@ -58,6 +58,10 @@
                     vm.debitBalance = 0;
                     vm.requiredBalance = 0;
                 }
+
+                if($scope.tenant.creditBalance >= $scope.tenant.requiredBalance) {
+                    vm.requiredBalance = 0;
+                }
             });
 
             var ref = rootRef.child('tenant-tin-requests').child(tenantId).orderByChild('status').equalTo(1);

@@ -171,9 +171,14 @@
                         var obj = { ackAttached: true, remarks: '', status: 2 };
                         rootRef.child('tenant-tin-requests-token/' + tenantId + '/' + id).update(Object.assign(request, obj));
                         rootRef.child('tenant-tin-requests/' + tenantId + '/' + request['barcode']).update(Object.assign(request, obj));
-                        console.log(totalCost);
                         creditBalance = creditBalance - totalCost;
-                        requiredBalance = requiredBalance - totalCost;
+                        
+                        if(requiredBalance != 0 && requiredBalance >= totalCost) {
+                            requiredBalance = requiredBalance - totalCost;
+                        } else if(requiredBalance == 0 || requiredBalance < totalCost) {
+                            requiredBalance = 0;
+                        }
+
                         rootRef.child('tenants').child(tenantId).update({ 'creditBalance': creditBalance, 'requiredBalance': requiredBalance }).then(function () {
                             var mergeObj = {};
                             var tenantLedger = rootRef.child('tenant-payment-ledger').child(tenantId);

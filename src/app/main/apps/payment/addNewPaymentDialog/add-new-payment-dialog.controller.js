@@ -33,7 +33,8 @@
                     editorOptions: {
                         onInitialized: function (e) {
                             e.component.option('value', new Date());
-                        }
+                        },
+                        max: new Date()
                     },
                     validationRules: [{
                         type: 'required',

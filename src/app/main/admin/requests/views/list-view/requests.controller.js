@@ -306,7 +306,7 @@
                     dataSource: 'vm.gridData'
                 },
                 editing: {
-                    allowUpdating: true,
+                    allowUpdating: false,
                     allowDeleting: true
                 },
                 columns: [
@@ -352,7 +352,7 @@
                         caption: '27A',
                         cellTemplate: function (container, options) {
                             if (options.data.form27AUrl) {
-                                $compile($('<a class="md-button md-raised md-normal"  href="' + options.data.form27AUrl + '" download><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
+                                $compile($('<a class="md-button md-raised md-normal"  href="' + options.data.form27AUrl + '" download target="_blank"><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
                             } else {
                                 $compile($('<a ng-click="vm.uploadForm27A(' + options.data.barcode + ')">Wrong Form27A! Click to Upload again</a>'))($scope).appendTo(container);
                                 //$compile($('<div dx-file-uploader="vm.form27AUploader(' + options.data.barcode + ')"></a>'))($scope).appendTo(container);
@@ -364,7 +364,7 @@
                         caption: 'FVU',
                         cellTemplate: function (container, options) {
                             if (options.data.fvuFileUrl) {
-                                $compile($('<a class="md-button md-raised md-normal" href="' + options.data.fvuFileUrl + '" download><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
+                                $compile($('<a class="md-button md-raised md-normal" href="' + options.data.fvuFileUrl + '" download target="_blank"><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
                             } else {
                                 $compile($('<a ng-click="vm.uploadForm27A(' + options.data.barcode + ')">Wrong FVU! Click to Upload again</a>'))($scope).appendTo(container);
                             }
@@ -376,7 +376,7 @@
                         caption: 'Acknowledgement',
                         cellTemplate: function (container, options) {
                             if (options.data.acknowledgementUrl) {
-                                $compile($('<a class="md-button md-raised md-normal"  href="' + options.data.acknowledgementUrl + '" download><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
+                                $compile($('<a class="md-button md-raised md-normal"  href="' + options.data.acknowledgementUrl + '" download target="_blank"><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
                             }
                         },
                         allowEditing: false

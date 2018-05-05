@@ -408,7 +408,7 @@
                     caption: '27A',
                     cellTemplate: function (container, options) {
                         if (options.data.form27AUrl) {
-                            $compile($('<a class="md-button md-raised md-normal"  href="' + options.data.form27AUrl + '" download><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
+                            $compile($('<a class="md-button md-raised md-normal"  href="' + options.data.form27AUrl + '" download target="_blank"><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
                         } else {
                             $compile($('<a ng-click="vm.uploadForm27A(' + options.data.barcode + ')">Wrong Form27A! Click to Upload again</a>'))($scope).appendTo(container);
                             //$compile($('<div dx-file-uploader="vm.form27AUploader(' + options.data.barcode + ')"></a>'))($scope).appendTo(container);
@@ -419,7 +419,7 @@
                     caption: 'FVU',
                     cellTemplate: function (container, options) {
                         if (options.data.fvuFileUrl) {
-                            $compile($('<a class="md-button md-raised md-normal" href="' + options.data.fvuFileUrl + '" download><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
+                            $compile($('<a class="md-button md-raised md-normal" href="' + options.data.fvuFileUrl + '" download target="_blank"><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
                         } else {
                             $compile($('<a ng-click="vm.uploadForm27A(' + options.data.barcode + ')">Wrong FVU! Click to Upload again</a>'))($scope).appendTo(container);
                         }
@@ -430,19 +430,64 @@
                     caption: 'Acknowledge',
                     cellTemplate: function (container, options) {
                         if (options.data.acknowledgementUrl) {
-                            $compile($('<a class="md-button md-raised md-normal"  href="' + options.data.acknowledgementUrl + '" download><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
+                            $compile($('<a class="md-button md-raised md-normal"  href="' + options.data.acknowledgementUrl + '" download target="_blank"><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
                         }
                     }
                 },
-
+                {
+                    caption: 'Finacial Year',
+                    dataField: 'finYear',
+                    allowEditing: false
+                }, {
+                    caption: 'QTR',
+                    dataField: 'qtr',
+                    allowEditing: false
+                }, {
+                    caption: 'Form No',
+                    dataField: 'formNo',
+                    allowEditing: false
+                },
                 {
                     dataField: 'token',
                     caption: 'Token Number'
 
                 },
                 {
+                    dataField: 'rno',
+                    caption: 'R No',
+                    allowEditing: false
+                }, {
                     dataField: 'rdate',
-                    caption: 'R Date'
+                    caption: 'R Date',
+                    allowEditing: false
+                },  {
+                    dataField: 'module',
+                    caption: 'Module',
+                    allowEditing: false
+                },  {
+                    caption: 'TAN',
+                    dataField: 'tan',
+                    allowEditing: false
+                }, {
+                    caption: 'AO Code',
+                    dataField: 'aoCode',
+                    allowEditing: false
+                }, {
+                    caption: 'Regular/Correction',
+                    dataField: 'corrections',
+                    allowEditing: false
+                }, {
+                    caption: 'Original Token No',
+                    dataField: 'origTokenNo',
+                    allowEditing: false
+                }, {
+                    caption: 'Deductee/Collectee Count',
+                    dataField: 'collecteeCount',
+                    allowEditing: false
+                }, {
+                    caption: 'User ID',
+                    dataField: 'userId',
+                    allowEditing: false
                 }, {
                     dataField: 'fees',
                     caption: 'Fees'

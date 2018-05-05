@@ -214,7 +214,7 @@
                         caption: '27A',
                         cellTemplate: function (container, options) {
                             if (options.data.form27AUrl) {
-                                $('<a href="' + options.data.form27AUrl + '" download>Download 27A</a>').appendTo(container);
+                                $('<a href="' + options.data.form27AUrl + '" download target="_blank">Download 27A</a>').appendTo(container);
                             } else {
                                 $compile($('<a class="md-button md-raised md-accent" ng-click="uploadForm27A()">Upload Form 27A</a>'))(scope).appendTo(container);
                             }
@@ -224,7 +224,7 @@
                         caption: 'FVU',
                         cellTemplate: function (container, options) {
                             if (options.data.fvuFileUrl) {
-                                $('<a href="' + options.data.fvuFileUrl + '" download>Download FVU</a>').appendTo(container);
+                                $('<a href="' + options.data.fvuFileUrl + '" download target="_blank">Download FVU</a>').appendTo(container);
                             } else {
                                 $('<a class="">Upload FVU</span>').appendTo(container);
                             }
@@ -402,6 +402,9 @@
                     var reader = new FileReader();
 
                     reader.addEventListener('load', function (e) {
+                        console.log(e.target.result.split('\n'));
+
+
                         if (!e.target.result || !e.target.result.split('\n') || !e.target.result.split('\n')[7]) {
                             invalidFiles.push({
                                 'description': fvu.name,
@@ -411,9 +414,18 @@
                         }
                         var barcode = e.target.result.split('\n')[7].split('^');
 
-                        if (isNaN(Number(barcode))) {
+                        if (isNaN(Number(barcode[barcode.length - 1].trim()))) {
                             barcode = e.target.result.split('\n')[6].split('^');
                         }
+
+                        if (isNaN(Number(barcode[barcode.length - 1].trim()))) {
+                            barcode = e.target.result.split('\n')[8].split('^');
+                        }
+
+                        var formNo = (e.target.result.split('\n')[1].split('^'))[4],
+                            deductor = (e.target.result.split('\n')[1].split('^'))[18],
+                            qtr = (e.target.result.split('\n')[1].split('^'))[17],
+                            finYear = (e.target.result.split('\n')[1].split('^'))[16];
                         //fs.writeFile('./fvucontent.json', barcode[barcode.length - 1]);
                         barcode = barcode[barcode.length - 1].trim();
 
@@ -463,11 +475,17 @@
                                 $firebaseStorage(fvuRef).$put(fvu, metaData).$complete(function (snapshot) {
                                     //Step 3:Read the file as ArrayBuffer
 
-                                    var requestObj = { 'fvuFileName': fvu.name, 'barcode': barcode, 'fvuFileUrl': snapshot.downloadURL, 'requestId': key, 'tenantId': formObj.tenantId, 'status': 1 };
+                                    var requestObj = { 'fvuFileName': fvu.name, 'barcode': barcode, 'fvuFileUrl': snapshot.downloadURL, 'requestId': key, 'tenantId': formObj.tenantId, 'status': 1,
+                                    'formNo': formNo, 'deductor': deductor, 'qtr': qtr, 'finYear': finYear };
 
                                     if (tinrequests.hasOwnProperty(barcode)) {
                                         tinrequests[barcode].fvuFileUrl = snapshot.downloadURL;
                                         tinrequests[barcode].fvuFileName = fvu.name;
+                                        tinrequests[barcode].formNo = formNo;
+                                        tinrequests[barcode].deductor = deductor;
+                                        tinrequests[barcode].qtr = qtr;
+                                        tinrequests[barcode].finYear = finYear;
+
                                     } else {
                                         tinrequests[barcode] = requestObj;
                                     }

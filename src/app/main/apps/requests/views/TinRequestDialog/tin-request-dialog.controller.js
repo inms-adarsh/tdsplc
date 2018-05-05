@@ -159,13 +159,23 @@
                             }
                             var barcode = e.target.result.split('\n')[7].split('^');
     
-                            if (isNaN(Number(barcode))) {
+                            if (isNaN(Number(barcode[barcode.length - 1].trim()))) {
                                 barcode = e.target.result.split('\n')[6].split('^');
+                            }
+
+                            if (isNaN(Number(barcode[barcode.length - 1].trim()))) {
+                                barcode = e.target.result.split('\n')[8].split('^');
                             }
 
                             var barcode = e.target.result.split('\n')[6].split('^');
                             //fs.writeFile('./fvucontent.json', barcode[barcode.length - 1]);
                             barcode = barcode[barcode.length - 1].trim();
+
+                            
+                            var formNo = (e.target.result.split('\n')[1].split('^'))[4],
+                            deductor = (e.target.result.split('\n')[1].split('^'))[18],
+                            qtr = (e.target.result.split('\n')[1].split('^'))[17],
+                            finYear = (e.target.result.split('\n')[1].split('^'))[16];
                            
                             if(request.barcode == barcode) {
                                 $firebaseStorage(storageRef).$put(form27A, metaData).$complete(function (snapshot) {
@@ -175,7 +185,8 @@
                                     var ref = rootRef.child('tenant-tin-requests').child(tenantId).child(''+barcode);
                                     ref.once("value", function(request) {
                                         var request = angular.copy(request.val()); 
-                                        Object.assign(request, {'fvuFileName': form27A.name, 'fvuFileUrl': snapshot.downloadURL, 'latest': true, 'valid': true, status: 1});
+                                        Object.assign(request, {'fvuFileName': form27A.name, 'fvuFileUrl': snapshot.downloadURL, 'latest': true, 'valid': true, status: 1,
+                                        'formNo': formNo, 'deductor': deductor, 'qtr': qtr, 'finYear': finYear});
                                         //delete request.$id;
 
                                         var mergeObj = {};

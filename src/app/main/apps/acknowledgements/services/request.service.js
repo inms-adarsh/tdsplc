@@ -132,7 +132,7 @@
                         caption: 'Attachment 27A',
                         cellTemplate: function(container, options) {
                             if(options.data.form27AUrl) {
-                                $('<a href="'+ options.data.form27AUrl+'" download>Download 27A</a>').appendTo(container);
+                                $('<a href="'+ options.data.form27AUrl+'" download target="_blank">Download 27A</a>').appendTo(container);
                             } else {
                                 $compile($('<a class="md-button md-raised md-accent" ng-click="uploadForm27A()">Upload Form 27A</a>'))(scope).appendTo(container);
                             }
@@ -142,7 +142,7 @@
                         caption: 'Attachment FVU',
                         cellTemplate: function(container, options) {
                             if(options.data.fvuFileUrl) {
-                                $('<a href="'+ options.data.fvuFileUrl+'" download>Download FVU</a>').appendTo(container);
+                                $('<a href="'+ options.data.fvuFileUrl+'" download target="_blank">Download FVU</a>').appendTo(container);
                             } else {
                                 $('<a class="">Upload FVU</span>').appendTo(container);
                             }

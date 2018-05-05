@@ -201,5 +201,14 @@
             formInstance.itemOption('bankAccount', 'visible', false);
             //formInstance.itemOption('payment.neftAmount', 'visible', false);
         }
+
+        vm.closeDialog = function closeDialog() {
+            var result = DevExpress.ui.dialog.confirm("All your input data will be cleared. Do you want to close? ", "Confirm");
+            result.done(function (dialogResult) {
+                if (dialogResult == true) {
+                    $mdDialog.hide();
+                }
+            });
+        }
     }
 })();

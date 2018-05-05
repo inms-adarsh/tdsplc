@@ -37,7 +37,15 @@
             name: 'Uploaded'
         }];
 
+        vm.filters = {
+            'all': 'All',
+            'pending':'Pending',
+            'e-tds': 'E-TDS Uploaded',
+            'ack': 'Acknowledgement Uploaded'           
+        };
+
         vm.uploadReqbtnDisabled = true;
+        vm.changeFilter = changeFilter;
 
         vm.statusSelectBox = {
             dataSource: requestStatus,
@@ -219,6 +227,8 @@
          * Init
          */
         function init() {
+            vm.changeFilter('all');
+            
             vm.gridOptions = dxUtils.createGrid();
 
             var ref = rootRef.child('tenants');
@@ -288,6 +298,7 @@
 
                     }
                 };
+
             };
 
             vm.requestGridOptions = {
@@ -334,7 +345,8 @@
                                 return '';
                             }
                         },
-                        allowEditing: false
+                        allowEditing: false,
+                        visible: role == 'superuser' ? true : false
                     }, {
                         dataField: 'attachment27a',
                         caption: '27A',
@@ -497,7 +509,7 @@
                                         templateUrl: 'app/main/apps/requests/views/addNewRequestDialog/add-new-request-dialog.html',
                                         parent: angular.element(document.body),
                                         controllerAs: 'vm',
-                                        clickOutsideToClose: true,
+                                        clickOutsideToClose: false,
                                         fullscreen: true, // Only for -xs, -sm breakpoints.,
                                         bindToController: true,
                                         locals: { isAdmin: true, customers: customers }
@@ -598,7 +610,7 @@
                     });
                 },
                 onCellPrepared: function (e) {
-                    if (e.rowType == 'data' && e.row.data.acknowledged === true && role == 'superuser') {
+                    if (e.rowType == 'data' && e.row.data.acknowledged === true || role != 'superuser') {
                         e.cellElement.find(".dx-link-delete").remove();
                         //e.cellElement.find(".dx-link-edit").remove();
                     }
@@ -892,10 +904,10 @@
                     firebaseUtils.addData(ref, uploadedAcknowledgement[tenant]);
                 }
 
-                if(tokens.length ==  0) {
+                if (tokens.length == 0) {
                     DevExpress.ui.dialog.alert('Acknowledgemnts have uploaded successfully', 'Success');
                 } else {
-                    
+
                     $mdDialog.show({
                         controller: 'ErrorDialogController',
                         templateUrl: 'app/main/admin/errorDialog/error-dialog.html',
@@ -911,9 +923,9 @@
                             $scope.status = 'You cancelled the dialog.';
                         });
 
-                    
+
                 }
-                
+
                 //requestService.generate_cutomPDF();
             });
             // for (var i = 0; i < tokens.length; i++) {
@@ -974,7 +986,7 @@
                 templateUrl: 'app/main/apps/requests/views/TinRequestDialog/tin-request-dialog.html',
                 parent: angular.element(document.body),
                 controllerAs: 'vm',
-                clickOutsideToClose: true,
+                clickOutsideToClose: false,
                 fullscreen: true, // Only for -xs, -sm breakpoints.,
                 locals: { barcode: barcode, request: request },
                 bindToController: true
@@ -986,6 +998,36 @@
                     $scope.status = 'You cancelled the dialog.';
                 });
         };
+
+
+        function changeFilter(filter) {
+            vm.currentFilter = filter;
+
+            switch(filter) {
+                case 'pending': {
+                    gridInstance.filter([['status', '=', 1], 'and', ['acknowledged', 'notcontains', true]]);
+                    break;
+                }
+
+                case 'all': {
+                    if(gridInstance) {
+                        gridInstance.clearFilter();
+                    }
+                    break;
+                }
+
+                case 'e-tds': {
+                    gridInstance.filter([['acknowledged', '=', true], 'and', ['ackAttached', 'notcontains', true]]);
+                    break;
+                }
+
+                case 'ack': {
+                    gridInstance.filter(['ackAttached', '=', true]);
+                    break;
+                }
+
+            }
+        }
     }
 
 })();

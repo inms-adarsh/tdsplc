@@ -158,7 +158,7 @@
                                     templateUrl: 'app/main/apps/payment/addNewPaymentDialog/add-new-payment-dialog.html',
                                     parent: angular.element(document.body),
                                     controllerAs: 'vm',
-                                    clickOutsideToClose: true,
+                                    clickOutsideToClose: false,
                                     fullscreen: true, // Only for -xs, -sm breakpoints.,
                                     bindToController: true,
                                     locals: {

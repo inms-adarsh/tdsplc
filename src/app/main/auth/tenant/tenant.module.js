@@ -36,13 +36,13 @@
             group : true,
             weight: 1
         });
-        // msNavigationServiceProvider.saveItem('apps.tenant', {
-        //     title : 'Profile',
-        //     icon  : 'icon-account',
-        //     state : 'app.auth_tenant',
-        //     weight: 5,
-        //     roles: ['superuser', 'customer']
-        // });
+       
+        msNavigationServiceProvider.saveItem('tenant', {
+            weight: 8,
+            title: 'Tenant Information',
+            state: 'app.auth_tenant',
+            roles: ['superuser', 'customer']
+        });
     }
 
 })();

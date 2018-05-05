@@ -16,6 +16,5 @@
     /** @ngInject */
     function config()
     {
-        
     }
 })();

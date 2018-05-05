@@ -65,8 +65,13 @@
                 if(authData.emailVerified) {
                   vm.retrieveTenantId(authData);
                 } else {
-                  DevExpress.ui.dialog.alert('You have not yet verified your registered email address! Please verify your email to login. A verification link has been sent to you', 'Verify Email');
-                  firebase.auth().currentUser.sendEmailVerification();
+                  var result = DevExpress.ui.dialog.confirm('You have not yet verified your registered email address! Send verification link again ?', 'Verify Email');
+                  result.done(function (dialogResult) {
+                      if(dialogResult == true) {
+                          firebase.auth().currentUser.sendEmailVerification();
+                          DevExpress.ui.dialog.alert('A verification link has been sent to you! Please check your mail inbox', 'Success');
+                      }
+                  });
                   $rootScope.loadingProgress = false;
                 }
               })

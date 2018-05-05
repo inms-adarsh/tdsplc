@@ -274,6 +274,7 @@
 
             gridData = $firebaseArray(rootRef.child('tenant-tin-requests').child(formObj.tenantId));
 
+            serverData = $firebaseArray(rootRef.child('tenant-tin-requests'));
             requestObj.date = requestObj.date.toString();
             requestObj.user = auth.$getAuth().uid;
             requestObj.tenantId = formObj.tenantId;
@@ -341,10 +342,11 @@
                                             }
                                         };
 
-                                    var barcodeAlreadyExist = msUtils.getIndexByArray(gridData, 'barcode', barcode);
+                                    var barcodeAlreadyExist = msUtils.getIndexByArray(gridData, 'barcode', barcode),
+                                        barcodeAlreadyExistinServer = msUtils.getIndexByArray(serverData, 'barcode', barcode);
 
                                    
-                                        if (barcodeAlreadyExist > -1) {
+                                        if (barcodeAlreadyExist > -1 || barcodeAlreadyExistinServer>-1) {
                                             invalidFiles.push({
                                                 'description': barcode,
                                                 'reason': 'Form 27A File for barcode already uploaded'
@@ -447,10 +449,11 @@
                                 }
                             };
 
-                            var barcodeAlreadyExist = msUtils.getIndexByArray(gridData, 'barcode', barcode);
+                            var barcodeAlreadyExist = msUtils.getIndexByArray(gridData, 'barcode', barcode),
+                                barcodeAlreadyExistinServer = msUtils.getIndexByArray(serverData, 'barcode', barcode);
 
-                                   
-                            if (barcodeAlreadyExist > -1) {
+                       
+                            if (barcodeAlreadyExist > -1 || barcodeAlreadyExistinServer>-1) {
                                 invalidFiles.push({
                                     'description': barcode,
                                     'reason': 'FVU File for barcode already uploaded'

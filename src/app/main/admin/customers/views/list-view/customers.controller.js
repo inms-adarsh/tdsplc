@@ -221,7 +221,7 @@
                 templateUrl        : 'app/main/admin/customers/views/dialogs/customer-dialog.html',
                 parent             : angular.element($document.body),
                 targetEvent        : ev,
-                clickOutsideToClose: true,
+                clickOutsideToClose: false,
                 locals             : {
                     dialogData: {
                         dialogType: 'add'
@@ -241,7 +241,7 @@
                 templateUrl        : 'app/main/apps/customers/views/dialogs/add-edit/edit-dialog.html',
                 parent             : angular.element($document.body),
                 targetEvent        : ev,
-                clickOutsideToClose: true,
+                clickOutsideToClose: false,
                 locals             : {
                     dialogData: {
                         chartData : vm.data,

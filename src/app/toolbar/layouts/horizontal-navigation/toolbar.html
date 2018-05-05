@@ -27,7 +27,7 @@
                 <md-button class="user-button" ng-click="$mdOpenMenu()" aria-label="User settings" translate translate-attr-aria-label="TOOLBAR.USER_SETTINGS">
                     <div layout="row" layout-align="space-between center">
                         <div class="avatar-wrapper">
-                            <img md-menu-align-target class="avatar" src="assets/images/avatars/profile.jpg">
+                            <img md-menu-align-target class="avatar" ng-src="{{vm.userData.logo}}">
                         </div>
                         <span class="username" hide-sm>{{vm.userData.name}}</span>
                         <md-icon md-font-icon="icon-chevron-down" class="icon s16" hide-sm></md-icon>
@@ -35,7 +35,7 @@
                 </md-button>
 
                 <md-menu-content width="3">
-                    <md-menu-item class="md-indent" ui-sref="app.auth_tenant">
+                    <md-menu-item class="md-indent" ui-sref="app.profile.details">
                         <md-icon md-font-icon="icon-account" class="icon"></md-icon>
                         <md-button>My Profile</md-button>
                     </md-menu-item>

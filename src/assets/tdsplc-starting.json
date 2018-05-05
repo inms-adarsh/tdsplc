@@ -1,0 +1,57 @@
+{
+  "employees" : {
+    "r3oSYVSI4gT8JHxw42yfcnE16VC3" : {
+      "address" : "131, First Floor,  Topiwala Centre,Jawahar Nagar Road, Goregaon (W)",
+      "city" : "Mumbai",
+      "date" : "Sat May 05 2018 13:18:32 GMT+0530 (India Standard Time)",
+      "email" : "cacsplc5@gmail.com",
+      "password" : "PLC12345",
+      "phone" : "8652488877",
+      "role" : "superuser",
+      "username" : "Professional Leaders"
+    }
+  },
+  "settings" : {
+    "extraCharge" : 2,
+    "logo" : "https://firebasestorage.googleapis.com/v0/b/tdsplc-staging.appspot.com/o/settings%2Flogo?alt=media&token=0581088d-ac62-4308-be08-e3ac53c05d4b",
+    "requestIdPrefix" : "tdsplc_"
+  },
+  "tenant-users" : {
+    "-LBjHS6c7leDKqLPiv9X" : {
+      "r3oSYVSI4gT8JHxw42yfcnE16VC3" : {
+        "address" : "131, First Floor,  Topiwala Centre,Jawahar Nagar Road, Goregaon (W)",
+        "city" : "Mumbai",
+        "email" : "cacsplc5@gmail.com",
+        "name" : "Professional Leaders",
+        "phone" : "8652488877",
+        "position" : "active",
+        "role" : "superuser"
+      }
+    }
+  },
+  "tenants" : {
+    "-LBjHS6c7leDKqLPiv9X" : {
+      "address" : "131, First Floor,  Topiwala Centre,Jawahar Nagar Road, Goregaon (W)",
+      "city" : "Mumbai",
+      "company" : "Professional Leaders",
+      "creditBalance" : 0,
+      "date" : "Sat May 05 2018 13:22:38 GMT+0530 (India Standard Time)",
+      "email" : "cacsplc5@gmail.com",
+      "paymentType" : "prepaid",
+      "phone" : "8652488877",
+      "postalCode" : "400062",
+      "state" : "Maharashtra"
+    }
+  },
+  "users" : {
+    "r3oSYVSI4gT8JHxw42yfcnE16VC3" : {
+      "address" : "131, First Floor,  Topiwala Centre,Jawahar Nagar Road, Goregaon (W)",
+      "city" : "Mumbai",
+      "email" : "cacsplc5@gmail.com",
+      "name" : "Professional Leaders",
+      "phone" : "8652488877",
+      "role" : "superuser",
+      "tenantId" : "-LBjHS6c7leDKqLPiv9X"
+    }
+  }
+}

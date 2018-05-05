@@ -34,7 +34,7 @@
                 templateUrl        : 'app/main/admin/roles/views/dialogs/role-dialog.html',
                 parent             : angular.element($document.body),
                 targetEvent        : ev,
-                clickOutsideToClose: true,
+                clickOutsideToClose: false,
                 locals             : {
                     dialogData: {
                         dialogType: 'add'
@@ -54,7 +54,7 @@
                 templateUrl        : 'app/main/apps/roles/views/dialogs/add-edit/edit-dialog.html',
                 parent             : angular.element($document.body),
                 targetEvent        : ev,
-                clickOutsideToClose: true,
+                clickOutsideToClose: false,
                 locals             : {
                     dialogData: {
                         chartData : vm.data,

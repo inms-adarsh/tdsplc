@@ -233,7 +233,7 @@
                 templateUrl: 'app/main/apps/acknowledgements/views/TinAcknowledgementDialog/tin-acknowledgement-dialog.html',
                 parent: angular.element(document.body),
                 controllerAs: 'vm',
-                clickOutsideToClose: true,
+                clickOutsideToClose: false,
                 fullscreen: true, // Only for -xs, -sm breakpoints.,
                 locals: { acknowledgement: acknowledgement },
                 bindToController: true

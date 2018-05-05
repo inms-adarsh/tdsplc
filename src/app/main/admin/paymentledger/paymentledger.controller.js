@@ -116,7 +116,7 @@
                         }
                         if (data.bankAccount) {
                             var index = msUtils.getIndexByArray(accounts, '$id', data.bankAccount);
-                            str += 'Account Name: ' + accounts[index].bankName + '</br>';
+                            str += 'Account Name: ' + accounts[index].bankname + '</br>';
                         }
                         if (data.cashBy) {
                             var index = msUtils.getIndexByArray(users, '$id', data.cashBy);

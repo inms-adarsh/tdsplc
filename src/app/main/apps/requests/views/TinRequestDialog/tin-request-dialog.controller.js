@@ -110,7 +110,20 @@
                               // do stuff
                               pdf.getPage(1).then(function(page) {
                                   page.getTextContent().then(function(text) {
-                                      var barcode = text.items[3].str.trim(); 
+                                    if (!text || !text.items || !text.items[3]) {
+                                        DevExpress.ui.dialog.alert('Invalid File', 'Error'); 
+                                        return resolve({});
+                                    }
+                                    var barcode = text.items[3].str.trim();
+
+                                    if (isNaN(Number(barcode))) {
+                                        DevExpress.ui.dialog.alert('Invalid File', 'Error'); 
+                                        return resolve({});
+                                    } else if (barcode.length != 20) {
+                                        DevExpress.ui.dialog.alert('Invalid File', 'Error'); 
+                                        return resolve({});
+                                    }
+
                                       if(request.barcode == barcode) {
                                         $firebaseStorage(storageRef).$put(form27A, metaData).$complete(function (snapshot) {
                                             var ref = rootRef.child('tenant-tin-requests').child(tenantId).child(''+barcode);
@@ -126,18 +139,7 @@
                                             
                                         }); 
                                      } else {
-                                        $mdToast.show({
-                                            template : '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Invalid File!</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
-                                            hideDelay: 7000,
-                                            controller: 'ToastController',
-                                            position : 'top right',
-                                            parent   : '#request-dialog',
-                                            locals: {
-                                                cssStyle: {
-
-                                                }
-                                            }
-                                        });
+                                        DevExpress.ui.dialog.alert('Invalid File', 'Error'); 
                                      }    
                                   });
                               });
@@ -151,15 +153,20 @@
                         var reader = new FileReader();
     
                         reader.addEventListener('load', function (e) {
+                            if (!e.target.result || !e.target.result.split('\n') || !e.target.result.split('\n')[7]) {
+                                DevExpress.ui.dialog.alert('Invalid File', 'Error'); 
+                                return resolve({});
+                            }
+                            var barcode = e.target.result.split('\n')[7].split('^');
+    
+                            if (isNaN(Number(barcode))) {
+                                barcode = e.target.result.split('\n')[6].split('^');
+                            }
+
                             var barcode = e.target.result.split('\n')[6].split('^');
                             //fs.writeFile('./fvucontent.json', barcode[barcode.length - 1]);
                             barcode = barcode[barcode.length - 1].trim();
-                            // if(typeof barcode === 'number') {
-                            //     barcode = barcode[barcode.length - 1].trim();
-                            // } else {
-                            //     barcode = e.target.result.split('\n')[7].split('^');
-                            //     barcode = barcode[barcode.length - 1].trim();
-                            // }
+                           
                             if(request.barcode == barcode) {
                                 $firebaseStorage(storageRef).$put(form27A, metaData).$complete(function (snapshot) {
 
@@ -182,18 +189,7 @@
                                     });
                                 }); 
                              } else {
-                                $mdToast.show({
-                                    template : '<md-toast ng-style="cssStyle"><span class="md-toast-text" flex>Invalid File!</span><md-button ng-click="closeToast()">Close</md-button></md-toast>',
-                                    hideDelay: 7000,
-                                    controller: 'ToastController',
-                                    position : 'top right',
-                                    parent   : '#request-dialog',
-                                    locals: {
-                                        cssStyle: {
-                                            
-                                        }
-                                    }
-                                });
+                                DevExpress.ui.dialog.alert('Invalid File', 'Error'); 
                              }    
                         });
                         

@@ -986,7 +986,7 @@
                 templateUrl: 'app/main/apps/requests/views/TinRequestDialog/tin-request-dialog.html',
                 parent: angular.element(document.body),
                 controllerAs: 'vm',
-                clickOutsideToClose: false,
+                clickOutsideToClose: true,
                 fullscreen: true, // Only for -xs, -sm breakpoints.,
                 locals: { barcode: barcode, request: request },
                 bindToController: true

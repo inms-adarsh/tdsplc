@@ -36,6 +36,8 @@
                         $state.go(loginRedirectPath);
                     }).catch(function(error) {
                     // An error happened.
+                    DevExpress.ui.dialog.alert('Email Id Already used! choose another email Id to signup', 'Error');
+                        $rootScope.loadingProgress = false;
                     });
                     //redirect();
                     var ref = rootRef.child('tenants');

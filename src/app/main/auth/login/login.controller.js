@@ -53,7 +53,7 @@
               vm.retrieveTenantId(authData);
             }
           } else {
-            $state.go('app.auth_login');
+            $state.go('app.home.login');
             localStorage.clear();
           }
         });

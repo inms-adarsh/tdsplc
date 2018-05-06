@@ -41,7 +41,8 @@
             'app.payment',
             'app.settings',
             'app.profile',
-            'app.paymentledger'
+            'app.paymentledger',
+            'app.home'
             //'app.bulkbuys'
         ]);
 })();

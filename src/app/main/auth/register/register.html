@@ -1,8 +1,5 @@
-<div id="register" layout="column" layout-align="center center">
-    <md-progress-circular id="toolbar-progress" ng-if="$root.loadingProgress" class="md-accent" md-mode="indeterminate" md-diameter="32">
+  <md-progress-circular id="toolbar-progress" ng-if="$root.loadingProgress" class="md-accent" md-mode="indeterminate" md-diameter="32">
     </md-progress-circular>
-
-    <div id="register-form-wrapper" class="flex-scrollable" ms-scroll>
         <div id="register-form">
             <div class="title" translate="REGISTER_V2.TITLE">Create an account</div>
 
@@ -56,8 +53,6 @@
 
             <div class="login" layout="row" layout-sm="column" layout-align="center center">
                 <span class="text" translate="REGISTER_V2.ALREADY_HAVE">Already have an account?</span>
-                <a class="link" ui-sref="app.auth_login" translate="REGISTER_V2.LOGIN">Log in</a>
+                <a class="link" ui-sref="app.home.login" translate="REGISTER_V2.LOGIN">Log in</a>
             </div>
         </div>
-    </div>
-</div>

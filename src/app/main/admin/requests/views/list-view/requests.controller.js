@@ -37,7 +37,15 @@
             name: 'Uploaded'
         }];
 
+        vm.filters = {
+            'all': 'All',
+            'pending':'Pending',
+            'e-tds': 'E-TDS Uploaded',
+            'ack': 'Acknowledgement Uploaded'           
+        };
+
         vm.uploadReqbtnDisabled = true;
+        vm.changeFilter = changeFilter;
 
         vm.statusSelectBox = {
             dataSource: requestStatus,
@@ -219,6 +227,8 @@
          * Init
          */
         function init() {
+            vm.changeFilter('all');
+            
             vm.gridOptions = dxUtils.createGrid();
 
             var ref = rootRef.child('tenants');
@@ -288,6 +298,7 @@
 
                     }
                 };
+
             };
 
             vm.requestGridOptions = {
@@ -295,7 +306,7 @@
                     dataSource: 'vm.gridData'
                 },
                 editing: {
-                    allowUpdating: true,
+                    allowUpdating: false,
                     allowDeleting: true
                 },
                 columns: [
@@ -313,7 +324,9 @@
                             type: 'required',
                             message: 'Date is required'
                         }],
-                        allowEditing: false
+                        allowEditing: false,
+                        sortIndex: 1,
+                        sortOrder: "asc"
                     }, {
                         dataField: 'refNo',
                         caption: 'Order Id #'
@@ -334,13 +347,14 @@
                                 return '';
                             }
                         },
-                        allowEditing: false
+                        allowEditing: false,
+                        visible: role == 'superuser' ? true : false
                     }, {
                         dataField: 'attachment27a',
                         caption: '27A',
                         cellTemplate: function (container, options) {
                             if (options.data.form27AUrl) {
-                                $compile($('<a class="md-button md-raised md-normal"  href="' + options.data.form27AUrl + '" download><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
+                                $compile($('<a class="md-button md-raised md-normal"  href="' + options.data.form27AUrl + '" download target="_blank"><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
                             } else {
                                 $compile($('<a ng-click="vm.uploadForm27A(' + options.data.barcode + ')">Wrong Form27A! Click to Upload again</a>'))($scope).appendTo(container);
                                 //$compile($('<div dx-file-uploader="vm.form27AUploader(' + options.data.barcode + ')"></a>'))($scope).appendTo(container);
@@ -352,7 +366,7 @@
                         caption: 'FVU',
                         cellTemplate: function (container, options) {
                             if (options.data.fvuFileUrl) {
-                                $compile($('<a class="md-button md-raised md-normal" href="' + options.data.fvuFileUrl + '" download><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
+                                $compile($('<a class="md-button md-raised md-normal" href="' + options.data.fvuFileUrl + '" download target="_blank"><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
                             } else {
                                 $compile($('<a ng-click="vm.uploadForm27A(' + options.data.barcode + ')">Wrong FVU! Click to Upload again</a>'))($scope).appendTo(container);
                             }
@@ -364,7 +378,7 @@
                         caption: 'Acknowledgement',
                         cellTemplate: function (container, options) {
                             if (options.data.acknowledgementUrl) {
-                                $compile($('<a class="md-button md-raised md-normal"  href="' + options.data.acknowledgementUrl + '" download><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
+                                $compile($('<a class="md-button md-raised md-normal"  href="' + options.data.acknowledgementUrl + '" download target="_blank"><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
                             }
                         },
                         allowEditing: false
@@ -497,7 +511,7 @@
                                         templateUrl: 'app/main/apps/requests/views/addNewRequestDialog/add-new-request-dialog.html',
                                         parent: angular.element(document.body),
                                         controllerAs: 'vm',
-                                        clickOutsideToClose: true,
+                                        clickOutsideToClose: false,
                                         fullscreen: true, // Only for -xs, -sm breakpoints.,
                                         bindToController: true,
                                         locals: { isAdmin: true, customers: customers }
@@ -598,7 +612,7 @@
                     });
                 },
                 onCellPrepared: function (e) {
-                    if (e.rowType == 'data' && e.row.data.acknowledged === true && role == 'superuser') {
+                    if (e.rowType == 'data' && e.row.data.acknowledged === true || role != 'superuser') {
                         e.cellElement.find(".dx-link-delete").remove();
                         //e.cellElement.find(".dx-link-edit").remove();
                     }
@@ -892,10 +906,10 @@
                     firebaseUtils.addData(ref, uploadedAcknowledgement[tenant]);
                 }
 
-                if(tokens.length ==  0) {
+                if (tokens.length == 0) {
                     DevExpress.ui.dialog.alert('Acknowledgemnts have uploaded successfully', 'Success');
                 } else {
-                    
+
                     $mdDialog.show({
                         controller: 'ErrorDialogController',
                         templateUrl: 'app/main/admin/errorDialog/error-dialog.html',
@@ -911,9 +925,9 @@
                             $scope.status = 'You cancelled the dialog.';
                         });
 
-                    
+
                 }
-                
+
                 //requestService.generate_cutomPDF();
             });
             // for (var i = 0; i < tokens.length; i++) {
@@ -986,6 +1000,36 @@
                     $scope.status = 'You cancelled the dialog.';
                 });
         };
+
+
+        function changeFilter(filter) {
+            vm.currentFilter = filter;
+
+            switch(filter) {
+                case 'pending': {
+                    gridInstance.filter([['status', '=', 1], 'and', ['acknowledged', 'notcontains', true]]);
+                    break;
+                }
+
+                case 'all': {
+                    if(gridInstance) {
+                        gridInstance.clearFilter();
+                    }
+                    break;
+                }
+
+                case 'e-tds': {
+                    gridInstance.filter([['acknowledged', '=', true], 'and', ['ackAttached', 'notcontains', true]]);
+                    break;
+                }
+
+                case 'ack': {
+                    gridInstance.filter(['ackAttached', '=', true]);
+                    break;
+                }
+
+            }
+        }
     }
 
 })();

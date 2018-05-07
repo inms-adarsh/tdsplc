@@ -53,7 +53,7 @@
                 if($scope.tenant.requiredBalance > 0) {
                     vm.debitBalance = $scope.tenant.requiredBalance || 0;
                     vm.requiredBalance = $scope.tenant.requiredBalance - $scope.tenant.creditBalance;
-                    DevExpress.ui.dialog.alert('Few acknowledgements are hidden due to low credit balance ! please recharge with minimum '+ vm.requiredBalance +' to view all ', 'Balance Low !');
+                    DevExpress.ui.dialog.alert('Low credit balance ! please recharge with minimum '+ vm.requiredBalance +' to view all acknowledgements ', 'Balance Low !');
                 } else {
                     vm.debitBalance = 0;
                     vm.requiredBalance = 0;
@@ -70,11 +70,13 @@
 
             var ref = rootRef.child('tenant-payments').orderByChild('tenantId').equalTo(tenantId);
 
-           $firebaseArray(ref).$loaded(function(data) {
+            ref.on('value', function(data) {
+                var data = data.val();
                 vm.pendingPaymentData = data.filter(function(payment) {
                     return payment.status == 0;
                 });
             });
+
             vm.requestGridOptions = {
                 bindingOptions: {
                     dataSource: 'vm.gridData'
@@ -119,7 +121,7 @@
                         caption: '27A',
                         cellTemplate: function (container, options) {
                             if (options.data.form27AUrl) {
-                                $compile($('<a class="md-button md-raised md-normal"  href="' + options.data.form27AUrl + '" download><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
+                                $compile($('<a class="md-button md-raised md-normal"  href="' + options.data.form27AUrl + '" download target="_blank"><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
                             }
                         },
                         allowEditing: false
@@ -128,7 +130,7 @@
                         caption: 'FVU',
                         cellTemplate: function (container, options) {
                             if (options.data.fvuFileUrl) {
-                                $compile($('<a class="md-button md-raised md-normal" href="' + options.data.fvuFileUrl + '" download><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
+                                $compile($('<a class="md-button md-raised md-normal" href="' + options.data.fvuFileUrl + '" download target="_blank"><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
                             }
                         },
                         allowEditing: false

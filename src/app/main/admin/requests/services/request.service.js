@@ -228,7 +228,7 @@
                         dataField: 'attachment27a',
                         caption: '27A',
                         cellTemplate: function (container, options) {
-                            $('<a href="' + options.data.filePath + '" download>Download 27A</a>').appendTo(container);
+                            $('<a href="' + options.data.filePath + '" download target="_blank">Download 27A</a>').appendTo(container);
                         }
                     }, {
                         dataField: 'attachmentfvu',

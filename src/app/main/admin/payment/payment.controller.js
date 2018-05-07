@@ -72,7 +72,7 @@
                                     templateUrl: 'app/main/apps/payment/addNewPaymentDialog/add-new-payment-dialog.html',
                                     parent: angular.element(document.body),
                                     controllerAs: 'vm',
-                                    clickOutsideToClose: true,
+                                    clickOutsideToClose: false,
                                     fullscreen: true, // Only for -xs, -sm breakpoints.,
                                     bindToController: true,
                                     locals: { isAdmin: true, prerequisites: {
@@ -170,10 +170,13 @@
             {
                 dataField: 'paymentMode',
                 caption: 'Payment Mode',
-                lookup: {
-                    dataSource: vm.paymentModes,
-                    displayExpr: "name",
-                    valueExpr: "$id"
+                calculateCellValue: function (data) {
+                    var index = msUtils.getIndexByArray(vm.paymentModes, 'id', data.paymentMode);
+                    if (index > -1) {
+                        return vm.paymentModes[index].name;
+                    } else {
+                        return '';
+                    }
                 },
                 allowEditing: false
             }, {

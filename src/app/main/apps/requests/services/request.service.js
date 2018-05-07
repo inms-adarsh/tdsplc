@@ -13,7 +13,8 @@
             fvuInstance,
             scope = $rootScope.$new(),
             settings = {},
-            gridData = {};
+            gridData = {},
+            serverData = {};
         // Private variables
 
         adminService.getCurrentSettings().then(function (data) {
@@ -25,8 +26,7 @@
             updateRequest: updateRequest,
             fetchRequestList: fetchRequestList,
             requestForm: requestForm,
-            saveRequest: saveRequest,
-            generate_cutomPDF: generate_cutomPDF
+            saveRequest: saveRequest
         };
 
         var comapnyJSON={
@@ -214,7 +214,7 @@
                         caption: '27A',
                         cellTemplate: function (container, options) {
                             if (options.data.form27AUrl) {
-                                $('<a href="' + options.data.form27AUrl + '" download>Download 27A</a>').appendTo(container);
+                                $('<a href="' + options.data.form27AUrl + '" download target="_blank">Download 27A</a>').appendTo(container);
                             } else {
                                 $compile($('<a class="md-button md-raised md-accent" ng-click="uploadForm27A()">Upload Form 27A</a>'))(scope).appendTo(container);
                             }
@@ -224,7 +224,7 @@
                         caption: 'FVU',
                         cellTemplate: function (container, options) {
                             if (options.data.fvuFileUrl) {
-                                $('<a href="' + options.data.fvuFileUrl + '" download>Download FVU</a>').appendTo(container);
+                                $('<a href="' + options.data.fvuFileUrl + '" download target="_blank">Download FVU</a>').appendTo(container);
                             } else {
                                 $('<a class="">Upload FVU</span>').appendTo(container);
                             }
@@ -274,6 +274,7 @@
 
             gridData = $firebaseArray(rootRef.child('tenant-tin-requests').child(formObj.tenantId));
 
+            serverData = $firebaseArray(rootRef.child('admin-tin-requests'));
             requestObj.date = requestObj.date.toString();
             requestObj.user = auth.$getAuth().uid;
             requestObj.tenantId = formObj.tenantId;
@@ -341,10 +342,11 @@
                                             }
                                         };
 
-                                    var barcodeAlreadyExist = msUtils.getIndexByArray(gridData, 'barcode', barcode);
+                                    var barcodeAlreadyExist = msUtils.getIndexByArray(gridData, 'barcode', barcode),
+                                        barcodeAlreadyExistinServer = msUtils.getIndexByArray(serverData, 'barcode', barcode);
 
                                    
-                                        if (barcodeAlreadyExist > -1) {
+                                        if (barcodeAlreadyExist > -1 || barcodeAlreadyExistinServer>-1) {
                                             invalidFiles.push({
                                                 'description': barcode,
                                                 'reason': 'Form 27A File for barcode already uploaded'
@@ -400,6 +402,9 @@
                     var reader = new FileReader();
 
                     reader.addEventListener('load', function (e) {
+                        console.log(e.target.result.split('\n'));
+
+
                         if (!e.target.result || !e.target.result.split('\n') || !e.target.result.split('\n')[7]) {
                             invalidFiles.push({
                                 'description': fvu.name,
@@ -409,9 +414,18 @@
                         }
                         var barcode = e.target.result.split('\n')[7].split('^');
 
-                        if (isNaN(Number(barcode))) {
+                        if (isNaN(Number(barcode[barcode.length - 1].trim()))) {
                             barcode = e.target.result.split('\n')[6].split('^');
                         }
+
+                        if (isNaN(Number(barcode[barcode.length - 1].trim()))) {
+                            barcode = e.target.result.split('\n')[8].split('^');
+                        }
+
+                        var formNo = (e.target.result.split('\n')[1].split('^'))[4],
+                            deductor = (e.target.result.split('\n')[1].split('^'))[18],
+                            qtr = (e.target.result.split('\n')[1].split('^'))[17],
+                            finYear = (e.target.result.split('\n')[1].split('^'))[16];
                         //fs.writeFile('./fvucontent.json', barcode[barcode.length - 1]);
                         barcode = barcode[barcode.length - 1].trim();
 
@@ -447,10 +461,11 @@
                                 }
                             };
 
-                            var barcodeAlreadyExist = msUtils.getIndexByArray(gridData, 'barcode', barcode);
+                            var barcodeAlreadyExist = msUtils.getIndexByArray(gridData, 'barcode', barcode),
+                                barcodeAlreadyExistinServer = msUtils.getIndexByArray(serverData, 'barcode', barcode);
 
-                                   
-                            if (barcodeAlreadyExist > -1) {
+                       
+                            if (barcodeAlreadyExist > -1 || barcodeAlreadyExistinServer>-1) {
                                 invalidFiles.push({
                                     'description': barcode,
                                     'reason': 'FVU File for barcode already uploaded'
@@ -460,11 +475,17 @@
                                 $firebaseStorage(fvuRef).$put(fvu, metaData).$complete(function (snapshot) {
                                     //Step 3:Read the file as ArrayBuffer
 
-                                    var requestObj = { 'fvuFileName': fvu.name, 'barcode': barcode, 'fvuFileUrl': snapshot.downloadURL, 'requestId': key, 'tenantId': formObj.tenantId, 'status': 1 };
+                                    var requestObj = { 'fvuFileName': fvu.name, 'barcode': barcode, 'fvuFileUrl': snapshot.downloadURL, 'requestId': key, 'tenantId': formObj.tenantId, 'status': 1,
+                                    'formNo': formNo, 'deductor': deductor, 'qtr': qtr, 'finYear': finYear };
 
                                     if (tinrequests.hasOwnProperty(barcode)) {
                                         tinrequests[barcode].fvuFileUrl = snapshot.downloadURL;
                                         tinrequests[barcode].fvuFileName = fvu.name;
+                                        tinrequests[barcode].formNo = formNo;
+                                        tinrequests[barcode].deductor = deductor;
+                                        tinrequests[barcode].qtr = qtr;
+                                        tinrequests[barcode].finYear = finYear;
+
                                     } else {
                                         tinrequests[barcode] = requestObj;
                                     }
@@ -518,7 +539,11 @@
                         pendingCount++;
                     } else {
                         if(formObj.isAdmin) {
-                            mergeObj['admin-tin-requests/' + request] = requestObj;
+                            mergeObj['tenant-tin-requests/'  + formObj.tenantId + '/' + request] = null;                          
+                            invalidFiles.push({
+                                'description': request,
+                                'reason': 'Both FVU and Form27A should be uploaded to create request'
+                            });
                         }
                         failureCount++;
                     }
@@ -645,755 +670,8 @@
                 }
             });
         }
-        function generate() {
-
-            var doc = new jsPDF('p', 'pt');
           
-            var res = doc.autoTableHtmlToJson(document.getElementById("basic-table"));
-            doc.autoTable(res.columns, res.data, {margin: {top: 80}});
-          
-            var header = function(data) {
-              doc.setFontSize(18);
-              doc.setTextColor(40);
-              doc.setFontStyle('normal');
-              //doc.addImage(headerImgData, 'JPEG', data.settings.margin.left, 20, 50, 50);
-              doc.text("Testing Report", data.settings.margin.center, 50);
-            };
-          
-            var options = {
-              beforePageContent: header,
-              margin: {
-                top: 80
-              },
-              startY: doc.autoTableEndPosY() + 20
-            };
-          
-            doc.autoTable(res.columns, res.data, options);
-          
-            doc.save("table.pdf");
-          }
-          
-          
-          function generate_cutomPDF() {
-            
-              var doc = new jsPDF('p', 'pt');
-            
-              var rightStartCol1=400;
-              var rightStartCol2=480;
-          
-          
-              var InitialstartX=40;
-              var startX=40;
-              var InitialstartY=50;
-              var startY=0;
-          
-              var lineHeights=12;
-          
-              var res = doc.autoTableHtmlToJson(document.getElementById("basic-table"));
-                res = doc.autoTableHtmlToJson(document.getElementById("tblInvoiceItemsList"));
-              
-              doc.setFontSize(fontSizes.SubTitleFontSize);
-              doc.setFont('times');
-              doc.setFontType('bold');
-              
-              //pdf.addImage(agency_logo.src, 'PNG', logo_sizes.centered_x, _y, logo_sizes.w, logo_sizes.h);
-              doc.addImage(company_logo.src, 'PNG', startX,startY+=50, company_logo.w,company_logo.h);
-          
-              doc.textAlign(comapnyJSON.CompanyName, {align: "left"}, startX, startY+=15+company_logo.h);
-              doc.setFontSize(fontSizes.NormalFontSize);
-              doc.textAlign("GSTIN", {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-             // var w = doc.getStringUnitWidth('GSTIN') * NormalFontSize;
-              doc.textAlign(comapnyJSON.CompanyGSTIN, {align: "left"}, 80, startY);
-              
-              doc.setFontType('bold');
-              doc.textAlign("STATE", {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(comapnyJSON.CompanyState, {align: "left"}, 80, startY);
-          
-              doc.setFontType('bold');
-              doc.textAlign("PAN", {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(comapnyJSON.CompanyPAN, {align: "left"}, 80, startY);
-          
-              // doc.setFontType('bold');
-              // doc.textAlign("Address", {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              // doc.setFontType('normal');
-              // doc.textAlign(comapnyJSON.CompanyAddressLine1, {align: "left"}, 80, startY);
-              // doc.textAlign(comapnyJSON.CompanyAddressLine2, {align: "left"}, 80, startY+=lineSpacing.NormalSpacing);
-              // doc.textAlign(comapnyJSON.CompanyAddressLine3, {align: "left"}, 80, startY+=lineSpacing.NormalSpacing);
-               
-              doc.setFontType('bold');
-              doc.textAlign("PIN", {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(comapnyJSON.PIN, {align: "left"}, 80, startY);
-              
-              doc.setFontType('bold');
-              doc.textAlign("EMAIL", {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(comapnyJSON.companyEmail, {align: "left"}, 80, startY);
-          
-              doc.setFontType('bold');
-              doc.textAlign("Phone: ", {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(comapnyJSON.companyPhno, {align: "left"}, 80, startY);
-          
-             var tempY=InitialstartY;
-          
-          
-              doc.setFontType('bold');
-              doc.textAlign("INVOICE NO: ", {align: "left"},  rightStartCol1, tempY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(invoiceJSON.InvoiceNo, {align: "left"}, rightStartCol2, tempY);
-          
-          
-              doc.setFontType('bold');
-              doc.textAlign("INVOICE Date: ", {align: "left"},  rightStartCol1, tempY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(invoiceJSON.InvoiceDate, {align: "left"}, rightStartCol2, tempY);
-          
-              doc.setFontType('bold');
-              doc.textAlign("Reference No: ", {align: "left"},  rightStartCol1, tempY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(invoiceJSON.RefNo, {align: "left"}, rightStartCol2, tempY);
-          
-              doc.setFontType('bold');
-              doc.textAlign("Total: ", {align: "left"},  rightStartCol1, tempY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(invoiceJSON.TotalAmnt, {align: "left"}, rightStartCol2, tempY);
-              // doc.writeText(0, tempY+=lineSpacing.NormalSpacing ,"INVOICE No  :  "+invoiceJSON.InvoiceNo + '     ', { align: 'right' });
-              // doc.writeText(0, tempY+=lineSpacing.NormalSpacing ,"INVOICE Date: "+invoiceJSON.InvoiceDate + '     ', { align: 'right' });
-              // doc.writeText(0, tempY+=lineSpacing.NormalSpacing ,"Reference No: "+invoiceJSON.RefNo + '     ', { align: 'right' });
-              // doc.writeText(0, tempY+=lineSpacing.NormalSpacing ,"Total       :  Rs. "+invoiceJSON.TotalAmnt + '     ', { align: 'right' });
-             
-              doc.setFontType('normal');
-             
-              doc.setLineWidth(1);
-             // doc.line(20, startY+lineSpacing.NormalSpacing, 580, startY+=lineSpacing.NormalSpacing);
-              doc.line(20, startY+lineSpacing.NormalSpacing, 220, startY+lineSpacing.NormalSpacing);
-              doc.line(380, startY+lineSpacing.NormalSpacing, 580, startY+lineSpacing.NormalSpacing);
-             
-              doc.setFontSize(fontSizes.Head2TitleFontSize);
-              doc.setFontType('bold');
-              doc.textAlign("TAX INVOICE", {align: "center"}, startX, startY+=lineSpacing.NormalSpacing+2);
-               
-              doc.setFontSize(fontSizes.NormalFontSize);
-              doc.setFontType('bold');
-          
-              //-------Customer Info Billing---------------------
-             var startBilling=startY;
-          
-              doc.textAlign("Billing Address,", {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              doc.textAlign(customer_BillingInfoJSON.CustomerName, {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              doc.setFontSize(fontSizes.NormalFontSize);
-              doc.textAlign("GSTIN", {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-             // var w = doc.getStringUnitWidth('GSTIN') * NormalFontSize;
-              doc.textAlign(customer_BillingInfoJSON.CustomerGSTIN, {align: "left"}, 80, startY);
-              
-             
-              // doc.setFontType('bold');
-              // doc.textAlign("PAN", {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              // doc.setFontType('normal');
-              // doc.textAlign(customer_BillingInfoJSON.CustomerPAN, {align: "left"}, 80, startY);
-          
-              doc.setFontType('bold');
-              doc.textAlign("Address", {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(customer_BillingInfoJSON.CustomerAddressLine1, {align: "left"}, 80, startY);
-              doc.textAlign(customer_BillingInfoJSON.CustomerAddressLine2, {align: "left"}, 80, startY+=lineSpacing.NormalSpacing);
-              doc.textAlign(customer_BillingInfoJSON.CustomerAddressLine3, {align: "left"}, 80, startY+=lineSpacing.NormalSpacing);
-               
-              doc.setFontType('bold');
-              doc.textAlign("STATE", {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(customer_BillingInfoJSON.CustomerState, {align: "left"}, 80, startY);
-          
-              doc.setFontType('bold');
-              doc.textAlign("PIN", {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(customer_BillingInfoJSON.PIN, {align: "left"}, 80, startY);
-              
-              doc.setFontType('bold');
-              doc.textAlign("EMAIL", {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(customer_BillingInfoJSON.CustomerEmail, {align: "left"}, 80, startY);
-          
-              doc.setFontType('bold');
-              doc.textAlign("Phone: ", {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(customer_BillingInfoJSON.CustomerPhno, {align: "left"}, 80, startY);
-          
-              
-          
-              //-------Customer Info Shipping---------------------
-              var rightcol1=340;
-              var rightcol2=400;
-          
-              startY=startBilling;
-              doc.setFontType('bold');
-              doc.textAlign("Shipping Address,", {align: "left"}, rightcol1, startY+=lineSpacing.NormalSpacing);
-              doc.textAlign(customer_BillingInfoJSON.CustomerName, {align: "left"}, rightcol1, startY+=lineSpacing.NormalSpacing);
-              doc.setFontSize(fontSizes.NormalFontSize);
-              doc.setFontType('bold');
-              doc.textAlign("GSTIN", {align: "left"}, rightcol1, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-             // var w = doc.getStringUnitWidth('GSTIN') * NormalFontSize;
-              doc.textAlign(customer_BillingInfoJSON.CustomerGSTIN, {align: "left"},rightcol2, startY);
-              
-             
-              // doc.setFontType('bold');
-              // doc.textAlign("PAN", {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              // doc.setFontType('normal');
-              // doc.textAlign(customer_BillingInfoJSON.CustomerPAN, {align: "left"}, 80, startY);
-          
-              doc.setFontType('bold');
-              doc.textAlign("Address", {align: "left"}, rightcol1, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(customer_BillingInfoJSON.CustomerAddressLine1, {align: "left"}, rightcol2, startY);
-              doc.textAlign(customer_BillingInfoJSON.CustomerAddressLine2, {align: "left"}, rightcol2, startY+=lineSpacing.NormalSpacing);
-              doc.textAlign(customer_BillingInfoJSON.CustomerAddressLine3, {align: "left"}, rightcol2, startY+=lineSpacing.NormalSpacing);
-               
-              doc.setFontType('bold');
-              doc.textAlign("STATE", {align: "left"}, rightcol1, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(customer_BillingInfoJSON.CustomerState, {align: "left"}, rightcol2, startY);
-          
-              doc.setFontType('bold');
-              doc.textAlign("PIN", {align: "left"}, rightcol1, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(customer_BillingInfoJSON.PIN, {align: "left"}, rightcol2, startY);
-              
-              doc.setFontType('bold');
-              doc.textAlign("EMAIL", {align: "left"}, rightcol1, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(customer_BillingInfoJSON.CustomerEmail, {align: "left"}, rightcol2, startY);
-          
-              doc.setFontType('bold');
-              doc.textAlign("Phone: ", {align: "left"}, rightcol1, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(customer_BillingInfoJSON.CustomerPhno, {align: "left"}, rightcol2, startY);
-          
-              
-          
-          
-              var header = function(data) {
-                doc.setFontSize(8);
-                doc.setTextColor(40);
-                doc.setFontStyle('normal');
-               // doc.textAlign("TAX INVOICE", {align: "center"}, data.settings.margin.left, 50);
-           
-                //doc.addImage(headerImgData, 'JPEG', data.settings.margin.left, 20, 50, 50);
-               // doc.text("Testing Report", 110, 50);
-              };
-             // doc.autoTable(res.columns, res.data, {margin: {top:  startY+=30}});
-             doc.setFontSize(8);
-             doc.setFontStyle('normal');
-             
-              var options = {
-                beforePageContent: header,
-                margin: {
-                  top: 50 
-                },
-                styles: {
-                  overflow: 'linebreak',
-                  fontSize: 8,
-                  rowHeight: 'auto',
-                  columnWidth: 'wrap'
-                },
-                columnStyles: {
-                  1: {columnWidth: 'auto'},
-                  2: {columnWidth: 'auto'},
-                  3: {columnWidth: 'auto'},
-                  4: {columnWidth: 'auto'},
-                  5: {columnWidth: 'auto'},
-                  6: {columnWidth: 'auto'},
-                },
-                startY: startY+=50
-              };
-            
-              var columns = [
-                {title: "ID", dataKey: "id",width: 90},
-                {title: "Product", dataKey: "Product",width: 40}, 
-                {title: "Rate/Item", dataKey: "Rate/Item",width: 40}, 
-                {title: "Qty", dataKey: "Qty",width: 40}, 
-                {title: "Dsnt", dataKey: "Dsnt",width: 40}, 
-                {title: "S.Total", dataKey: "STotal",width: 40}, 
-                {title: "CGST", dataKey: "CGST",width: 40}, 
-                {title: "SGST", dataKey: "SGST",width: 40}, 
-                {title: "IGST", dataKey: "IGST",width: 40}, 
-                {title: "CESS", dataKey: "CESS",width: 40}, 
-                {title: "Total", dataKey: "Total",width: 40}, 
-            ];
-            var rows = [
-              {"id": 1, "Product": "SAMSUNG GALAXY S8 PLUS 64GB HSNCODE: 330854040", "Rate/Item": "10","Qty" : "12","Dsnt":"0","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 2, "Product": "SAMSUNG GALAXY S8 PLUS 64GB HSNCODE: 330854040", "Rate/Item": "10","Qty" : "12","Dsnt":"0","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 3, "Product": "SAMSUNG GALAXY S8 PLUS 64GB HSNCODE: 330854040", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "SAMSUNG GALAXY S8 PLUS 64GB HSNCODE: 330854040", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "SAMSUNG GALAXY S8 PLUS 64GB HSNCODE: 330854040", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": '', "Product": "", "Rate/Item": "Total","Qty" : "","Dsnt":"20","STotal":"360","CGST":60,"SGST":60,"IGST":0,"CESS":60,"Total":680},
-           
-            ];
-          
-            // columnStyles: {
-            //   id: {fillColor: 255}
-            // },
-            
-            doc.autoTable(columns, rows, options);   //From dynamic data.
-            // doc.autoTable(res.columns, res.data, options); //From htmlTable
-            
-          
-          
-            //-------Invoice Footer---------------------
-            var rightcol1=340;
-            var rightcol2=430;
-          
-            startY=doc.autoTableEndPosY()+30;
-            doc.setFontSize(fontSizes.NormalFontSize);
-            
-            doc.setFontType('bold');
-            doc.textAlign("Sub Total,", {align: "left"}, rightcol1, startY+=lineSpacing.NormalSpacing);
-            doc.textAlign(invoiceJSON.SubTotalAmnt, {align: "left"}, rightcol2, startY);
-            doc.setFontSize(fontSizes.NormalFontSize);
-            doc.setFontType('bold');
-            doc.textAlign("CGST Rs.", {align: "left"}, rightcol1, startY+=lineSpacing.NormalSpacing);
-            doc.setFontType('normal');
-           // var w = doc.getStringUnitWidth('GSTIN') * NormalFontSize;
-            doc.textAlign(invoiceJSON.TotalCGST, {align: "left"},rightcol2, startY);
-            
-          
-            doc.setFontType('bold');
-            doc.textAlign("SGST Rs.", {align: "left"}, rightcol1, startY+=lineSpacing.NormalSpacing);
-            doc.setFontType('normal');
-           // var w = doc.getStringUnitWidth('GSTIN') * NormalFontSize;
-            doc.textAlign(invoiceJSON.TotalSGST, {align: "left"},rightcol2, startY);
-            
-            doc.setFontType('bold');
-            doc.textAlign("IGST Rs.", {align: "left"}, rightcol1, startY+=lineSpacing.NormalSpacing);
-            doc.setFontType('normal');
-           // var w = doc.getStringUnitWidth('GSTIN') * NormalFontSize;
-            doc.textAlign(invoiceJSON.TotalIGST, {align: "left"},rightcol2, startY);
-            
-          
-            doc.setFontType('bold');
-            doc.textAlign("CESS Rs.", {align: "left"}, rightcol1, startY+=lineSpacing.NormalSpacing);
-            doc.setFontType('normal');
-           // var w = doc.getStringUnitWidth('GSTIN') * NormalFontSize;
-            doc.textAlign(invoiceJSON.TotalCESS, {align: "left"},rightcol2, startY);
-            
-            doc.setFontType('bold');
-            doc.textAlign("Total GST Rs.", {align: "left"}, rightcol1, startY+=lineSpacing.NormalSpacing);
-            doc.setFontType('normal');
-           // var w = doc.getStringUnitWidth('GSTIN') * NormalFontSize;
-            doc.textAlign(invoiceJSON.TotalGST, {align: "left"},rightcol2, startY);
-            
-          
-            doc.setFontType('bold');
-            doc.textAlign("Grand Total Rs.", {align: "left"}, rightcol1, startY+=lineSpacing.NormalSpacing);
-            doc.setFontType('normal');
-           // var w = doc.getStringUnitWidth('GSTIN') * NormalFontSize;
-            doc.textAlign(invoiceJSON.TotalAmnt, {align: "left"},rightcol2, startY);
-            doc.setFontType('bold');
-            doc.textAlign('For '+comapnyJSON.CompanyName+',', {align: "center"},rightcol2, startY+=lineSpacing.NormalSpacing+50);
-            doc.textAlign('Authorised Signatory', {align: "center"},rightcol2, startY+=lineSpacing.NormalSpacing+50);
-            
-              doc.save("invoice.pdf");
-          }
-          
-          function generate_cutomPDF_landscape() {
-            
-              var doc = new jsPDF('landscape', 'pt','a4');
-            
-              //var rightStartCol1=400;
-              //var rightStartCol2=480;
-              var rightStartCol1=doc.internal.pageSize.width-195;
-              var rightStartCol2=doc.internal.pageSize.width-115;
-          
-              var InitialstartX=40;
-              var startX=40;
-              var InitialstartY=50;
-              var startY=0;
-          
-              var lineHeights=12;
-          
-              var res = doc.autoTableHtmlToJson(document.getElementById("basic-table"));
-                res = doc.autoTableHtmlToJson(document.getElementById("tblInvoiceItemsList"));
-              
-              doc.setFontSize(fontSizes.SubTitleFontSize);
-              doc.setFont('times');
-              doc.setFontType('bold');
-              
-              //pdf.addImage(agency_logo.src, 'PNG', logo_sizes.centered_x, _y, logo_sizes.w, logo_sizes.h);
-              doc.addImage(company_logo.src, 'PNG', startX,startY+=50, company_logo.w,company_logo.h);
-          
-              doc.textAlign(comapnyJSON.CompanyName, {align: "left"}, startX, startY+=15+company_logo.h);
-              doc.setFontSize(fontSizes.NormalFontSize);
-              doc.textAlign("GSTIN", {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-             // var w = doc.getStringUnitWidth('GSTIN') * NormalFontSize;
-              doc.textAlign(comapnyJSON.CompanyGSTIN, {align: "left"}, 80, startY);
-              
-              doc.setFontType('bold');
-              doc.textAlign("STATE", {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(comapnyJSON.CompanyState, {align: "left"}, 80, startY);
-          
-              doc.setFontType('bold');
-              doc.textAlign("PAN", {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(comapnyJSON.CompanyPAN, {align: "left"}, 80, startY);
-          
-              // doc.setFontType('bold');
-              // doc.textAlign("Address", {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              // doc.setFontType('normal');
-              // doc.textAlign(comapnyJSON.CompanyAddressLine1, {align: "left"}, 80, startY);
-              // doc.textAlign(comapnyJSON.CompanyAddressLine2, {align: "left"}, 80, startY+=lineSpacing.NormalSpacing);
-              // doc.textAlign(comapnyJSON.CompanyAddressLine3, {align: "left"}, 80, startY+=lineSpacing.NormalSpacing);
-               
-              doc.setFontType('bold');
-              doc.textAlign("PIN", {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(comapnyJSON.PIN, {align: "left"}, 80, startY);
-              
-              doc.setFontType('bold');
-              doc.textAlign("EMAIL", {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(comapnyJSON.companyEmail, {align: "left"}, 80, startY);
-          
-              doc.setFontType('bold');
-              doc.textAlign("Phone: ", {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(comapnyJSON.companyPhno, {align: "left"}, 80, startY);
-          
-             var tempY=InitialstartY;
-          
-          
-              doc.setFontType('bold');
-              doc.textAlign("INVOICE NO: ", {align: "left"},  rightStartCol1, tempY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(invoiceJSON.InvoiceNo, {align: "left"}, rightStartCol2, tempY);
-          
-          
-              doc.setFontType('bold');
-              doc.textAlign("INVOICE Date: ", {align: "left"},  rightStartCol1, tempY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(invoiceJSON.InvoiceDate, {align: "left"}, rightStartCol2, tempY);
-          
-              doc.setFontType('bold');
-              doc.textAlign("Reference No: ", {align: "left"},  rightStartCol1, tempY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(invoiceJSON.RefNo, {align: "left"}, rightStartCol2, tempY);
-          
-              doc.setFontType('bold');
-              doc.textAlign("Total: ", {align: "left"},  rightStartCol1, tempY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(invoiceJSON.TotalAmnt, {align: "left"}, rightStartCol2, tempY);
-              // doc.writeText(0, tempY+=lineSpacing.NormalSpacing ,"INVOICE No  :  "+invoiceJSON.InvoiceNo + '     ', { align: 'right' });
-              // doc.writeText(0, tempY+=lineSpacing.NormalSpacing ,"INVOICE Date: "+invoiceJSON.InvoiceDate + '     ', { align: 'right' });
-              // doc.writeText(0, tempY+=lineSpacing.NormalSpacing ,"Reference No: "+invoiceJSON.RefNo + '     ', { align: 'right' });
-              // doc.writeText(0, tempY+=lineSpacing.NormalSpacing ,"Total       :  Rs. "+invoiceJSON.TotalAmnt + '     ', { align: 'right' });
-             
-              doc.setFontType('normal');
-             
-              doc.setLineWidth(1);
-              var lineEnd1=(doc.internal.pageSize.width/2)-70;
-              var lineEnd2=doc.internal.pageSize.width-10;
-             // doc.line(20, startY+lineSpacing.NormalSpacing, 580, startY+=lineSpacing.NormalSpacing);
-              doc.line(20, startY+lineSpacing.NormalSpacing, lineEnd1, startY+lineSpacing.NormalSpacing);
-              doc.line(lineEnd1+140, startY+lineSpacing.NormalSpacing, lineEnd2, startY+lineSpacing.NormalSpacing);
-             
-              doc.setFontSize(fontSizes.Head2TitleFontSize);
-              doc.setFontType('bold');
-              doc.textAlign("TAX INVOICE", {align: "center"}, startX, startY+=lineSpacing.NormalSpacing+2);
-               
-              doc.setFontSize(fontSizes.NormalFontSize);
-              doc.setFontType('bold');
-          
-              //-------Customer Info Billing---------------------
-             var startBilling=startY;
-          
-              doc.textAlign("Billing Address,", {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              doc.textAlign(customer_BillingInfoJSON.CustomerName, {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              doc.setFontSize(fontSizes.NormalFontSize);
-              doc.textAlign("GSTIN", {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-             // var w = doc.getStringUnitWidth('GSTIN') * NormalFontSize;
-              doc.textAlign(customer_BillingInfoJSON.CustomerGSTIN, {align: "left"}, 80, startY);
-              
-             
-              // doc.setFontType('bold');
-              // doc.textAlign("PAN", {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              // doc.setFontType('normal');
-              // doc.textAlign(customer_BillingInfoJSON.CustomerPAN, {align: "left"}, 80, startY);
-          
-              doc.setFontType('bold');
-              doc.textAlign("Address", {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(customer_BillingInfoJSON.CustomerAddressLine1, {align: "left"}, 80, startY);
-              doc.textAlign(customer_BillingInfoJSON.CustomerAddressLine2, {align: "left"}, 80, startY+=lineSpacing.NormalSpacing);
-              doc.textAlign(customer_BillingInfoJSON.CustomerAddressLine3, {align: "left"}, 80, startY+=lineSpacing.NormalSpacing);
-               
-              doc.setFontType('bold');
-              doc.textAlign("STATE", {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(customer_BillingInfoJSON.CustomerState, {align: "left"}, 80, startY);
-          
-              doc.setFontType('bold');
-              doc.textAlign("PIN", {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(customer_BillingInfoJSON.PIN, {align: "left"}, 80, startY);
-              
-              doc.setFontType('bold');
-              doc.textAlign("EMAIL", {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(customer_BillingInfoJSON.CustomerEmail, {align: "left"}, 80, startY);
-          
-              doc.setFontType('bold');
-              doc.textAlign("Phone: ", {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(customer_BillingInfoJSON.CustomerPhno, {align: "left"}, 80, startY);
-          
-              
-          
-              //-------Customer Info Shipping---------------------
-             // var rightcol1=340;
-             // var rightcol2=400;
-              var rightcol1=doc.internal.pageSize.width-255;
-              var rightcol2=doc.internal.pageSize.width-195;
-          
-              startY=startBilling;
-              doc.setFontType('bold');
-              doc.textAlign("Shipping Address,", {align: "left"}, rightcol1, startY+=lineSpacing.NormalSpacing);
-              doc.textAlign(customer_BillingInfoJSON.CustomerName, {align: "left"}, rightcol1, startY+=lineSpacing.NormalSpacing);
-              doc.setFontSize(fontSizes.NormalFontSize);
-              doc.setFontType('bold');
-              doc.textAlign("GSTIN", {align: "left"}, rightcol1, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-             // var w = doc.getStringUnitWidth('GSTIN') * NormalFontSize;
-              doc.textAlign(customer_BillingInfoJSON.CustomerGSTIN, {align: "left"},rightcol2, startY);
-              
-             
-              // doc.setFontType('bold');
-              // doc.textAlign("PAN", {align: "left"}, startX, startY+=lineSpacing.NormalSpacing);
-              // doc.setFontType('normal');
-              // doc.textAlign(customer_BillingInfoJSON.CustomerPAN, {align: "left"}, 80, startY);
-          
-              doc.setFontType('bold');
-              doc.textAlign("Address", {align: "left"}, rightcol1, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(customer_BillingInfoJSON.CustomerAddressLine1, {align: "left"}, rightcol2, startY);
-              doc.textAlign(customer_BillingInfoJSON.CustomerAddressLine2, {align: "left"}, rightcol2, startY+=lineSpacing.NormalSpacing);
-              doc.textAlign(customer_BillingInfoJSON.CustomerAddressLine3, {align: "left"}, rightcol2, startY+=lineSpacing.NormalSpacing);
-               
-              doc.setFontType('bold');
-              doc.textAlign("STATE", {align: "left"}, rightcol1, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(customer_BillingInfoJSON.CustomerState, {align: "left"}, rightcol2, startY);
-          
-              doc.setFontType('bold');
-              doc.textAlign("PIN", {align: "left"}, rightcol1, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(customer_BillingInfoJSON.PIN, {align: "left"}, rightcol2, startY);
-              
-              doc.setFontType('bold');
-              doc.textAlign("EMAIL", {align: "left"}, rightcol1, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(customer_BillingInfoJSON.CustomerEmail, {align: "left"}, rightcol2, startY);
-          
-              doc.setFontType('bold');
-              doc.textAlign("Phone: ", {align: "left"}, rightcol1, startY+=lineSpacing.NormalSpacing);
-              doc.setFontType('normal');
-              doc.textAlign(customer_BillingInfoJSON.CustomerPhno, {align: "left"}, rightcol2, startY);
-          
-              
-          
-          
-              var header = function(data) {
-                doc.setFontSize(8);
-                doc.setTextColor(40);
-                doc.setFontStyle('normal');
-               // doc.textAlign("TAX INVOICE", {align: "center"}, data.settings.margin.left, 50);
-           
-                //doc.addImage(headerImgData, 'JPEG', data.settings.margin.left, 20, 50, 50);
-               // doc.text("Testing Report", 110, 50);
-              };
-             // doc.autoTable(res.columns, res.data, {margin: {top:  startY+=30}});
-             doc.setFontSize(8);
-             doc.setFontStyle('normal');
-             
-              var options = {
-                beforePageContent: header,
-                margin: {
-                  top: 50 
-                },
-                styles: {
-                  overflow: 'linebreak',
-                  fontSize: 8,
-                  rowHeight: 'auto',
-                  columnWidth: 'wrap'
-                },
-                columnStyles: {
-                  1: {columnWidth: 'auto'},
-                  2: {columnWidth: 'auto'},
-                  3: {columnWidth: 'auto'},
-                  4: {columnWidth: 'auto'},
-                  5: {columnWidth: 'auto'},
-                  6: {columnWidth: 'auto'},
-                },
-                startY: startY+=50
-              };
-            
-              var columns = [
-                {title: "ID", dataKey: "id",width: 90},
-                {title: "Product", dataKey: "Product",width: 40}, 
-                {title: "Rate/Item", dataKey: "Rate/Item",width: 40}, 
-                {title: "Qty", dataKey: "Qty",width: 40}, 
-                {title: "Dsnt", dataKey: "Dsnt",width: 40}, 
-                {title: "S.Total", dataKey: "STotal",width: 40}, 
-                {title: "CGST", dataKey: "CGST",width: 40}, 
-                {title: "SGST", dataKey: "SGST",width: 40}, 
-                {title: "IGST", dataKey: "IGST",width: 40}, 
-                {title: "CESS", dataKey: "CESS",width: 40}, 
-                {title: "Total", dataKey: "Total"}, 
-            ];
-            var rows = [
-              {"id": 1, "Product": "SAMSUNG GALAXY S8 PLUS 64GB HSNCODE: 330854040", "Rate/Item": "10","Qty" : "12","Dsnt":"0","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 2, "Product": "SAMSUNG GALAXY S8 PLUS 64GB HSNCODE: 330854040", "Rate/Item": "10","Qty" : "12","Dsnt":"0","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 3, "Product": "SAMSUNG GALAXY S8 PLUS 64GB HSNCODE: 330854040", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "SAMSUNG GALAXY S8 PLUS 64GB HSNCODE: 330854040", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "SAMSUNG GALAXY S8 PLUS 64GB HSNCODE: 330854040", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": 4, "Product": "Shaw", "Rate/Item": "10","Qty" : "12","Dsnt":"10","STotal":"120","CGST":20,"SGST":20,"IGST":0,"CESS":20,"Total":180},
-              {"id": '', "Product": "", "Rate/Item": "Total","Qty" : "","Dsnt":"20","STotal":"360","CGST":60,"SGST":60,"IGST":0,"CESS":60,"Total":680},
-           
-            ];
-          
-            // columnStyles: {
-            //   id: {fillColor: 255}
-            // },
-            
-            doc.autoTable(columns, rows, options);   //From dynamic data.
-            // doc.autoTable(res.columns, res.data, options); //From htmlTable
-            
-          
-          
-            //-------Invoice Footer---------------------
-            
-            var rightcol1=doc.internal.pageSize.width-255;
-            var rightcol2=doc.internal.pageSize.width-195;
-          
-            startY=doc.autoTableEndPosY()+30;
-            doc.setFontSize(fontSizes.NormalFontSize);
-            
-            doc.setFontType('bold');
-            doc.textAlign("Sub Total,", {align: "left"}, rightcol1, startY+=lineSpacing.NormalSpacing);
-            doc.textAlign(invoiceJSON.SubTotalAmnt, {align: "left"}, rightcol2, startY);
-            doc.setFontSize(fontSizes.NormalFontSize);
-            doc.setFontType('bold');
-            doc.textAlign("CGST Rs.", {align: "left"}, rightcol1, startY+=lineSpacing.NormalSpacing);
-            doc.setFontType('normal');
-           // var w = doc.getStringUnitWidth('GSTIN') * NormalFontSize;
-            doc.textAlign(invoiceJSON.TotalCGST, {align: "left"},rightcol2, startY);
-            
-          
-            doc.setFontType('bold');
-            doc.textAlign("SGST Rs.", {align: "left"}, rightcol1, startY+=lineSpacing.NormalSpacing);
-            doc.setFontType('normal');
-           // var w = doc.getStringUnitWidth('GSTIN') * NormalFontSize;
-            doc.textAlign(invoiceJSON.TotalSGST, {align: "left"},rightcol2, startY);
-            
-            doc.setFontType('bold');
-            doc.textAlign("IGST Rs.", {align: "left"}, rightcol1, startY+=lineSpacing.NormalSpacing);
-            doc.setFontType('normal');
-           // var w = doc.getStringUnitWidth('GSTIN') * NormalFontSize;
-            doc.textAlign(invoiceJSON.TotalIGST, {align: "left"},rightcol2, startY);
-            
-          
-            doc.setFontType('bold');
-            doc.textAlign("CESS Rs.", {align: "left"}, rightcol1, startY+=lineSpacing.NormalSpacing);
-            doc.setFontType('normal');
-           // var w = doc.getStringUnitWidth('GSTIN') * NormalFontSize;
-            doc.textAlign(invoiceJSON.TotalCESS, {align: "left"},rightcol2, startY);
-            
-            doc.setFontType('bold');
-            doc.textAlign("Total GST Rs.", {align: "left"}, rightcol1, startY+=lineSpacing.NormalSpacing);
-            doc.setFontType('normal');
-           // var w = doc.getStringUnitWidth('GSTIN') * NormalFontSize;
-            doc.textAlign(invoiceJSON.TotalGST, {align: "left"},rightcol2, startY);
-            
-          
-            doc.setFontType('bold');
-            doc.textAlign("Grand Total Rs.", {align: "left"}, rightcol1, startY+=lineSpacing.NormalSpacing);
-            doc.setFontType('normal');
-           // var w = doc.getStringUnitWidth('GSTIN') * NormalFontSize;
-            doc.textAlign(invoiceJSON.TotalAmnt, {align: "left"},rightcol2, startY);
-            doc.setFontType('bold');
-            doc.textAlign('For '+comapnyJSON.CompanyName+',', {align: "center"},rightcol2, startY+=lineSpacing.NormalSpacing+50);
-            doc.textAlign('Authorised Signatory', {align: "center"},rightcol2, startY+=lineSpacing.NormalSpacing+50);
-            
-              doc.save("invoice.pdf");
-          }
-          
+        
           
     }
 }());

@@ -32,9 +32,55 @@
             id: 3,
             name: 'Low Credit Balance'
         }];
+
+
+        vm.filters = {
+            'all': 'All',
+            'pending': 'Pending',
+            'invalid': 'Invalid',
+            'ack': 'Acknowledgement Uploaded',
+            'paymentpending': 'Pending Payment'
+        };
+
+        vm.changeFilter = changeFilter;
         // Methods
         init();
         //////////
+
+
+        function changeFilter(filter) {
+            vm.currentFilter = filter;
+
+            switch (filter) {
+                case 'pending': {
+                    gridInstance.filter(['status', '=', 1]);
+                    break;
+                }
+
+                case 'invalid': {
+                    gridInstance.filter(['status', '=', 0]);
+                    break;
+                }
+
+                case 'all': {
+                    if (gridInstance) {
+                        gridInstance.clearFilter();
+                    }
+                    break;
+                }
+
+                case 'ack': {
+                    gridInstance.filter(['ackAttached', '=', true]);
+                    break;
+                }
+
+                case 'paymentpending': {
+                    gridInstance.filter(['remarks', '=', 'Credit Balance Low! Please Recharge ']);
+                    break;
+                }
+
+            }
+        }
 
 
         function init() {
@@ -42,6 +88,7 @@
             // requestService.fetchRequestList().then(function (data) {
             //     vm.gridData = data;
             // });
+            vm.changeFilter('all');
             var ref = rootRef.child('tenant-tin-requests').child(tenantId).orderByChild('status');
             vm.gridData = $firebaseArray(ref);
 
@@ -51,6 +98,7 @@
                     vm.btnDisabled = false;
                 } else {
                     vm.btnDisabled = true;
+
                 }
             }
 
@@ -64,10 +112,10 @@
             vm.creditBalance = 'Credit Balance: ' + newVal.creditBalance;
             $scope.buttonType = newVal.creditBalance < 0 ? 'danger' : 'success';
 
-            if(newVal.requiredBalance > 0) {
+            if (newVal.requiredBalance > 0) {
                 vm.debitBalance = newVal.requiredBalance || 0;
                 vm.requiredBalance = newVal.requiredBalance - newVal.creditBalance;
-                DevExpress.ui.dialog.alert('Few acknowledgements are hidden due to low credit balance ! please recharge with minimum '+ vm.requiredBalance +' to view all ', 'Balance Low !');
+                DevExpress.ui.dialog.alert('Low credit balance ! please recharge with minimum ' + vm.requiredBalance + ' to view all acknowledgements ', 'Balance Low !');
             } else {
                 vm.debitBalance = 0;
                 vm.requiredBalance = 0;
@@ -99,16 +147,16 @@
                     templateUrl: 'app/main/apps/requests/views/addNewRequestDialog/add-new-request-dialog.html',
                     parent: angular.element(document.body),
                     controllerAs: 'vm',
-                    clickOutsideToClose: true,
+                    clickOutsideToClose: false,
                     fullscreen: true, // Only for -xs, -sm breakpoints.,
                     bindToController: true,
                     locals: { isAdmin: false, customers: {} }
                 })
-                .then(function (answer) {
-                    
-                }, function () {
-                    $scope.status = 'You cancelled the dialog.';
-                });
+                    .then(function (answer) {
+
+                    }, function () {
+                        $scope.status = 'You cancelled the dialog.';
+                    });
                 //$scope.visiblePopup = true;
             }
         }
@@ -241,7 +289,7 @@
             bindingOptions: {
                 dataSource: 'vm.gridData'
             },
-            
+
             onToolbarPreparing: function (e) {
                 var dataGrid = e.component;
 
@@ -341,7 +389,7 @@
                 }, {
                     dataField: 'refNo',
                     caption: 'Order Id #'
-                },  
+                },
                 {
                     caption: 'Deductor/Collector Name',
                     dataField: 'deductor'
@@ -360,7 +408,7 @@
                     caption: '27A',
                     cellTemplate: function (container, options) {
                         if (options.data.form27AUrl) {
-                            $compile($('<a class="md-button md-raised md-normal"  href="' + options.data.form27AUrl + '" download><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
+                            $compile($('<a class="md-button md-raised md-normal"  href="' + options.data.form27AUrl + '" download target="_blank"><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
                         } else {
                             $compile($('<a ng-click="vm.uploadForm27A(' + options.data.barcode + ')">Wrong Form27A! Click to Upload again</a>'))($scope).appendTo(container);
                             //$compile($('<div dx-file-uploader="vm.form27AUploader(' + options.data.barcode + ')"></a>'))($scope).appendTo(container);
@@ -371,7 +419,7 @@
                     caption: 'FVU',
                     cellTemplate: function (container, options) {
                         if (options.data.fvuFileUrl) {
-                            $compile($('<a class="md-button md-raised md-normal" href="' + options.data.fvuFileUrl + '" download><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
+                            $compile($('<a class="md-button md-raised md-normal" href="' + options.data.fvuFileUrl + '" download target="_blank"><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
                         } else {
                             $compile($('<a ng-click="vm.uploadForm27A(' + options.data.barcode + ')">Wrong FVU! Click to Upload again</a>'))($scope).appendTo(container);
                         }
@@ -382,20 +430,29 @@
                     caption: 'Acknowledge',
                     cellTemplate: function (container, options) {
                         if (options.data.acknowledgementUrl) {
-                            $compile($('<a class="md-button md-raised md-normal"  href="' + options.data.acknowledgementUrl + '" download><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
+                            $compile($('<a class="md-button md-raised md-normal"  href="' + options.data.acknowledgementUrl + '" download target="_blank"><md-icon md-font-icon="icon-download s24"></md-icon></a>'))($scope).appendTo(container);
                         }
                     }
                 },
-                
+                {
+                    caption: 'Finacial Year',
+                    dataField: 'finYear',
+                    allowEditing: false
+                }, {
+                    caption: 'QTR',
+                    dataField: 'qtr',
+                    allowEditing: false
+                }, {
+                    caption: 'Form No',
+                    dataField: 'formNo',
+                    allowEditing: false
+                },
                 {
                     dataField: 'token',
                     caption: 'Token Number'
 
                 },
                 {
-                    dataField: 'rdate',
-                    caption: 'R Date'
-                },  {
                     dataField: 'fees',
                     caption: 'Fees'
                 }, {
@@ -406,18 +463,19 @@
                     caption: 'Discount',
                     alignment: 'right',
                     allowEditing: false,
-                    calculateCellValue: function(data) {
-                        return data.discount? data.discount + '%' : '';
+                    visible: false,
+                    calculateCellValue: function (data) {
+                        return data.discount ? data.discount + '%' : '';
                     }
                 },
                 {
                     dataField: 'totalCost',
                     caption: 'Total Cost',
                     dataType: 'number',
-                    calculateCellValue: function(data) {
-                        if(data.fees) {
+                    calculateCellValue: function (data) {
+                        if (data.fees) {
                             var discount = data.discount ? data.discount : 0;
-                            return data.fees - (data.fees * discount * 0.01 ) + data.extra;
+                            return data.fees - (data.fees * discount * 0.01) + data.extra;
                         } else {
                             return '';
                         }
@@ -453,6 +511,12 @@
                     info.rowElement.addClass("md-green-50-bg");
                 }
 
+                if (info.rowType == 'data' && info.data.discount) {
+                    if(gridInstance) {
+                        gridInstance.columnOption('discount', 'visible', true);
+                    }
+                }
+
             },
             summary: {
                 totalItems: [{
@@ -470,6 +534,7 @@
                     e.cellElement.find(".dx-link-delete").remove();
                     e.cellElement.find(".dx-link-edit").remove();
                 }
+
             },
             onRowRemoving: function (e) {
                 var component = e.component;
@@ -615,6 +680,7 @@
         };
     }
 
+
     function ToastController($scope, $mdToast, cssStyle) {
         $scope.cssStyle = cssStyle;
         var isDlgOpen = true;
@@ -628,4 +694,5 @@
                 });
         };
     }
+
 })();

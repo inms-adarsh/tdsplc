@@ -34,7 +34,7 @@
     {
         $locationProvider.html5Mode(true);
 
-        $urlRouterProvider.otherwise('/auth/login');
+        $urlRouterProvider.otherwise('/index/login');
 
         /**
          * Layout Style Switcher

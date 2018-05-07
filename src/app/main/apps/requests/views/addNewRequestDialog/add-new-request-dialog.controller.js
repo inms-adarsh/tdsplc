@@ -1,5 +1,4 @@
-(function ()
-{
+(function () {
     'use strict';
 
     angular
@@ -7,8 +6,7 @@
         .controller('AddRequestDialogController', AddRequestDialogController);
 
     /** @ngInject */
-    function AddRequestDialogController($state, $firebaseObject, isAdmin, authService, $mdToast, $scope, $mdDialog, $document, $firebaseStorage, firebaseUtils, requestService, customers)
-    {
+    function AddRequestDialogController($state, $firebaseObject, isAdmin, authService, $mdToast, $scope, $mdDialog, $document, $firebaseStorage, firebaseUtils, requestService, customers) {
         var vm = this,
             formInstance,
             form27AInstance,
@@ -42,7 +40,7 @@
                     }],
                     visible: isAdmin,
                     colSpan: 2
-                }, 
+                },
                 {
                     template: function (data, itemElement) {
                         itemElement.append($("<div>").attr("id", "dxfu1").dxFileUploader({
@@ -115,21 +113,30 @@
 
                 formObj.form27As = form27AInstance.option('value');
                 formObj.fvus = fvuInstance.option('value');
-                if(!formObj.tenantId) {
+                if (!formObj.tenantId) {
                     formObj.tenantId = tenantId;
                 }
                 formObj.isAdmin = isAdmin;
                 requestService.saveRequest(formObj);
 
                 $mdDialog.hide();
-                
+
                 form27AInstance.option('disabled', true);
                 fvuInstance.option('disabled', true);
-                
+
                 form27AInstance.reset();
                 fvuInstance.reset();
                 $scope.visibleRequestPopup = false
             }
         }
+
+        vm.closeDialog = function closeDialog() {
+            var result = DevExpress.ui.dialog.confirm("All your input data will be cleared. Do you want to close? ", "Confirm");
+            result.done(function (dialogResult) {
+                if (dialogResult == true) {
+                    $mdDialog.hide();
+                }
+            });
+        }
     }
-})();
+    }) ();

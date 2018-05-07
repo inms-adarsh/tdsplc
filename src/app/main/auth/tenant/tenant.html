@@ -21,7 +21,16 @@
                 </md-input-container>
                 <md-input-container flex="100" flex-gt-xs="50"  md-no-float>
                     <label translate="TENANT.PHONE_NUMBER">Phone</label>
-                    <input ng-model="vm.tenant.phone" type="text" required>
+                    <input name="phone" ng-model="vm.tenant.phone" ng-pattern="/^[0-9]{10}$/" md-maxlength="10" type="text" required>
+                    <div ng-messages="wizardStep2.phone.$error"
+                             role="alert" multiple>
+                            <div ng-message="required"><span>You must enter a phone no.</span></div>
+                            <div ng-message="pattern">
+                                <span>That doesn't look like a valid phone no.</span></div>
+                            <div ng-message="md-maxlength">
+                                <span>Phone no can't be longer than 10 characters.</span>
+                            </div>
+                        </div>
                 </md-input-container>
               </div>
               <div layout="column" layout-gt-xs="row" flex>
@@ -62,16 +71,13 @@
                     </md-input-container>
                 </div>
                 <md-button type="submit" class="md-raised md-accent submit-button" aria-label="RESET MY PASSWORD"
-                           ng-disabled="TenantForm.$invalid || registerForm.$pristine"
+                           ng-disabled="TenantForm.$invalid || registerForm.$pristine || disableBtn"
                            translate="TENANT.SAVE"
                            translate-attr-aria-label="TENANT.SAVE">
                     Save
                 </md-button>
             </form>
 
-            <div class="login" layout="row" layout-align="center center"  ng-show="vm.tenantIdExist">
-                <a class="link" ui-sref="app.auth_login" translate="TENANT.GO_HOME">Go to Home</a>
-            </div>
         </div>
     </div>
 </div>

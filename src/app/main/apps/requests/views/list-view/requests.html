@@ -50,9 +50,20 @@
         </div> -->
 
         <md-card>
-            <md-card-actions layout="row" layout-align="start center">
-                <div dx-button="vm.addTinRequests"></div>
+            <md-card-actions layout="row" layout-align="space-between center">
+                <div layout="row" layout-align="start center" dx-button="vm.addTinRequests"></div>
+                <div layout="row" layout-align="end center">
+                    <md-button  
+                    ng-repeat="(key, filter) in vm.filters" 
+                    ng-click="vm.changeFilter(key)" 
+                    ng-disabled="vm.currentFilter == key"
+                    ng-class="{'md-accent md-raised': vm.currentFilter == key}">
+                        {{filter}}
+                    
+                    </md-button>
+                </div>
             </md-card-actions>
+            
             <md-card-content>
                 <div ng-class="{'error-alert-message': vm.invalidRequest, 'success-alert-message': !vm.invalidRequest}" ng-show="vm.showAlertMessage">
                     <span>Last Request generated with {{vm.invalidRequest == true? 'Errors': 'Success'}} :

@@ -6,7 +6,7 @@
         .controller('TenantController', TenantController);
 
     /** @ngInject */
-    function TenantController(authService, currentAuth, $mdToast, loginRedirectPath, auth) {
+    function TenantController($scope, authService, currentAuth, $mdToast, loginRedirectPath, auth) {
         var vm = this;
         // Data
         vm.tenant = [];
@@ -41,7 +41,7 @@
          * @param tenant Information object
          */
         function addTenant(tenant) {
-
+            $scope.disableBtn = true;
             if (vm.editMode === true) {
                 vm.editTenant(tenant);
             } else {
@@ -52,13 +52,13 @@
                 authService.addTenant(tenant).then(function (key) {
                     authService.updateUserTenantId(currentAuth.uid, key, vm.userInfo).then(function () {
                         authService.setCurrentTenant(key);
-                        vm.editMode = true;
-                        DevExpress.ui.dialog.alert('Details Saved Successfully', 'Success');
-                        authService.removeCurrentUser();
+                        vm.editMode = true;                        
                         auth.$signOut();
                         $state.go(loginRedirectPath);
                         vm.authData = null;
                         localStorage.clear();
+                        DevExpress.ui.dialog.alert('Details Saved Successfully', 'Success');
+                        authService.removeCurrentUser();
                     });
                     return key;
                 }).catch(function (err) {
@@ -75,6 +75,7 @@
             authService.updateTenantInfo(tenant, vm.tenantId).then(function (data) {
                 //authService.updateUserInfo(currentAuth.uid, data);
                 DevExpress.ui.dialog.alert('Details Saved Successfully', 'Success');
+                $scope.disableBtn = false;
             }).catch(function (err) {
 
             });

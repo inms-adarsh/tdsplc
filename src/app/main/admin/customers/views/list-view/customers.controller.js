@@ -96,7 +96,8 @@
                     caption: '#',
                     cellTemplate: function(cellElement, cellInfo) {
                         cellElement.text(cellInfo.row.dataIndex + 1)
-                    }
+                    },
+                    allowEditing: false
                 }, {
                     dataField: 'company',
                     caption: 'Firm name',
@@ -104,12 +105,15 @@
                         type: 'required',
                         message: 'Name is required'
                     }],
+                    allowEditing: false
                 },{
                     dataField: 'creditBalance',
-                    caption: 'Credit Balance'
+                    caption: 'Credit Balance',
+                    allowEditing: false
                 }, {
                     dataField: 'requiredBalance',
-                    caption: 'Required Balance'
+                    caption: 'Required Balance',
+                    allowEditing: false
                 }, {
                     dataField: 'phone',
                     caption: 'Phone',
@@ -117,14 +121,16 @@
                     validationRules: [{
                         type: 'required',
                         message: 'Phone number is required'
-                    }]
+                    }],
+                    allowEditing: false
                 },  {
                     dataField: 'email',
                     caption: 'Email',
                     validationRules: [{
                         type: 'email',
                         message: 'Please enter valid e-mail address'
-                    }]
+                    }],
+                    allowEditing: false
                 }, {
                     dataField: 'address',
                     caption: 'Address'
@@ -167,7 +173,9 @@
                         dataSource: clientStatus,
                         displayExpr: "name",
                         valueExpr: "id"
-                    }
+                    },
+                    sortIndex: 0,
+                    sortOrder: "desc"
                 }],
                 export: {
                     enabled: true,
@@ -191,9 +199,22 @@
                     });
                     e.cancel = d.promise();
                 }, 
-                onRowUpdated: function(e) {
+                onRowUpdating: function(e) {
+                    var d = $.Deferred();
                     var ref = rootRef.child('tenants').child(e.key.$id);
-                    firebaseUtils.updateData(ref, e.data);
+
+                    if(e.newData.paymentType == 'prepaid' && (e.key.creditBalance < 0 || e.key.requiredBalance > 0)) {
+                        DevExpress.ui.dialog.alert('Can not convert the tenant to prepaid untill you clear the pending payments', 'Error');
+                        d.reject('Can not convert the tenant to prepaid untill you clear the pending payments');
+                    }
+                    else if(e.newData.paymentType == 'postpaid' && e.key.requiredBalance > 0) {
+                        DevExpress.ui.dialog.alert('Can not convert the tenant to postpaid untill you clear the pending payments', 'Error');
+                        d.reject('Can not convert the tenant to postpaid untill you clear the pending payments');
+                    } else {                        
+                        firebaseUtils.updateData(ref, e.newData);
+                        d.resolve();
+                    }
+                    e.cancel = d.promise();
                 },
                 onContentReady: function(e) {
                     gridInstance = e.component;
@@ -203,6 +224,15 @@
                         column: '#',
                         summaryType: 'count'
                     }]
+                },
+                onRowPrepared: function(info) {
+                    if (info.rowType == 'data' && info.data.position == 'active') {
+                        info.rowElement.addClass("md-green-50-bg");
+                    }
+
+                    if (info.rowType == 'data' && info.data.position == 'deactive') {
+                        info.rowElement.addClass("md-red-50-bg");
+                    }
                 }
 
             };
@@ -221,7 +251,7 @@
                 templateUrl        : 'app/main/admin/customers/views/dialogs/customer-dialog.html',
                 parent             : angular.element($document.body),
                 targetEvent        : ev,
-                clickOutsideToClose: true,
+                clickOutsideToClose: false,
                 locals             : {
                     dialogData: {
                         dialogType: 'add'
@@ -241,7 +271,7 @@
                 templateUrl        : 'app/main/apps/customers/views/dialogs/add-edit/edit-dialog.html',
                 parent             : angular.element($document.body),
                 targetEvent        : ev,
-                clickOutsideToClose: true,
+                clickOutsideToClose: false,
                 locals             : {
                     dialogData: {
                         chartData : vm.data,

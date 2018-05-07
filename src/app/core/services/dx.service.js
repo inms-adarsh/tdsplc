@@ -41,7 +41,7 @@
                     placeholder: 'Search...'
                 },
                 columnChooser: {
-                    enabled: true
+                    enabled: false
                 },
                 editing: {
                     allowAdding: false,

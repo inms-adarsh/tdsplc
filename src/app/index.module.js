@@ -40,7 +40,9 @@
             //'app.acknowledgements',
             'app.payment',
             'app.settings',
-            'app.paymentledger'
+            'app.profile',
+            'app.paymentledger',
+            'app.home'
             //'app.bulkbuys'
         ]);
 })();

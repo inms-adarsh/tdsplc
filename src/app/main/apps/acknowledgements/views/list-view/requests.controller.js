@@ -128,7 +128,7 @@
                 caption: 'Attachment 27A',
                 cellTemplate: function (container, options) {
                     if (options.data.form27AUrl) {
-                        $('<a href="' + options.data.form27AUrl + '" download>'+ options.data.form27AFileName +'</a>').appendTo(container);
+                        $('<a href="' + options.data.form27AUrl + '" download target="_blank">'+ options.data.form27AFileName +'</a>').appendTo(container);
                     } else {
                         $compile($('<a class="md-button md-raised md-accent" ng-click="vm.uploadForm27A(' + options.data.barcode + ')">Upload Form 27A</a>'))($scope).appendTo(container);
                         //$compile($('<div dx-file-uploader="vm.form27AUploader(' + options.data.barcode + ')"></a>'))($scope).appendTo(container);
@@ -139,7 +139,7 @@
                 caption: 'Attachment FVU',
                 cellTemplate: function (container, options) {
                     if (options.data.fvuFileUrl) {
-                        $('<a href="' + options.data.fvuFileUrl + '" download>' + options.data.fvuFileName +'</a>').appendTo(container);
+                        $('<a href="' + options.data.fvuFileUrl + '" download target="_blank">' + options.data.fvuFileName +'</a>').appendTo(container);
                     } else {
                         $compile($('<a class="md-button md-raised md-accent" ng-click="vm.uploadForm27A(' + options.data.barcode + ')">Upload FVU</a>'))($scope).appendTo(container);
                     }
@@ -149,7 +149,7 @@
                 caption: 'Acknowledge',
                 cellTemplate: function (container, options) {
                     if (options.data.acknowledgementUrl) {
-                        $('<a href="' + options.data.acknowledgementUrl + '" download>' + options.data.acknowledgementFileName + '</a>').appendTo(container);
+                        $('<a href="' + options.data.acknowledgementUrl + '" download target="_blank">' + options.data.acknowledgementFileName + '</a>').appendTo(container);
                     }
                 }
             }, {
@@ -233,7 +233,7 @@
                 templateUrl: 'app/main/apps/acknowledgements/views/TinAcknowledgementDialog/tin-acknowledgement-dialog.html',
                 parent: angular.element(document.body),
                 controllerAs: 'vm',
-                clickOutsideToClose: true,
+                clickOutsideToClose: false,
                 fullscreen: true, // Only for -xs, -sm breakpoints.,
                 locals: { acknowledgement: acknowledgement },
                 bindToController: true

@@ -57,47 +57,57 @@
         </div>
 
 
-            <!-- CONTENT TOOLBAR -->
-            <!-- / CONTENT TOOLBAR -->
-            <!-- CONTENT -->
-            <div class="popup" dx-popup="vm.assignedToPopupOptions">
-                <div data-options="dxTemplate: { name:'info' }">
-                    <div dx-data-grid="vm.employeeGrid"></div>
-                    </br>
-                    <div style="text-align:center">
-                        <div dx-button="vm.assignButtonOptions"></div>
-                    </div>
+        <!-- CONTENT TOOLBAR -->
+        <!-- / CONTENT TOOLBAR -->
+        <!-- CONTENT -->
+        <div class="popup" dx-popup="vm.assignedToPopupOptions">
+            <div data-options="dxTemplate: { name:'info' }">
+                <div dx-data-grid="vm.employeeGrid"></div>
+                </br>
+                <div style="text-align:center">
+                    <div dx-button="vm.assignButtonOptions"></div>
                 </div>
             </div>
-            <!-- DEMO CONTENT -->
-            <md-card>
-                <md-card-content>
-                    <div ng-class="{'error-alert-message': vm.invalidRequest, 'success-alert-message': !vm.invalidRequest}" ng-show="vm.showAlertMessage">
-                        <span>Last Request generated with {{vm.invalidRequest == true? 'Errors': 'Success'}} :
-                            <a ng-click="showRequest()">Click to View</a>
-                        </span>
-                    </div>
-                    <!-- CONTENT TOOLBAR -->
-                    <!-- / CONTENT TOOLBAR -->
-                    <!-- CONTENT -->
-                    <div class="popup" dx-popup="vm.uploadPopupOptions">
-                        <div data-options="dxTemplate: { name:'requestinfo' }">
-                            <div id="request-form" dx-form="vm.requestForm"></div>
-                            </br>
-                            <div style="text-align:center">
-                                <div dx-button="vm.requestButtonOptions"></div>
-                            </div>
+        </div>
+        <!-- DEMO CONTENT -->
+        <md-card>
+            <md-card-actions layout="row" layout-align="end center" layout-align-sm="end" flex-sm="100">
+                <md-button  
+                ng-repeat="(key, filter) in vm.filters" 
+                ng-click="vm.changeFilter(key)" 
+                ng-disabled="vm.currentFilter == key"
+                ng-class="{'md-accent md-raised': vm.currentFilter == key}">
+                    {{filter}}
+                
+                </md-button>
+            </md-card-actions>
+            <md-card-content>
+                <div ng-class="{'error-alert-message': vm.invalidRequest, 'success-alert-message': !vm.invalidRequest}" ng-show="vm.showAlertMessage">
+                    <span>Last Request generated with {{vm.invalidRequest == true? 'Errors': 'Success'}} :
+                        <a ng-click="showRequest()">Click to View</a>
+                    </span>
+                </div>
+                <!-- CONTENT TOOLBAR -->
+                <!-- / CONTENT TOOLBAR -->
+                <!-- CONTENT -->
+                <div class="popup" dx-popup="vm.uploadPopupOptions">
+                    <div data-options="dxTemplate: { name:'requestinfo' }">
+                        <div id="request-form" dx-form="vm.requestForm"></div>
+                        </br>
+                        <div style="text-align:center">
+                            <div dx-button="vm.requestButtonOptions"></div>
                         </div>
                     </div>
+                </div>
 
-                    <div id="request-grid" dx-data-grid="vm.gridOptions"></div>
-                    <!-- / DEMO CONTENT -->
+                <div id="request-grid" dx-data-grid="vm.gridOptions"></div>
+                <!-- / DEMO CONTENT -->
 
 
-                </md-card-content>
-            </md-card>
+            </md-card-content>
+        </md-card>
 
-            <!-- / CONTENT -->
+        <!-- / CONTENT -->
     </div>
     <!-- / CENTER -->
 

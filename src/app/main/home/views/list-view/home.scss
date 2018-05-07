@@ -1,7 +1,8 @@
 #register-v2 {
-    background: url('/assets/images/backgrounds/dark-material-bg.jpg') no-repeat;
+    //background: url('/assets/images/backgrounds/dark-material-bg.jpg') no-repeat;
     background-size: cover;
     height:100%;
+    background: #337ab7;
     .top-row {
         .navigation-toggle {
             height: $toolbarHeight;
@@ -71,9 +72,7 @@
         }
     
         #register-v2-form-wrapper {
-            width: 416px;
             min-width: 416px;
-            max-width: 416px;
             background: #FFFFFF;
     
             #register-v2-form {

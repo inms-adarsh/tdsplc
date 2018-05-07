@@ -324,7 +324,9 @@
                             type: 'required',
                             message: 'Date is required'
                         }],
-                        allowEditing: false
+                        allowEditing: false,
+                        sortIndex: 1,
+                        sortOrder: "asc"
                     }, {
                         dataField: 'refNo',
                         caption: 'Order Id #'

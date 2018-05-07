@@ -173,7 +173,9 @@
                         dataSource: clientStatus,
                         displayExpr: "name",
                         valueExpr: "id"
-                    }
+                    },
+                    sortIndex: 0,
+                    sortOrder: "desc"
                 }],
                 export: {
                     enabled: true,
@@ -222,6 +224,15 @@
                         column: '#',
                         summaryType: 'count'
                     }]
+                },
+                onRowPrepared: function(info) {
+                    if (info.rowType == 'data' && info.data.position == 'active') {
+                        info.rowElement.addClass("md-green-50-bg");
+                    }
+
+                    if (info.rowType == 'data' && info.data.position == 'deactive') {
+                        info.rowElement.addClass("md-red-50-bg");
+                    }
                 }
 
             };

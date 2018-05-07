@@ -453,42 +453,6 @@
 
                 },
                 {
-                    dataField: 'rno',
-                    caption: 'R No',
-                    allowEditing: false
-                }, {
-                    dataField: 'rdate',
-                    caption: 'R Date',
-                    allowEditing: false
-                },  {
-                    dataField: 'module',
-                    caption: 'Module',
-                    allowEditing: false
-                },  {
-                    caption: 'TAN',
-                    dataField: 'tan',
-                    allowEditing: false
-                }, {
-                    caption: 'AO Code',
-                    dataField: 'aoCode',
-                    allowEditing: false
-                }, {
-                    caption: 'Regular/Correction',
-                    dataField: 'corrections',
-                    allowEditing: false
-                }, {
-                    caption: 'Original Token No',
-                    dataField: 'origTokenNo',
-                    allowEditing: false
-                }, {
-                    caption: 'Deductee/Collectee Count',
-                    dataField: 'collecteeCount',
-                    allowEditing: false
-                }, {
-                    caption: 'User ID',
-                    dataField: 'userId',
-                    allowEditing: false
-                }, {
                     dataField: 'fees',
                     caption: 'Fees'
                 }, {

@@ -1,13 +1,22 @@
 <div id="register-v2">
-    <!-- <md-toolbar class="md-menu-toolbar md-whiteframe-1dp ng-scope _md md-default-theme _md-toolbar-transitions">
-        <div class="top-row" layout="row" layout-align="space-between center">
+    <md-toolbar class="md-menu-toolbar md-whiteframe-1dp ng-scope _md md-default-theme _md-toolbar-transitions">
+        <div class="top-row" layout="row" layout-align="space-between center" flex>
             <div layout="row" layout-align="start center">
                 <div class="logo" layout="row" layout-align="start center">
                     <img src="/assets/images/logo.jpg" class="logo-image">
                 </div>
             </div>
+            <div layout="row" layout-align="start center" style="margin-right: 10px">
+                    <md-button  ui-sref="app.home.register" aria-label="Contact Us" style="margin-right: 8px">
+                            Home
+                    </md-button>
+                <md-button class="md-raised md-accent" ui-sref="app.home.contactus" aria-label="Contact Us">
+                    Contact Us
+                </md-button>
+            </div>
         </div>
-    </md-toolbar> -->
+      
+    </md-toolbar>
     <div layout="column" layout-align="center center" class="main">
         <div id="register-v2-intro" flex hide show-gt-sm>
             <div class="title">
@@ -19,7 +28,7 @@
             </div>
         </div>
 
-        <div id="register-v2-form-wrapper" class="flex-scrollable md-whiteframe-8dp" layout="column" flex ms-scroll>
+        <div id="register-v2-form-wrapper" class="flex-scrollable md-whiteframe-0dp" layout="column" flex ms-scroll>
             <div id="register-v2-form">
                 <div ui-view></div>
             </div>

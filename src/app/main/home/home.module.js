@@ -40,6 +40,11 @@
                 templateUrl: 'app/main/auth/login/login.html',
                 controller : 'LoginController as vm',
                 bodyClass: 'home'
+            }).state('app.home.contactus', {
+                url      : '/contact-us',
+                templateUrl: 'app/main/home/views/contact/contact.html',
+                controller : 'ContactController as vm',
+                bodyClass: 'home'
             });
 
         // Translation
@@ -48,11 +53,5 @@
 
         // Navigation
 
-        msNavigationServiceProvider.saveItem('home', {
-            title: 'Home',
-            weight: 7,
-            state: 'app.home',
-            roles: ['superuser']
-        });
     }
 })();

@@ -1,0 +1,19 @@
+
+
+    .info-line {
+        margin-bottom: 24px;
+
+        .title {
+            font-size: 15px !important;
+            font-weight: 700;
+            padding-bottom: 4px;
+        }
+
+        .info {
+
+        }
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
